@@ -2,6 +2,13 @@
 
 A modern, performance-focused portfolio and landing page built with Next.js 16, React 19, and Tailwind CSS.
 
+## Quick Start
+
+```bash
+pnpm install
+pnpm dev
+```
+
 ## About
 
 This is a portfolio website for **Burley** — showcasing services for building investable MVPs in 5 days. The site features smooth scrolling animations, a dark theme aesthetic, and a comprehensive component library built on Radix UI primitives.
