@@ -39,9 +39,9 @@ export function HeroSection() {
 
       <SplitFlapAudioProvider>
         <div className="w-full flex items-center justify-between px-6 md:px-12 py-4 border-b border-border/30">
-          <div className="flex items-center gap-8">
-            <div className="h-[32px] w-[140px] flex items-center shrink-0">
-              <div className="scale-[0.18] origin-left whitespace-nowrap">
+          <div className="flex items-center gap-4 md:gap-8">
+            <div className="h-[36px] w-[90px] md:h-[32px] md:w-[140px] flex items-center shrink-0">
+              <div className="scale-[0.22] md:scale-[0.18] origin-left whitespace-nowrap">
                 <SplitFlapText text="BURLEY" speed={40} />
               </div>
             </div>
