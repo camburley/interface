@@ -17,9 +17,9 @@ const caseStudies = [
   },
   {
     title: "Guideline Buddy",
-    category: "Healthcare Compliance",
+    category: "Mortgage Compliance",
     proven: "Mortgage pros need faster access to lending guidelines",
-    outcome: "Piloted at 3 hospitals, 90% retention",
+    outcome: "Active users across multiple lenders",
     span: "col-span-1 row-span-1",
   },
   {
@@ -65,10 +65,10 @@ const caseStudies = [
     span: "col-span-1 row-span-1",
   },
   {
-    title: "Dental Directory",
-    category: "Programmatic SEO",
-    proven: "Celebrity content + local pages drive organic traffic",
-    outcome: "30+ celebrity pages, local city directories",
+    title: "Supermarket Puzzle",
+    category: "Gamified Platform",
+    proven: "Gamification drives engagement with product discovery",
+    outcome: "98+ hub pages, Firebase analytics, active users",
     span: "col-span-1 row-span-1",
   },
   {
@@ -77,6 +77,34 @@ const caseStudies = [
     proven: "Mobile approval workflows increase response time",
     outcome: "React Native app with push notifications, deployed",
     span: "col-span-2 row-span-1",
+  },
+  {
+    title: "MCP Servers",
+    category: "AI Tooling",
+    proven: "Custom tools extend AI agent capabilities",
+    outcome: "Calendar, Gmail, Firebase integrations in production",
+    span: "col-span-1 row-span-1",
+  },
+  {
+    title: "Canelo Crawford",
+    category: "Sports Analytics",
+    proven: "Real-time odds tracking drives betting engagement",
+    outcome: "Live odds scraping, Redis caching, email alerts",
+    span: "col-span-1 row-span-1",
+  },
+  {
+    title: "Assist AI",
+    category: "AI Backend Infra",
+    proven: "Multi-model AI backends need unified interfaces",
+    outcome: "WebSockets, Pinecone RAG, speech-to-text, deployed",
+    span: "col-span-2 row-span-1",
+  },
+  {
+    title: "FurOnWheels",
+    category: "Programmatic SEO",
+    proven: "Location-based content scales organic traffic",
+    outcome: "481+ city pages, breed/brand taxonomies, live",
+    span: "col-span-1 row-span-1",
   },
 ]
 
