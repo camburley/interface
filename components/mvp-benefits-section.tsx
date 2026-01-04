@@ -86,7 +86,7 @@ export function MvpBenefitsSection() {
     <section ref={sectionRef} id="mvp-sprint" className="relative py-32 pl-6 md:pl-28 pr-6 md:pr-12">
       <div ref={headerRef} className="mb-16">
         <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">01 / What You Get</span>
-        <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">MVP SPRINT DELIVERABLES</h2>
+        <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">WHAT YOU WALK AWAY WITH</h2>
       </div>
 
       <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

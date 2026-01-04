@@ -69,7 +69,10 @@ export function ApplicationFormSection() {
           <a href="mailto:cam@burley.ai" className="text-accent hover:underline">
             cam@burley.ai
           </a>
-          . I'll review your application and get back to you within 24 hours.
+          . I&apos;ll review your application and get back to you within 24 hours.
+        </p>
+        <p className="mt-4 font-mono text-xs text-muted-foreground/60">
+          Betaworks Camp participant. Dozens of MVPs shipped across AI, fintech, healthcare, and more.
         </p>
       </div>
 

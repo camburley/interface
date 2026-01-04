@@ -101,9 +101,8 @@ export function HeroSection() {
           </h1>
 
           <p className="mt-8 max-w-2xl font-mono text-base text-muted-foreground leading-relaxed">
-            I&apos;m Cam. I help founders ship a vertical slice of their product in 5 days—deployed, usable, and ready
-            to show investors or users. No endless iterations. No agency layers. Just you and me building something
-            real.
+            I&apos;m Cam. I help founders ship the first real version of their product—deployed, usable, and ready to
+            show investors or users. No endless iterations. No agency layers. Just you and me building something real.
           </p>
 
           <div className="mt-12 flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -147,7 +146,7 @@ export function HeroSection() {
 
       <div className="absolute bottom-8 right-8 md:bottom-12 md:right-12">
         <div className="border border-border px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          MVP Sprint / 5 Days
+          Thought → Thing
         </div>
       </div>
     </section>

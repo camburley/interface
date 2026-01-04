@@ -14,6 +14,11 @@ const faqs = [
       "That's the point. We scope it down to a vertical slice—one core flow that proves your riskiest assumption. Not the whole product. Just enough to learn if it's worth building more.",
   },
   {
+    question: "Why should I work with you instead of a dev agency or full-time hire?",
+    answer:
+      "Because I specialize in the earliest, fuzziest stage—when you don't know exactly what to build yet. Agencies want a spec. Full-time hires need onboarding. I help you figure out the spec BY building. Every serious founder I've worked with has asked me to stay involved beyond the initial build—as a technical lead, partner, or advisor. That's because I don't just execute; I help shape the product.",
+  },
+  {
     question: "Do I get to keep the code?",
     answer:
       "Yes. You get full access to the GitHub repo, and you own everything. No licensing fees. No vendor lock-in. You can take it and run with it, or hire someone else to continue building.",
