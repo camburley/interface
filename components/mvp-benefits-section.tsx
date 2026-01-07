@@ -1,11 +1,5 @@
 "use client"
 
-import { useRef, useEffect } from "react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-
-gsap.registerPlugin(ScrollTrigger)
-
 const benefits = [
   {
     number: "01",
@@ -40,56 +34,14 @@ const benefits = [
 ]
 
 export function MvpBenefitsSection() {
-  const sectionRef = useRef<HTMLElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
-  const gridRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!sectionRef.current) return
-
-    const ctx = gsap.context(() => {
-      if (headerRef.current) {
-        gsap.from(headerRef.current, {
-          x: -60,
-          opacity: 0,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: headerRef.current,
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-          },
-        })
-      }
-
-      if (gridRef.current) {
-        const cards = gridRef.current.querySelectorAll("article")
-        gsap.from(cards, {
-          y: 40,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: gridRef.current,
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-          },
-        })
-      }
-    }, sectionRef)
-
-    return () => ctx.revert()
-  }, [])
-
   return (
-    <section ref={sectionRef} id="mvp-sprint" className="relative py-16 md:py-24 pl-6 md:pl-28 pr-6 md:pr-12">
-      <div ref={headerRef} className="mb-8 md:mb-12">
+    <section id="mvp-sprint" className="relative py-16 md:py-24 pl-6 md:pl-28 pr-6 md:pr-12">
+      <div className="mb-8 md:mb-12">
         <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">01 / What You Get</span>
         <h2 className="mt-3 font-[var(--font-bebas)] text-4xl md:text-6xl tracking-tight">WHAT YOU WALK AWAY WITH</h2>
       </div>
 
-      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {benefits.map((benefit) => (
           <article
             key={benefit.number}
