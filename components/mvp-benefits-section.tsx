@@ -83,23 +83,23 @@ export function MvpBenefitsSection() {
   }, [])
 
   return (
-    <section ref={sectionRef} id="mvp-sprint" className="relative py-32 pl-6 md:pl-28 pr-6 md:pr-12">
-      <div ref={headerRef} className="mb-16">
+    <section ref={sectionRef} id="mvp-sprint" className="relative py-16 md:py-24 pl-6 md:pl-28 pr-6 md:pr-12">
+      <div ref={headerRef} className="mb-8 md:mb-12">
         <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">01 / What You Get</span>
-        <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">WHAT YOU WALK AWAY WITH</h2>
+        <h2 className="mt-3 font-[var(--font-bebas)] text-4xl md:text-6xl tracking-tight">WHAT YOU WALK AWAY WITH</h2>
       </div>
 
-      <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         {benefits.map((benefit) => (
           <article
             key={benefit.number}
-            className="group border border-border/40 p-6 hover:border-accent/60 transition-all duration-300"
+            className="group border border-border/40 p-4 hover:border-accent/60 transition-all duration-300"
           >
-            <div className="font-mono text-xs uppercase tracking-widest text-accent mb-4">{benefit.number}</div>
-            <h3 className="font-[var(--font-bebas)] text-2xl tracking-tight mb-3 group-hover:text-accent transition-colors">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-accent mb-2">{benefit.number}</div>
+            <h3 className="font-[var(--font-bebas)] text-lg md:text-xl tracking-tight mb-2 group-hover:text-accent transition-colors leading-tight">
               {benefit.title}
             </h3>
-            <p className="font-mono text-xs text-muted-foreground leading-relaxed">{benefit.description}</p>
+            <p className="font-mono text-[10px] md:text-xs text-muted-foreground leading-relaxed hidden md:block">{benefit.description}</p>
           </article>
         ))}
       </div>

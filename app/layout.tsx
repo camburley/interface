@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SmoothScroll } from "@/components/smooth-scroll"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -53,6 +54,18 @@ export default function RootLayout({
       >
         <div className="noise-overlay" aria-hidden="true" />
         <SmoothScroll>{children}</SmoothScroll>
+        <Toaster 
+          position="bottom-right" 
+          toastOptions={{
+            style: {
+              background: 'var(--background)',
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
+              fontFamily: 'var(--font-ibm-plex-mono)',
+              fontSize: '12px',
+            },
+          }}
+        />
         <Analytics />
       </body>
     </html>
