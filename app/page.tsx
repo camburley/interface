@@ -6,6 +6,7 @@ import { WorkSection } from "@/components/work-section"
 import { ProcessSection } from "@/components/process-section"
 import { FaqSection } from "@/components/faq-section"
 import { ApplicationFormSection } from "@/components/application-form-section"
+import { FooterSection } from "@/components/footer-section"
 import { SideNav } from "@/components/side-nav"
 
 export default function Page() {
@@ -23,6 +24,7 @@ export default function Page() {
         <ProcessSection />
         <FaqSection />
         <ApplicationFormSection />
+        <FooterSection />
       </div>
     </main>
   )
