@@ -89,17 +89,17 @@ export function MvpBenefitsSection() {
         <h2 className="mt-3 font-[var(--font-bebas)] text-4xl md:text-6xl tracking-tight">WHAT YOU WALK AWAY WITH</h2>
       </div>
 
-      <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {benefits.map((benefit) => (
           <article
             key={benefit.number}
-            className="group border border-border/40 p-4 hover:border-accent/60 transition-all duration-300"
+            className="group border border-border/40 p-5 hover:border-accent/60 transition-all duration-300"
           >
             <div className="font-mono text-[10px] uppercase tracking-widest text-accent mb-2">{benefit.number}</div>
-            <h3 className="font-[var(--font-bebas)] text-lg md:text-xl tracking-tight mb-2 group-hover:text-accent transition-colors leading-tight">
+            <h3 className="font-[var(--font-bebas)] text-xl tracking-tight mb-2 group-hover:text-accent transition-colors leading-tight">
               {benefit.title}
             </h3>
-            <p className="font-mono text-[10px] md:text-xs text-muted-foreground leading-relaxed hidden md:block">{benefit.description}</p>
+            <p className="font-mono text-xs text-muted-foreground leading-relaxed">{benefit.description}</p>
           </article>
         ))}
       </div>

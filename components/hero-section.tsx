@@ -122,24 +122,6 @@ export function HeroSection() {
           </div>
 
           <p className="mt-6 font-mono text-xs text-muted-foreground/60">Work directly with Cam (no agency layers)</p>
-
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
-            <div className="border border-border/40 p-6">
-              <div className="font-mono text-xs uppercase tracking-widest text-accent mb-2">01</div>
-              <h3 className="font-[var(--font-bebas)] text-2xl tracking-tight mb-2">Deployed Link</h3>
-              <p className="font-mono text-xs text-muted-foreground">Live, working product</p>
-            </div>
-            <div className="border border-border/40 p-6">
-              <div className="font-mono text-xs uppercase tracking-widest text-accent mb-2">02</div>
-              <h3 className="font-[var(--font-bebas)] text-2xl tracking-tight mb-2">Loom Walkthrough</h3>
-              <p className="font-mono text-xs text-muted-foreground">Demo-ready explanation</p>
-            </div>
-            <div className="border border-border/40 p-6">
-              <div className="font-mono text-xs uppercase tracking-widest text-accent mb-2">03</div>
-              <h3 className="font-[var(--font-bebas)] text-2xl tracking-tight mb-2">Next-Step Plan</h3>
-              <p className="font-mono text-xs text-muted-foreground">What to build next</p>
-            </div>
-          </div>
         </div>
       </div>
       {/* </CHANGE> */}
