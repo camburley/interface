@@ -90,7 +90,7 @@ export function HeroSection() {
         {/* </CHANGE> */}
       </SplitFlapAudioProvider>
 
-      <div ref={contentRef} className="flex-1 flex items-center pt-12">
+      <div ref={contentRef} className="flex-1 flex items-start md:items-center pt-16 md:pt-12">
         <div className="w-full">
           <h1 className="font-[var(--font-bebas)] text-[clamp(3rem,10vw,8rem)] leading-[0.9] tracking-tight">
             BUILD AN
