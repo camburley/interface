@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { getSessionUser, ADMIN_UID } from "@/lib/session"
+import crypto from "crypto"
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser()
@@ -39,13 +40,13 @@ export async function POST(request: NextRequest) {
     createdAt: new Date().toISOString(),
   }, { merge: true })
 
-  // Generate invite link pointing to our own set-password page
-  const actionCodeSettings = {
-    url: "https://burley.ai/client/set-password",
-    handleCodeInApp: true,
-  }
-  const link = await auth.generatePasswordResetLink(email, actionCodeSettings)
-  console.log(`Invite link for ${email}: ${link}`)
+  // Generate secure invite token (stored in Firestore, valid 7 days)
+  const token = crypto.randomBytes(32).toString("hex")
+  const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000
 
-  return NextResponse.json({ ok: true, uid, inviteLink: link })
+  await db.collection("invite_tokens").doc(token).set({ uid, email, expiresAt, createdAt: Date.now() })
+
+  const inviteLink = `https://burley.ai/client/set-password?token=${token}`
+
+  return NextResponse.json({ ok: true, uid, inviteLink })
 }

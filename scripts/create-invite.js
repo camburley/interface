@@ -13,9 +13,13 @@ const app = getApps().find(a => a.name === 'inv') || initializeApp({
 
 const auth = getAuth(app);
 const db = getFirestore(app);
-const email = process.argv[2];
 
-if (!email) { console.error('Usage: node create-invite.js <email>'); process.exit(1); }
+const [email, name, projectName] = process.argv.slice(2);
+
+if (!email || !name || !projectName) {
+  console.error('Usage: node create-invite.js <email> "<name>" "<projectName>"');
+  process.exit(1);
+}
 
 async function run() {
   // Get or create Firebase Auth user
@@ -23,14 +27,24 @@ async function run() {
   try {
     const existing = await auth.getUserByEmail(email);
     uid = existing.uid;
-    console.log(`Using existing account: ${uid}`);
+    console.log(`Using existing auth account: ${uid}`);
   } catch {
-    const newUser = await auth.createUser({ email });
+    const newUser = await auth.createUser({ email, displayName: name });
     uid = newUser.uid;
-    console.log(`Created new account: ${uid}`);
+    console.log(`Created new auth account: ${uid}`);
   }
 
-  // Generate a secure random token and store in Firestore
+  // Create Firestore client document (same as admin panel does)
+  await db.collection('clients').doc(uid).set({
+    name,
+    email,
+    projectName,
+    balance: 0,
+    createdAt: new Date().toISOString(),
+  }, { merge: true });
+  console.log(`Firestore client doc created/updated.`);
+
+  // Generate secure invite token
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
 
