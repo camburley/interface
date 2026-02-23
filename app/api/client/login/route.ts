@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       idToken = body.idToken
     } else if (body.email && body.password) {
       // Server-side sign-in via Firebase REST API (no authorized domain needed)
-      const apiKey = process.env.NEXT_PUBLIC_FIREBASE_WEB_API_KEY
+      const apiKey = process.env.FIREBASE_WEB_API_KEY ?? process.env.NEXT_PUBLIC_FIREBASE_WEB_API_KEY
       const res = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
         {

@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing oobCode or password" }, { status: 400 })
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_WEB_API_KEY
+    const apiKey = process.env.FIREBASE_WEB_API_KEY ?? process.env.NEXT_PUBLIC_FIREBASE_WEB_API_KEY
 
     const res = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:resetPassword?key=${apiKey}`,
