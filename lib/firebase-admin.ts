@@ -1,11 +1,13 @@
 import { initializeApp, getApps, cert, type App } from "firebase-admin/app"
 import { getFirestore, type Firestore } from "firebase-admin/firestore"
+import { getAuth, type Auth } from "firebase-admin/auth"
 
 let app: App | undefined
 let db: Firestore | undefined
+let auth: Auth | undefined
 
-function getFirebaseAdmin(): { app: App; db: Firestore } {
-  if (!app || !db) {
+function getFirebaseAdmin(): { app: App; db: Firestore; auth: Auth } {
+  if (!app || !db || !auth) {
     const existingApps = getApps()
     
     if (existingApps.length > 0) {
@@ -27,9 +29,10 @@ function getFirebaseAdmin(): { app: App; db: Firestore } {
     }
     
     db = getFirestore(app)
+    auth = getAuth(app)
   }
   
-  return { app, db }
+  return { app, db, auth }
 }
 
 export { getFirebaseAdmin }
