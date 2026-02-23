@@ -21,10 +21,11 @@ export async function POST(request: NextRequest) {
     const data = await res.json()
     if (!res.ok) {
       const code = data?.error?.message ?? "UNKNOWN"
-      if (code.includes("EXPIRED") || code.includes("INVALID")) {
+      console.error("Firebase resetPassword error:", code, JSON.stringify(data))
+      if (code.includes("EXPIRED") || code.includes("INVALID") || code.includes("OOB")) {
         return NextResponse.json({ error: "Invite link expired. Contact Cam for a new one." }, { status: 400 })
       }
-      return NextResponse.json({ error: "Failed to set password." }, { status: 400 })
+      return NextResponse.json({ error: `Failed to set password: ${code}` }, { status: 400 })
     }
 
     return NextResponse.json({ ok: true, email: data.email })
