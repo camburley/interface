@@ -14,22 +14,24 @@ export default async function DashboardPage() {
   if (!clientDoc.exists) redirect("/client/login")
   const client = { id: clientDoc.id, ...clientDoc.data() } as ClientData
 
-  // Fetch retainer items
+  // Fetch retainer items (sort client-side to avoid composite index requirement)
   const itemsSnap = await db
     .collection("retainer_items")
     .where("clientId", "==", user.uid)
-    .orderBy("createdAt", "desc")
     .get()
-  const items: RetainerItem[] = itemsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as RetainerItem))
+  const items: RetainerItem[] = itemsSnap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as RetainerItem))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
-  // Fetch payment history
+  // Fetch payment history (sort client-side to avoid composite index requirement)
   const paymentsSnap = await db
     .collection("retainer_payments")
     .where("clientId", "==", user.uid)
-    .where("status", "==", "completed")
-    .orderBy("createdAt", "desc")
     .get()
-  const payments: RetainerPayment[] = paymentsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as RetainerPayment))
+  const payments: RetainerPayment[] = paymentsSnap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as RetainerPayment))
+    .filter((p) => p.status === "completed")
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   return <DashboardClient client={client} items={items} payments={payments} />
 }
