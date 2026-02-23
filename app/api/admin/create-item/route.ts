@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { getSessionUser, ADMIN_UID } from "@/lib/session"
+import { sendClientEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser()
@@ -25,6 +26,17 @@ export async function POST(request: NextRequest) {
     createdAt: new Date().toISOString(),
     completedAt: null,
   })
+
+  // Notify client
+  const clientDoc = await db.collection("clients").doc(clientId).get()
+  const client = clientDoc.data()
+  if (client) {
+    await sendClientEmail(
+      client.email,
+      `New scope item: ${title}`,
+      `Hi ${client.name},\n\nA new item has been added to your project:\n\n"${title}" — $${estimatedCost}\n${description ? `\n${description}\n` : ""}\nLog in to review and approve: https://burley.ai/client/dashboard\n\n— Cam`
+    )
+  }
 
   return NextResponse.json({ ok: true, id: ref.id })
 }

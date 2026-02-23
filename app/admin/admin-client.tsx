@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
-import { Users, Plus, RefreshCw, CheckCircle, Clock, Wrench, CircleDot, ExternalLink } from "lucide-react"
+import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 
 const STATUS_LABELS: Record<RetainerItem["status"], string> = {
   pending_approval: "Pending",
@@ -46,6 +46,9 @@ export function AdminClient({ clients, items }: Props) {
   const [itemDescription, setItemDescription] = useState("")
   const [itemCost, setItemCost] = useState("")
   const [creatingItem, startCreateItem] = useTransition()
+
+  // Update item
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
 
   function handleCreateClient(e: React.FormEvent) {
     e.preventDefault()
@@ -93,6 +96,27 @@ export function AdminClient({ clients, items }: Props) {
       setItemCost("")
       router.refresh()
     })
+  }
+
+  async function handleUpdateItem(itemId: string, status: string, actualCost?: number) {
+    setUpdatingItemId(itemId)
+    try {
+      const res = await fetch("/api/admin/update-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, status, ...(actualCost != null && { actualCost }) }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? "Failed to update")
+      }
+      toast.success(`Item updated to ${STATUS_LABELS[status as RetainerItem["status"]] ?? status}.`)
+      router.refresh()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update item")
+    } finally {
+      setUpdatingItemId(null)
+    }
   }
 
   const clientItems = (clientId: string) => items.filter((i) => i.clientId === clientId)
@@ -319,22 +343,15 @@ export function AdminClient({ clients, items }: Props) {
               <div className="space-y-2">
                 {items.map((item) => {
                   const c = clients.find((cl) => cl.id === item.clientId)
+                  const isUpdating = updatingItemId === item.id
                   return (
-                    <div key={item.id} className="border border-border/40 rounded-sm px-5 py-4 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`font-mono text-xs ${STATUS_COLORS[item.status]}`}>
-                            {STATUS_LABELS[item.status]}
-                          </span>
-                          {c && (
-                            <span className="font-mono text-xs text-muted-foreground">· {c.name}</span>
-                          )}
-                        </div>
-                        <p className="font-mono text-sm text-foreground truncate">{item.title}</p>
-                        <p className="font-mono text-xs text-muted-foreground mt-0.5">{formatDate(item.createdAt)}</p>
-                      </div>
-                      <p className="font-mono text-sm text-foreground shrink-0">${item.estimatedCost}</p>
-                    </div>
+                    <AdminItemCard
+                      key={item.id}
+                      item={item}
+                      clientName={c?.name}
+                      isUpdating={isUpdating}
+                      onUpdateStatus={handleUpdateItem}
+                    />
                   )
                 })}
                 {items.length === 0 && (
@@ -347,6 +364,141 @@ export function AdminClient({ clients, items }: Props) {
           </div>
         )}
       </main>
+    </div>
+  )
+}
+
+const STATUS_ORDER: RetainerItem["status"][] = ["pending_approval", "approved", "in_progress", "completed"]
+
+function AdminItemCard({
+  item,
+  clientName,
+  isUpdating,
+  onUpdateStatus,
+}: {
+  item: RetainerItem
+  clientName?: string
+  isUpdating: boolean
+  onUpdateStatus: (itemId: string, status: string, actualCost?: number) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [actualCost, setActualCost] = useState(item.actualCost?.toString() ?? item.estimatedCost.toString())
+
+  const currentIdx = STATUS_ORDER.indexOf(item.status)
+  const nextStatus = currentIdx < STATUS_ORDER.length - 1 ? STATUS_ORDER[currentIdx + 1] : null
+
+  function handleAdvance() {
+    if (!nextStatus) return
+    if (nextStatus === "completed") {
+      onUpdateStatus(item.id, nextStatus, Number(actualCost))
+    } else {
+      onUpdateStatus(item.id, nextStatus)
+    }
+  }
+
+  const NEXT_ACTION_LABELS: Record<string, string> = {
+    approved: "Mark Approved",
+    in_progress: "Start Work",
+    completed: "Mark Completed",
+  }
+
+  return (
+    <div className="border border-border/40 rounded-sm">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left"
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`font-mono text-xs ${STATUS_COLORS[item.status]}`}>
+              {STATUS_LABELS[item.status]}
+            </span>
+            {clientName && (
+              <span className="font-mono text-xs text-muted-foreground">· {clientName}</span>
+            )}
+          </div>
+          <p className="font-mono text-sm text-foreground truncate">{item.title}</p>
+          <p className="font-mono text-xs text-muted-foreground mt-0.5">{formatDate(item.createdAt)}</p>
+        </div>
+        <div className="flex items-center gap-4 shrink-0 ml-4">
+          <p className="font-mono text-sm text-foreground">${item.estimatedCost}</p>
+          {expanded ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-5 pb-5 border-t border-border/30 pt-4 space-y-4">
+          {item.description && (
+            <p className="font-mono text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+              {item.description}
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs text-muted-foreground">
+            <div>
+              <p className="uppercase tracking-widest mb-1">Est. Cost</p>
+              <p className="text-foreground">${item.estimatedCost}</p>
+            </div>
+            {item.actualCost != null && (
+              <div>
+                <p className="uppercase tracking-widest mb-1">Actual Cost</p>
+                <p className="text-foreground">${item.actualCost}</p>
+              </div>
+            )}
+            {item.approvedAt && (
+              <div>
+                <p className="uppercase tracking-widest mb-1">Approved</p>
+                <p className="text-foreground">{formatDate(item.approvedAt)}</p>
+              </div>
+            )}
+            {item.completedAt && (
+              <div>
+                <p className="uppercase tracking-widest mb-1">Completed</p>
+                <p className="text-foreground">{formatDate(item.completedAt)}</p>
+              </div>
+            )}
+          </div>
+
+          {nextStatus && (
+            <div className="flex items-center gap-3 pt-2 border-t border-border/20">
+              {nextStatus === "completed" && (
+                <div className="space-y-1">
+                  <label className="block font-mono text-xs text-muted-foreground uppercase tracking-widest">
+                    Actual Cost ($)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={actualCost}
+                    onChange={(e) => setActualCost(e.target.value)}
+                    className="w-28 bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+              )}
+              <button
+                onClick={handleAdvance}
+                disabled={isUpdating}
+                className="flex items-center gap-2 bg-primary text-primary-foreground font-mono text-xs uppercase tracking-widest px-4 py-2.5 rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-50 mt-auto"
+              >
+                {isUpdating ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : nextStatus === "completed" ? (
+                  <CheckCircle className="h-3.5 w-3.5" />
+                ) : nextStatus === "in_progress" ? (
+                  <Wrench className="h-3.5 w-3.5" />
+                ) : (
+                  <CircleDot className="h-3.5 w-3.5" />
+                )}
+                {NEXT_ACTION_LABELS[nextStatus] ?? nextStatus}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
