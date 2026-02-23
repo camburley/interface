@@ -7,7 +7,7 @@ import { toast } from "sonner"
 function SetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const oobCode = searchParams.get("oobCode") ?? ""
+  const token = searchParams.get("token") ?? ""
 
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
@@ -24,7 +24,7 @@ function SetPasswordForm() {
       toast.error("Password must be at least 8 characters.")
       return
     }
-    if (!oobCode) {
+    if (!token) {
       toast.error("Invalid or expired invite link.")
       return
     }
@@ -34,7 +34,7 @@ function SetPasswordForm() {
       const res = await fetch("/api/client/set-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oobCode, password }),
+        body: JSON.stringify({ token, password }),
       })
 
       const data = await res.json()
