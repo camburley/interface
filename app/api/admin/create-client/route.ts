@@ -39,8 +39,12 @@ export async function POST(request: NextRequest) {
     createdAt: new Date().toISOString(),
   }, { merge: true })
 
-  // Send password reset / invite email
-  const link = await auth.generatePasswordResetLink(email)
+  // Generate invite link pointing to our own set-password page
+  const actionCodeSettings = {
+    url: "https://burley.ai/client/set-password",
+    handleCodeInApp: true,
+  }
+  const link = await auth.generatePasswordResetLink(email, actionCodeSettings)
   console.log(`Invite link for ${email}: ${link}`)
 
   return NextResponse.json({ ok: true, uid, inviteLink: link })
