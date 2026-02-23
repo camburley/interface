@@ -2,8 +2,6 @@
 
 import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { getFirebaseClient } from "@/lib/firebase-client"
 import { toast } from "sonner"
 
 function LoginForm() {
@@ -20,22 +18,22 @@ function LoginForm() {
     setLoading(true)
 
     try {
-      const { auth } = getFirebaseClient()
-      const credential = await signInWithEmailAndPassword(auth, email, password)
-      const idToken = await credential.user.getIdToken()
-
       const res = await fetch("/api/client/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ email, password }),
       })
 
-      if (!res.ok) throw new Error("Login failed")
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? "Login failed")
+      }
 
       router.push(redirect)
       router.refresh()
-    } catch {
-      toast.error("Invalid email or password.")
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Invalid email or password."
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -44,7 +42,6 @@ function LoginForm() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        {/* Logo / wordmark */}
         <div className="mb-10">
           <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-2">Client Portal</p>
           <h1 className="font-bebas text-4xl text-foreground tracking-tight">Burley</h1>
@@ -94,7 +91,7 @@ function LoginForm() {
 
         <p className="mt-8 font-mono text-xs text-muted-foreground text-center">
           Access is by invitation only.{" "}
-          <a href="mailto:cam@burley.dev" className="text-primary hover:underline">
+          <a href="mailto:cam@burley.ai" className="text-primary hover:underline">
             Contact Cam
           </a>
         </p>

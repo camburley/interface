@@ -2,8 +2,6 @@
 
 import { Suspense, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth"
-import { getFirebaseClient } from "@/lib/firebase-client"
 import { toast } from "sonner"
 
 function SetPasswordForm() {
@@ -33,19 +31,23 @@ function SetPasswordForm() {
 
     setLoading(true)
     try {
-      const { auth } = getFirebaseClient()
-      await verifyPasswordResetCode(auth, oobCode)
-      await confirmPasswordReset(auth, oobCode, password)
+      const res = await fetch("/api/client/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oobCode, password }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error ?? "Something went wrong.")
+      }
+
       setDone(true)
       toast.success("Password set! Redirecting to login...")
       setTimeout(() => router.push("/client/login"), 2000)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : ""
-      if (msg.includes("expired") || msg.includes("invalid")) {
-        toast.error("This invite link has expired. Contact Cam for a new one.")
-      } else {
-        toast.error("Something went wrong. Try again or contact Cam.")
-      }
+      const msg = err instanceof Error ? err.message : "Something went wrong."
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

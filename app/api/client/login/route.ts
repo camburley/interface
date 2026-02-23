@@ -3,9 +3,31 @@ import { createSessionCookie, getSessionCookieOptions } from "@/lib/session"
 
 export async function POST(request: NextRequest) {
   try {
-    const { idToken } = await request.json()
-    if (!idToken) {
-      return NextResponse.json({ error: "Missing ID token" }, { status: 400 })
+    const body = await request.json()
+
+    let idToken: string
+
+    if (body.idToken) {
+      // Legacy: client already has an ID token
+      idToken = body.idToken
+    } else if (body.email && body.password) {
+      // Server-side sign-in via Firebase REST API (no authorized domain needed)
+      const apiKey = process.env.NEXT_PUBLIC_FIREBASE_WEB_API_KEY
+      const res = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: body.email, password: body.password, returnSecureToken: true }),
+        }
+      )
+      const data = await res.json()
+      if (!res.ok || !data.idToken) {
+        return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+      }
+      idToken = data.idToken
+    } else {
+      return NextResponse.json({ error: "Missing credentials" }, { status: 400 })
     }
 
     const sessionCookie = await createSessionCookie(idToken)
