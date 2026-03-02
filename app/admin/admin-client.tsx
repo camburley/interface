@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
-import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
+import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye } from "lucide-react"
 
 const STATUS_LABELS: Record<RetainerItem["status"], string> = {
   pending_approval: "Pending",
@@ -225,9 +225,18 @@ export function AdminClient({ clients, items }: Props) {
                           <p className="font-mono text-xs text-muted-foreground">{c.email}</p>
                           <p className="font-mono text-xs text-primary mt-0.5">{c.projectName}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-mono text-xl font-bold text-foreground">${c.balance}</p>
-                          <p className="font-mono text-xs text-muted-foreground">balance</p>
+                        <div className="text-right flex flex-col items-end gap-2">
+                          <div>
+                            <p className="font-mono text-xl font-bold text-foreground">${c.balance}</p>
+                            <p className="font-mono text-xs text-muted-foreground">balance</p>
+                          </div>
+                          <a
+                            href={`/admin/client/${c.id}`}
+                            className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
+                          >
+                            <Eye className="h-3 w-3" />
+                            View as client
+                          </a>
                         </div>
                       </div>
                       {ci.length > 0 && (

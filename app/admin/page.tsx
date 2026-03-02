@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { getSessionUser, ADMIN_UID } from "@/lib/session"
+import { getSessionUser, isAdmin } from "@/lib/session"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { AdminClient } from "./admin-client"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
@@ -7,7 +7,7 @@ import type { ClientData, RetainerItem } from "../client/dashboard/page"
 export default async function AdminPage() {
   const user = await getSessionUser()
   if (!user) redirect("/client/login?redirect=/admin")
-  if (user.uid !== ADMIN_UID) redirect("/client/dashboard")
+  if (!isAdmin(user.uid)) redirect("/client/dashboard")
 
   const { db } = getFirebaseAdmin()
 

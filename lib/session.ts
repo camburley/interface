@@ -39,3 +39,12 @@ export function getSessionCookieOptions(maxAge?: number) {
 }
 
 export const ADMIN_UID = process.env.ADMIN_UID ?? ""
+
+const ADMIN_UIDS = (process.env.ADMIN_UID ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+export function isAdmin(uid: string): boolean {
+  return ADMIN_UIDS.includes(uid)
+}
