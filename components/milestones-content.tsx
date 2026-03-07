@@ -87,7 +87,7 @@ const DEMO_PROJECT: MilestoneProject = {
       status: "draft",
       amount: 1500,
       fundingSource: "upwork-escrow",
-      fundingStatus: "pending",
+      fundingStatus: "funded",
       deliverables: [
         "Expo project scaffold with TypeScript",
         "Bottom-tab navigation (4 tabs per agreed flow map)",
