@@ -31,7 +31,7 @@ interface Props {
 
 export function AdminClient({ clients, items }: Props) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"clients" | "items">("clients")
+  const [activeTab, setActiveTab] = useState<"clients" | "items" | "projects">("clients")
 
   // Create client form
   const [clientName, setClientName] = useState("")
@@ -144,7 +144,7 @@ export function AdminClient({ clients, items }: Props) {
       <main className="max-w-5xl mx-auto px-6 py-10">
         {/* Tabs */}
         <div className="flex gap-1 mb-8 border-b border-border/30">
-          {(["clients", "items"] as const).map((tab) => (
+          {(["clients", "items", "projects"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -267,6 +267,40 @@ export function AdminClient({ clients, items }: Props) {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "projects" && (
+          <div>
+            <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+              <ListChecks className="h-3.5 w-3.5" />
+              All Projects
+            </p>
+            <div className="space-y-3">
+              {clients.map((c) => (
+                <a
+                  key={c.id}
+                  href={`/admin/projects/${c.id}/milestones`}
+                  className="block border border-border/40 rounded-sm p-5 hover:border-border transition-colors group"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-mono text-sm text-foreground font-medium group-hover:text-primary transition-colors">{c.projectName}</p>
+                      <p className="font-mono text-xs text-muted-foreground mt-0.5">{c.name}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-xs text-muted-foreground">${c.balance} balance</span>
+                      <ListChecks className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </div>
+                </a>
+              ))}
+              {clients.length === 0 && (
+                <div className="border border-dashed border-border/30 rounded-sm p-8 text-center">
+                  <p className="font-mono text-xs text-muted-foreground">No projects yet. Create a client first.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
