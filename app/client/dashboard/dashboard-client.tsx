@@ -4,6 +4,7 @@ import { Suspense, useState, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem, RetainerPayment } from "./page"
+import Link from "next/link"
 import {
   CheckCircle,
   Clock,
@@ -14,6 +15,7 @@ import {
   ChevronUp,
   CreditCard,
   RefreshCw,
+  ListChecks,
 } from "lucide-react"
 
 const STATUS_CONFIG: Record<
@@ -153,6 +155,13 @@ function DashboardInner({ client, items, payments }: Props) {
         <div>
           <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Active Project</p>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">{client.projectName}</h1>
+          <Link
+            href="/client/milestones"
+            className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors mt-2"
+          >
+            <ListChecks className="h-3.5 w-3.5" />
+            View project milestones
+          </Link>
         </div>
 
         {/* Balance card */}

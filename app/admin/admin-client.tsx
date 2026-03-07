@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
-import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye } from "lucide-react"
+import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye, ListChecks } from "lucide-react"
 
 const STATUS_LABELS: Record<RetainerItem["status"], string> = {
   pending_approval: "Pending",
@@ -236,6 +236,13 @@ export function AdminClient({ clients, items }: Props) {
                           >
                             <Eye className="h-3 w-3" />
                             View as client
+                          </a>
+                          <a
+                            href={`/admin/projects/${c.id}/milestones`}
+                            className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
+                          >
+                            <ListChecks className="h-3 w-3" />
+                            Milestones
                           </a>
                         </div>
                       </div>
