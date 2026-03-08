@@ -13,6 +13,7 @@ export interface Story {
   id: string
   title: string
   status: StoryStatus
+  placeholder?: boolean
   notes?: string
   outputUrl?: string
   specUrl?: string

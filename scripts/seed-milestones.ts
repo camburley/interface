@@ -35,6 +35,7 @@ interface SeedStory {
   id: string
   title: string
   status: string
+  placeholder?: boolean
   notes?: string
   outputUrl?: string
   specUrl?: string
@@ -101,7 +102,16 @@ const milestones: SeedMilestone[] = [
       { id: "ps-16", title: "Terms of Use URL", status: "done", notes: "doleright.com/terms", outputUrl: "https://doleright.com/terms", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
       { id: "ps-17", title: "Disclaimer text", status: "done", notes: "Inline copy provided", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
       { id: "ps-18", title: "Contact info (About screen)", status: "done", notes: "info@primanovagroup.com", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-      { id: "ps-19", title: "Ebook external link", status: "done", notes: "doleright.com/resources", outputUrl: "https://doleright.com/resources", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
+      {
+        id: "ps-19",
+        title: "Ebook external link",
+        status: "done",
+        placeholder: true,
+        notes: "Placeholder URL for now. Jan will send the final Amazon Kindle link next week.",
+        outputUrl: "https://dolceright.com/resources",
+        createdAt: "2026-03-04T00:00:00Z",
+        completedAt: "2026-03-05T00:00:00Z",
+      },
       { id: "ps-20", title: "Upwork contract / agreement", status: "done", createdAt: "2026-03-05T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
       { id: "ps-21", title: "Logo (wordmark)", status: "todo", notes: "She's doing it → ~Mon", createdAt: "2026-03-05T00:00:00Z" },
       { id: "ps-22", title: "App icon", status: "todo", notes: "Same → Monday", createdAt: "2026-03-05T00:00:00Z" },
@@ -202,7 +212,7 @@ async function seed() {
     {
       id: PROJECT_ID,
       clientName: "Jan Savolainen",
-      projectName: "Doleright Mobile App",
+      projectName: "dolceRight",
       createdAt: "2026-03-01T00:00:00Z",
     },
     { merge: true },

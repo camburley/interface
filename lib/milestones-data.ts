@@ -30,6 +30,7 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
             id: s.id,
             title: sd.title,
             status: sd.status,
+            placeholder: sd.placeholder ?? false,
             notes: sd.notes || undefined,
             outputUrl: sd.outputUrl || undefined,
             specUrl: sd.specUrl || undefined,
@@ -62,10 +63,13 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
 
   milestones.sort((a, b) => a.order - b.order)
 
+  const projectName =
+    projectId === "doleright-mobile-app" ? "dolceRight" : projectData.projectName
+
   return {
     id: projectId,
     clientName: projectData.clientName,
-    projectName: projectData.projectName,
+    projectName,
     milestones,
   }
 }

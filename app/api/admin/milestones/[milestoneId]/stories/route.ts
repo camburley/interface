@@ -27,7 +27,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { milestoneId } = await context.params
   const body = await request.json()
-  const { title, notes, outputUrl, specUrl } = body
+  const { title, notes, outputUrl, specUrl, placeholder } = body
 
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 })
 
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     projectId: milestoneDoc.data()!.projectId,
     title,
     status: "todo",
+    placeholder: Boolean(placeholder),
     notes: notes ?? "",
     outputUrl: outputUrl ?? null,
     specUrl: specUrl ?? null,

@@ -35,6 +35,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   if (body.title !== undefined) updates.title = body.title
+  if (body.placeholder !== undefined) updates.placeholder = Boolean(body.placeholder)
   if (body.notes !== undefined) updates.notes = body.notes
   if (body.outputUrl !== undefined) updates.outputUrl = body.outputUrl
   if (body.specUrl !== undefined) updates.specUrl = body.specUrl

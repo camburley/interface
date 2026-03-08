@@ -72,6 +72,7 @@ const ATTACHMENT_ICONS: Record<StoryAttachment["type"], typeof ImageIcon> = {
 
 interface StoryEditState {
   title: string
+  placeholder: boolean
   notes: string
   outputUrl: string
   specUrl: string
@@ -96,7 +97,13 @@ export function MilestonesContent({ project: initialProject, editable = false }:
   const [showAddMilestone, setShowAddMilestone] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const [editingStoryId, setEditingStoryId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<StoryEditState>({ title: "", notes: "", outputUrl: "", specUrl: "" })
+  const [editForm, setEditForm] = useState<StoryEditState>({
+    title: "",
+    placeholder: false,
+    notes: "",
+    outputUrl: "",
+    specUrl: "",
+  })
   const [newAttachment, setNewAttachment] = useState<NewAttachmentState>({ type: "screenshot", url: "", label: "" })
   const [showAttachmentForm, setShowAttachmentForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -129,6 +136,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
     setEditingStoryId(story.id)
     setEditForm({
       title: story.title,
+      placeholder: story.placeholder ?? false,
       notes: story.notes ?? "",
       outputUrl: story.outputUrl ?? "",
       specUrl: story.specUrl ?? "",
@@ -147,6 +155,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
     setSaving(true)
     const updates: Record<string, string> = {}
     if (editForm.title) updates.title = editForm.title
+    ;(updates as Record<string, string | boolean>).placeholder = editForm.placeholder
     updates.notes = editForm.notes
     updates.outputUrl = editForm.outputUrl
     updates.specUrl = editForm.specUrl
@@ -168,6 +177,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
                   ? {
                       ...s,
                       title: editForm.title || s.title,
+                      placeholder: editForm.placeholder,
                       notes: editForm.notes || undefined,
                       outputUrl: editForm.outputUrl || undefined,
                       specUrl: editForm.specUrl || undefined,
@@ -489,6 +499,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
           const inProgress = milestone.stories.filter((s) => s.status === "in-progress" || s.status === "review").length
           const waiting = milestone.stories.filter((s) => s.status === "todo").length
           const blocked = milestone.stories.filter((s) => s.status === "blocked").length
+          const placeholderCount = milestone.stories.filter((s) => s.placeholder).length
           const statusCfg = MILESTONE_STATUS_CONFIG[milestone.status]
 
           return (
@@ -601,6 +612,18 @@ export function MilestonesContent({ project: initialProject, editable = false }:
                                     onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
                                     className={inputClassName}
                                   />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Placeholder</label>
+                                  <label className="flex items-center gap-2 h-9 font-mono text-xs text-foreground">
+                                    <input
+                                      type="checkbox"
+                                      checked={editForm.placeholder}
+                                      onChange={(e) => setEditForm((p) => ({ ...p, placeholder: e.target.checked }))}
+                                      className="h-4 w-4 rounded border-border/50 bg-muted/20"
+                                    />
+                                    Needs follow-up later
+                                  </label>
                                 </div>
                                 <div className="space-y-1">
                                   <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Notes</label>
@@ -735,6 +758,11 @@ export function MilestonesContent({ project: initialProject, editable = false }:
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="font-mono text-xs text-foreground truncate">{story.title}</span>
+                                {story.placeholder && (
+                                  <span className="inline-flex items-center px-2 py-0.5 border border-amber-400/30 rounded-sm font-mono text-[10px] uppercase tracking-widest text-amber-400 bg-amber-400/10 shrink-0">
+                                    Placeholder
+                                  </span>
+                                )}
                                 {story.outputUrl && (
                                   <a href={story.outputUrl} target="_blank" rel="noreferrer" className="shrink-0">
                                     <ExternalLink className="h-3 w-3 text-primary hover:text-foreground transition-colors" />
@@ -850,6 +878,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
                       <span className="text-emerald-400">{done} done</span>
                       <span className="text-blue-400">{inProgress} in progress</span>
                       <span>{waiting} waiting</span>
+                      {placeholderCount > 0 && <span className="text-amber-400">{placeholderCount} placeholder</span>}
                       {blocked > 0 && <span className="text-red-400">{blocked} blocked</span>}
                       {milestone.dueDate && (
                         <span className="ml-auto">Due {formatDate(milestone.dueDate)}</span>
