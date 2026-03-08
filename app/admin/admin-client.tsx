@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
+import type { MilestoneProjectSummary } from "./page"
 import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye, ListChecks } from "lucide-react"
 
 const STATUS_LABELS: Record<RetainerItem["status"], string> = {
@@ -27,9 +28,10 @@ function formatDate(iso: string) {
 interface Props {
   clients: ClientData[]
   items: RetainerItem[]
+  milestoneProjects: MilestoneProjectSummary[]
 }
 
-export function AdminClient({ clients, items }: Props) {
+export function AdminClient({ clients, items, milestoneProjects }: Props) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"clients" | "items" | "projects">("clients")
 
@@ -275,30 +277,40 @@ export function AdminClient({ clients, items }: Props) {
           <div>
             <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
               <ListChecks className="h-3.5 w-3.5" />
-              All Projects
+              All Projects ({milestoneProjects.length})
             </p>
             <div className="space-y-3">
-              {clients.map((c) => (
-                <a
-                  key={c.id}
-                  href={`/admin/projects/${c.id}/milestones`}
-                  className="block border border-border/40 rounded-sm p-5 hover:border-border transition-colors group"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-mono text-sm text-foreground font-medium group-hover:text-primary transition-colors">{c.projectName}</p>
-                      <p className="font-mono text-xs text-muted-foreground mt-0.5">{c.name}</p>
+              {milestoneProjects.map((p) => {
+                const progressPct = p.milestoneCount > 0 ? Math.round((p.completedCount / p.milestoneCount) * 100) : 0
+                return (
+                  <a
+                    key={p.id}
+                    href={`/admin/projects/${p.id}/milestones`}
+                    className="block border border-border/40 rounded-sm p-5 hover:border-border transition-colors group"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-mono text-sm text-foreground font-medium group-hover:text-primary transition-colors">{p.projectName}</p>
+                        <p className="font-mono text-xs text-muted-foreground mt-0.5">{p.clientName}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block">
+                          <p className="font-mono text-xs text-foreground">${p.totalBudget.toLocaleString()}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">${p.funded.toLocaleString()} funded</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-mono text-xs text-foreground">{p.completedCount}/{p.milestoneCount}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">{progressPct}%</p>
+                        </div>
+                        <ListChecks className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-xs text-muted-foreground">${c.balance} balance</span>
-                      <ListChecks className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                  </div>
-                </a>
-              ))}
-              {clients.length === 0 && (
+                  </a>
+                )
+              })}
+              {milestoneProjects.length === 0 && (
                 <div className="border border-dashed border-border/30 rounded-sm p-8 text-center">
-                  <p className="font-mono text-xs text-muted-foreground">No projects yet. Create a client first.</p>
+                  <p className="font-mono text-xs text-muted-foreground">No milestone projects yet. Run the seed script first.</p>
                 </div>
               )}
             </div>

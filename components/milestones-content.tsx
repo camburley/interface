@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import {
   ChevronDown,
   ChevronUp,
@@ -10,6 +10,12 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Image as ImageIcon,
+  Play,
+  Link as LinkIcon,
+  X,
+  Check,
+  Paperclip,
 } from "lucide-react"
 import type {
   Milestone,
@@ -18,161 +24,9 @@ import type {
   StoryStatus,
   FundingSource,
   Story,
+  StoryAttachment,
 } from "@/lib/types/milestone"
 import { getMilestoneProgress, getProjectProgress, getTotalFunded, getTotalSpent } from "@/lib/types/milestone"
-
-// ---------------------------------------------------------------------------
-// Demo data: Jan Savolainen — Doleright Mobile App
-// ---------------------------------------------------------------------------
-
-const DEMO_PROJECT: MilestoneProject = {
-  id: "doleright-mobile-app",
-  clientName: "Jan Savolainen",
-  projectName: "Doleright Mobile App",
-  milestones: [
-    {
-      id: "m0-presprint",
-      projectId: "doleright-mobile-app",
-      title: "Pre-Sprint Planning & Assets",
-      description: "All planning, content, branding, and asset collection before sprint begins Mar 9.",
-      status: "active",
-      amount: 0,
-      fundingSource: "upwork-escrow",
-      fundingStatus: "funded",
-      deliverables: [
-        "Deal terms agreed ($6K / 4 milestones)",
-        "Timeline locked (sprint Mar 9, store submit wk Mar 28)",
-        "Full app flow & nav structure",
-        "All orientation screen copy finalized",
-        "5 search portal descriptions in copy",
-        "Brand direction & design kit",
-        "All external URLs (privacy, terms, resources, Softr)",
-        "Logo & app icon from client",
-      ],
-      completionCriteria: "All 23 pre-sprint items resolved — 0 waiting items remaining.",
-      stories: [
-        { id: "ps-1", title: "Deal terms ($6K / 4 milestones)", status: "done", notes: "Agreed Mar 2", createdAt: "2026-03-02T00:00:00Z", completedAt: "2026-03-02T00:00:00Z" },
-        { id: "ps-2", title: "Timeline (sprint Mar 9)", status: "done", notes: "Store submit wk Mar 28", createdAt: "2026-03-02T00:00:00Z", completedAt: "2026-03-02T00:00:00Z" },
-        { id: "ps-3", title: "QA scope definitions", status: "done", notes: "Minor polish only", createdAt: "2026-03-03T00:00:00Z", completedAt: "2026-03-03T00:00:00Z" },
-        { id: "ps-4", title: "Reviewer confirmed (Jan)", status: "done", notes: "Alex is gone", createdAt: "2026-03-03T00:00:00Z", completedAt: "2026-03-03T00:00:00Z" },
-        { id: "ps-5", title: "App flow / nav structure", status: "done", notes: "4 tabs, full flow map", createdAt: "2026-03-03T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-6", title: "Copy — 11 orientation screens", status: "done", notes: "Final locked v1", createdAt: "2026-03-03T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-7", title: "Copy — static text / glossary", status: "done", notes: "Terms, tips, share text", createdAt: "2026-03-03T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-8", title: "Search portal 1: immobiliare.it", status: "done", notes: "+ desc in copy", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-9", title: "Search portal 2: idealista.it", status: "done", notes: "+ desc in copy", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-10", title: "Search portal 3: casa.it", status: "done", notes: "+ desc in copy", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-11", title: "Search portal 4: gate-away.com", status: "done", notes: "+ desc in copy", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-12", title: "Search portal 5: subito.it", status: "done", notes: "+ desc in copy", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-04T00:00:00Z" },
-        { id: "ps-13", title: "Color palette / brand direction", status: "done", notes: "Full design kit sent", createdAt: "2026-03-03T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-14", title: "Softr directory URL", status: "done", notes: "federico42969.softr.app", outputUrl: "https://federico42969.softr.app", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-15", title: "Privacy policy URL", status: "done", notes: "doleright.com/privacy", outputUrl: "https://doleright.com/privacy", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-16", title: "Terms of Use URL", status: "done", notes: "doleright.com/terms", outputUrl: "https://doleright.com/terms", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-17", title: "Disclaimer text", status: "done", notes: "Inline copy provided", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-18", title: "Contact info (About screen)", status: "done", notes: "info@primanovagroup.com", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-19", title: "Ebook external link", status: "done", notes: "doleright.com/resources", outputUrl: "https://doleright.com/resources", createdAt: "2026-03-04T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-20", title: "Upwork contract / agreement", status: "done", createdAt: "2026-03-05T00:00:00Z", completedAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-21", title: "Logo (wordmark)", status: "todo", notes: "She's doing it → ~Mon", createdAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-22", title: "App icon", status: "todo", notes: "Same → Monday", createdAt: "2026-03-05T00:00:00Z" },
-        { id: "ps-23", title: "QR code redirect URL", status: "todo", notes: "Never mentioned yet", createdAt: "2026-03-05T00:00:00Z" },
-      ],
-      dueDate: "2026-03-08",
-      createdAt: "2026-03-01T00:00:00Z",
-      order: 0,
-    },
-    {
-      id: "m1-foundation",
-      projectId: "doleright-mobile-app",
-      title: "App Foundation, Navigation & UI Shell",
-      description: "Core app scaffold, tab navigation (4 tabs per flow map), theming from design kit, and shared UI primitives.",
-      status: "draft",
-      amount: 1500,
-      fundingSource: "upwork-escrow",
-      fundingStatus: "funded",
-      deliverables: [
-        "Expo project scaffold with TypeScript",
-        "Bottom-tab navigation (4 tabs per agreed flow map)",
-        "Global theming from brand design kit",
-        "Shared UI components (buttons, cards, modals)",
-        "Splash screen with logo wordmark",
-      ],
-      completionCriteria: "App runs on iOS simulator with all tabs navigable and themed per brand kit.",
-      stories: [],
-      dueDate: "2026-03-14",
-      createdAt: "2026-03-05T00:00:00Z",
-      order: 1,
-    },
-    {
-      id: "m2-orientation",
-      projectId: "doleright-mobile-app",
-      title: "Orientation Flow (11 Screens)",
-      description: "11 orientation screens with finalized copy, search portal integration, glossary, and share functionality.",
-      status: "draft",
-      amount: 1500,
-      fundingSource: "upwork-escrow",
-      fundingStatus: "pending",
-      deliverables: [
-        "11 orientation screens with locked copy",
-        "5 search portal cards (immobiliare, idealista, casa, gate-away, subito)",
-        "Static text / glossary section",
-        "Share text functionality",
-        "Disclaimer integration",
-      ],
-      completionCriteria: "All 11 orientation screens render with correct copy, portals link out, glossary accessible.",
-      stories: [],
-      dueDate: "2026-03-21",
-      createdAt: "2026-03-05T00:00:00Z",
-      order: 2,
-    },
-    {
-      id: "m3-resources",
-      projectId: "doleright-mobile-app",
-      title: "Resources, Directory & External Links",
-      description: "Softr directory integration, ebook link, about/contact screen, privacy & terms pages.",
-      status: "draft",
-      amount: 1500,
-      fundingSource: "upwork-escrow",
-      fundingStatus: "pending",
-      deliverables: [
-        "Softr directory embed/link (federico42969.softr.app)",
-        "Ebook external link (doleright.com/resources)",
-        "About screen with contact info (info@primanovagroup.com)",
-        "Privacy policy link (doleright.com/privacy)",
-        "Terms of Use link (doleright.com/terms)",
-        "QR code redirect integration",
-      ],
-      completionCriteria: "All external links functional, about screen complete, directory accessible.",
-      stories: [],
-      dueDate: "2026-03-25",
-      createdAt: "2026-03-05T00:00:00Z",
-      order: 3,
-    },
-    {
-      id: "m4-qa-submission",
-      projectId: "doleright-mobile-app",
-      title: "QA, Final Builds & Store Submission",
-      description: "Minor polish (per QA scope), final builds, and App Store submission by wk of Mar 28.",
-      status: "draft",
-      amount: 1500,
-      fundingSource: "upwork-escrow",
-      fundingStatus: "pending",
-      deliverables: [
-        "QA pass (minor polish scope only)",
-        "App Store screenshots & metadata",
-        "TestFlight beta build",
-        "App Store submission",
-      ],
-      completionCriteria: "App submitted to App Store, TestFlight available for Jan's review.",
-      stories: [],
-      dueDate: "2026-03-28",
-      createdAt: "2026-03-05T00:00:00Z",
-      order: 4,
-    },
-  ],
-}
-
-// ---------------------------------------------------------------------------
-// Status config
-// ---------------------------------------------------------------------------
 
 const MILESTONE_STATUS_CONFIG: Record<MilestoneStatus, { label: string; className: string }> = {
   draft: { label: "Draft", className: "text-muted-foreground bg-muted/30 border-border" },
@@ -180,6 +34,8 @@ const MILESTONE_STATUS_CONFIG: Record<MilestoneStatus, { label: string; classNam
   completed: { label: "Completed", className: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" },
   "on-hold": { label: "On Hold", className: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
 }
+
+const MILESTONE_STATUS_OPTIONS: MilestoneStatus[] = ["draft", "active", "completed", "on-hold"]
 
 const STORY_STATUS_CONFIG: Record<StoryStatus, { label: string; className: string }> = {
   todo: { label: "Todo", className: "text-muted-foreground" },
@@ -198,6 +54,8 @@ const FUNDING_LABELS: Record<FundingSource, string> = {
 
 const STORY_STATUS_OPTIONS: StoryStatus[] = ["todo", "in-progress", "review", "done", "blocked"]
 
+const ATTACHMENT_TYPE_OPTIONS: StoryAttachment["type"][] = ["screenshot", "loom", "url"]
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
@@ -206,21 +64,42 @@ function formatCurrency(n: number) {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 0 })}`
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
+const ATTACHMENT_ICONS: Record<StoryAttachment["type"], typeof ImageIcon> = {
+  screenshot: ImageIcon,
+  loom: Play,
+  url: LinkIcon,
+}
+
+interface StoryEditState {
+  title: string
+  notes: string
+  outputUrl: string
+  specUrl: string
+}
+
+interface NewAttachmentState {
+  type: StoryAttachment["type"]
+  url: string
+  label: string
+}
 
 interface MilestonesContentProps {
+  project: MilestoneProject
   editable?: boolean
 }
 
-export function MilestonesContent({ editable = false }: MilestonesContentProps) {
-  const [project, setProject] = useState<MilestoneProject>(DEMO_PROJECT)
+export function MilestonesContent({ project: initialProject, editable = false }: MilestonesContentProps) {
+  const [project, setProject] = useState<MilestoneProject>(initialProject)
   const [expandedMilestones, setExpandedMilestones] = useState<Set<string>>(
     new Set(project.milestones.filter((m) => m.status === "active").map((m) => m.id)),
   )
   const [showAddMilestone, setShowAddMilestone] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [editingStoryId, setEditingStoryId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<StoryEditState>({ title: "", notes: "", outputUrl: "", specUrl: "" })
+  const [newAttachment, setNewAttachment] = useState<NewAttachmentState>({ type: "screenshot", url: "", label: "" })
+  const [showAttachmentForm, setShowAttachmentForm] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const [newMilestone, setNewMilestone] = useState({
     title: "",
@@ -246,7 +125,118 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
     })
   }
 
-  function updateStoryStatus(milestoneId: string, storyId: string, status: StoryStatus) {
+  function startEditingStory(story: Story) {
+    setEditingStoryId(story.id)
+    setEditForm({
+      title: story.title,
+      notes: story.notes ?? "",
+      outputUrl: story.outputUrl ?? "",
+      specUrl: story.specUrl ?? "",
+    })
+    setShowAttachmentForm(false)
+    setNewAttachment({ type: "screenshot", url: "", label: "" })
+    setOpenDropdown(null)
+  }
+
+  function cancelEditing() {
+    setEditingStoryId(null)
+    setShowAttachmentForm(false)
+  }
+
+  const saveStoryEdit = useCallback(async (milestoneId: string, storyId: string) => {
+    setSaving(true)
+    const updates: Record<string, string> = {}
+    if (editForm.title) updates.title = editForm.title
+    updates.notes = editForm.notes
+    updates.outputUrl = editForm.outputUrl
+    updates.specUrl = editForm.specUrl
+
+    await fetch(`/api/admin/milestones/${milestoneId}/stories/${storyId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    })
+
+    setProject((prev) => ({
+      ...prev,
+      milestones: prev.milestones.map((m) =>
+        m.id === milestoneId
+          ? {
+              ...m,
+              stories: m.stories.map((s) =>
+                s.id === storyId
+                  ? {
+                      ...s,
+                      title: editForm.title || s.title,
+                      notes: editForm.notes || undefined,
+                      outputUrl: editForm.outputUrl || undefined,
+                      specUrl: editForm.specUrl || undefined,
+                    }
+                  : s,
+              ),
+            }
+          : m,
+      ),
+    }))
+
+    setSaving(false)
+    setEditingStoryId(null)
+  }, [editForm])
+
+  const addAttachmentToStory = useCallback(async (milestoneId: string, storyId: string) => {
+    if (!newAttachment.url.trim()) return
+
+    const attachment: StoryAttachment = {
+      type: newAttachment.type,
+      url: newAttachment.url.trim(),
+      label: newAttachment.label.trim() || undefined,
+      addedAt: new Date().toISOString(),
+    }
+
+    await fetch(`/api/admin/milestones/${milestoneId}/stories/${storyId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ attachments: [attachment] }),
+    })
+
+    setProject((prev) => ({
+      ...prev,
+      milestones: prev.milestones.map((m) =>
+        m.id === milestoneId
+          ? {
+              ...m,
+              stories: m.stories.map((s) =>
+                s.id === storyId
+                  ? { ...s, attachments: [...(s.attachments ?? []), attachment] }
+                  : s,
+              ),
+            }
+          : m,
+      ),
+    }))
+
+    setNewAttachment({ type: "screenshot", url: "", label: "" })
+    setShowAttachmentForm(false)
+  }, [newAttachment])
+
+  const updateMilestoneStatus = useCallback(async (milestoneId: string, status: MilestoneStatus) => {
+    setProject((prev) => ({
+      ...prev,
+      milestones: prev.milestones.map((m) =>
+        m.id === milestoneId
+          ? { ...m, status, ...(status === "completed" ? { completedAt: new Date().toISOString() } : { completedAt: undefined }) }
+          : m,
+      ),
+    }))
+
+    await fetch(`/api/admin/milestones/${milestoneId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    })
+  }, [])
+
+  const updateStoryStatus = useCallback(async (milestoneId: string, storyId: string, status: StoryStatus) => {
     setProject((prev) => ({
       ...prev,
       milestones: prev.milestones.map((m) =>
@@ -262,14 +252,30 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
           : m,
       ),
     }))
-  }
 
-  function addStory(milestoneId: string) {
+    await fetch(`/api/admin/milestones/${milestoneId}/stories/${storyId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    })
+  }, [])
+
+  const addStory = useCallback(async (milestoneId: string) => {
     const title = newStoryTitle[milestoneId]?.trim()
     if (!title) return
 
+    setNewStoryTitle((prev) => ({ ...prev, [milestoneId]: "" }))
+
+    const res = await fetch(`/api/admin/milestones/${milestoneId}/stories`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    })
+
+    const { id } = await res.json()
+
     const story: Story = {
-      id: `s-${Date.now()}`,
+      id,
       title,
       status: "todo",
       createdAt: new Date().toISOString(),
@@ -281,10 +287,9 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
         m.id === milestoneId ? { ...m, stories: [...m.stories, story] } : m,
       ),
     }))
-    setNewStoryTitle((prev) => ({ ...prev, [milestoneId]: "" }))
-  }
+  }, [newStoryTitle])
 
-  function deleteStory(milestoneId: string, storyId: string) {
+  const deleteStory = useCallback(async (milestoneId: string, storyId: string) => {
     setProject((prev) => ({
       ...prev,
       milestones: prev.milestones.map((m) =>
@@ -294,27 +299,47 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
       ),
     }))
     setOpenDropdown(null)
-  }
 
-  function addMilestone() {
+    await fetch(`/api/admin/milestones/${milestoneId}/stories/${storyId}`, { method: "DELETE" })
+  }, [])
+
+  const addMilestone = useCallback(async () => {
     if (!newMilestone.title.trim()) return
 
-    const milestone: Milestone = {
-      id: `m-${Date.now()}`,
+    const body = {
       projectId: project.id,
       title: newMilestone.title.trim(),
       description: newMilestone.description.trim() || undefined,
-      status: "draft",
       amount: Number(newMilestone.amount) || 0,
       fundingSource: newMilestone.fundingSource,
-      fundingStatus: "pending",
       deliverables: newMilestone.deliverables
         .split("\n")
         .map((d) => d.trim())
         .filter(Boolean),
+      order: project.milestones.length,
+    }
+
+    const res = await fetch("/api/admin/milestones", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+
+    const { id } = await res.json()
+
+    const milestone: Milestone = {
+      id,
+      projectId: project.id,
+      title: body.title,
+      description: body.description,
+      status: "draft",
+      amount: body.amount,
+      fundingSource: body.fundingSource,
+      fundingStatus: "pending",
+      deliverables: body.deliverables,
       stories: [],
       createdAt: new Date().toISOString(),
-      order: project.milestones.length,
+      order: body.order,
     }
 
     setProject((prev) => ({
@@ -323,7 +348,9 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
     }))
     setNewMilestone({ title: "", description: "", amount: "", fundingSource: "upwork-escrow", deliverables: "" })
     setShowAddMilestone(false)
-  }
+  }, [newMilestone, project.id, project.milestones.length])
+
+  const inputClassName = "w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
 
   return (
     <div className="space-y-8">
@@ -472,9 +499,25 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="font-mono text-xs text-muted-foreground shrink-0">M{milestone.order + 1}</span>
-                  <span className={`inline-flex items-center px-2.5 py-1 border rounded-sm font-mono text-[10px] uppercase tracking-widest shrink-0 ${statusCfg.className}`}>
-                    {statusCfg.label}
-                  </span>
+                  {editable ? (
+                    <select
+                      value={milestone.status}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        updateMilestoneStatus(milestone.id, e.target.value as MilestoneStatus)
+                      }}
+                      className={`inline-flex items-center px-2.5 py-1 border rounded-sm font-mono text-[10px] uppercase tracking-widest shrink-0 cursor-pointer bg-transparent focus:outline-none ${statusCfg.className}`}
+                    >
+                      {MILESTONE_STATUS_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{MILESTONE_STATUS_CONFIG[opt].label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className={`inline-flex items-center px-2.5 py-1 border rounded-sm font-mono text-[10px] uppercase tracking-widest shrink-0 ${statusCfg.className}`}>
+                      {statusCfg.label}
+                    </span>
+                  )}
                   <span className="font-mono text-sm text-foreground truncate">{milestone.title}</span>
                 </div>
                 <div className="flex items-center gap-4 shrink-0 ml-4">
@@ -538,6 +581,151 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
                     <div className="border border-border/30 rounded-sm divide-y divide-border/20">
                       {milestone.stories.map((story) => {
                         const storyCfg = STORY_STATUS_CONFIG[story.status]
+                        const isEditing = editingStoryId === story.id
+
+                        if (isEditing && editable) {
+                          return (
+                            <div key={story.id} className="px-3 py-3 space-y-3 bg-muted/5">
+                              <div className="flex items-center justify-between">
+                                <p className="font-mono text-[10px] text-primary uppercase tracking-widest">Edit Story</p>
+                                <button onClick={cancelEditing} className="text-muted-foreground hover:text-foreground transition-colors">
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Title</label>
+                                  <input
+                                    value={editForm.title}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                                    className={inputClassName}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Notes</label>
+                                  <input
+                                    value={editForm.notes}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
+                                    placeholder="Notes..."
+                                    className={inputClassName}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Output URL</label>
+                                  <input
+                                    value={editForm.outputUrl}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, outputUrl: e.target.value }))}
+                                    placeholder="https://..."
+                                    className={inputClassName}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Spec URL</label>
+                                  <input
+                                    value={editForm.specUrl}
+                                    onChange={(e) => setEditForm((p) => ({ ...p, specUrl: e.target.value }))}
+                                    placeholder="https://..."
+                                    className={inputClassName}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Existing attachments */}
+                              {story.attachments && story.attachments.length > 0 && (
+                                <div className="space-y-1.5">
+                                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">Attachments</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {story.attachments.map((att, i) => {
+                                      const Icon = ATTACHMENT_ICONS[att.type]
+                                      return (
+                                        <a
+                                          key={i}
+                                          href={att.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-flex items-center gap-1.5 border border-border/50 rounded-sm px-2.5 py-1 font-mono text-[10px] text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+                                        >
+                                          <Icon className="h-3 w-3" />
+                                          {att.label || att.type}
+                                        </a>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Add attachment form */}
+                              {showAttachmentForm ? (
+                                <div className="border border-border/30 rounded-sm p-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">New Attachment</p>
+                                    <button onClick={() => setShowAttachmentForm(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <select
+                                      value={newAttachment.type}
+                                      onChange={(e) => setNewAttachment((p) => ({ ...p, type: e.target.value as StoryAttachment["type"] }))}
+                                      className={inputClassName}
+                                    >
+                                      {ATTACHMENT_TYPE_OPTIONS.map((t) => (
+                                        <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                                      ))}
+                                    </select>
+                                    <input
+                                      value={newAttachment.url}
+                                      onChange={(e) => setNewAttachment((p) => ({ ...p, url: e.target.value }))}
+                                      placeholder="URL..."
+                                      className={inputClassName}
+                                    />
+                                    <input
+                                      value={newAttachment.label}
+                                      onChange={(e) => setNewAttachment((p) => ({ ...p, label: e.target.value }))}
+                                      placeholder="Label (optional)"
+                                      className={inputClassName}
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => addAttachmentToStory(milestone.id, story.id)}
+                                    disabled={!newAttachment.url.trim()}
+                                    className="flex items-center gap-1.5 font-mono text-[10px] text-primary hover:text-foreground uppercase tracking-widest transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                    Add Attachment
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setShowAttachmentForm(true)}
+                                  className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground hover:text-foreground uppercase tracking-widest transition-colors"
+                                >
+                                  <Paperclip className="h-3 w-3" />
+                                  Add Attachment
+                                </button>
+                              )}
+
+                              <div className="flex items-center gap-3 pt-1">
+                                <button
+                                  onClick={() => saveStoryEdit(milestone.id, story.id)}
+                                  disabled={saving}
+                                  className="flex items-center gap-1.5 bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-60"
+                                >
+                                  <Check className="h-3 w-3" />
+                                  {saving ? "Saving..." : "Save"}
+                                </button>
+                                <button
+                                  onClick={cancelEditing}
+                                  className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        }
+
                         return (
                           <div key={story.id} className="flex items-center gap-3 px-3 py-2.5 group hover:bg-muted/10 transition-colors">
                             {editable && (
@@ -556,6 +744,25 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
                                   <a href={story.specUrl} target="_blank" rel="noreferrer" className="shrink-0 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors">
                                     spec
                                   </a>
+                                )}
+                                {story.attachments && story.attachments.length > 0 && (
+                                  <span className="flex items-center gap-1 shrink-0">
+                                    {story.attachments.map((att, i) => {
+                                      const Icon = ATTACHMENT_ICONS[att.type]
+                                      return (
+                                        <a
+                                          key={i}
+                                          href={att.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          title={att.label || att.type}
+                                          className="text-primary/70 hover:text-primary transition-colors"
+                                        >
+                                          <Icon className="h-3 w-3" />
+                                        </a>
+                                      )
+                                    })}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -596,7 +803,7 @@ export function MilestonesContent({ editable = false }: MilestonesContentProps) 
                                 {openDropdown === story.id && (
                                   <div className="absolute right-0 top-7 z-20 border border-border bg-background rounded-sm shadow-lg min-w-[140px]">
                                     <button
-                                      onClick={() => setOpenDropdown(null)}
+                                      onClick={() => startEditingStory(story)}
                                       className="w-full flex items-center gap-2 px-3 py-2 font-mono text-xs text-foreground hover:bg-muted/20 transition-colors"
                                     >
                                       <Pencil className="h-3 w-3" /> Edit

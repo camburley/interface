@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation"
 import { ArrowLeft, LogOut } from "lucide-react"
 import { MilestonesContent } from "@/components/milestones-content"
+import type { MilestoneProject } from "@/lib/types/milestone"
 
 interface Props {
   userEmail?: string
+  project: MilestoneProject
 }
 
-export function MilestonesClientView({ userEmail }: Props) {
+export function MilestonesClientView({ userEmail, project }: Props) {
   const router = useRouter()
 
   async function handleLogout() {
@@ -50,7 +52,7 @@ export function MilestonesClientView({ userEmail }: Props) {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10">
-        <MilestonesContent />
+        <MilestonesContent project={project} />
       </main>
     </div>
   )

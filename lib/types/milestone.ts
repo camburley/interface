@@ -2,6 +2,13 @@ export type MilestoneStatus = "draft" | "active" | "completed" | "on-hold"
 export type StoryStatus = "todo" | "in-progress" | "review" | "done" | "blocked"
 export type FundingSource = "upwork-escrow" | "retainer" | "invoice" | "prepaid"
 
+export interface StoryAttachment {
+  type: "screenshot" | "loom" | "url"
+  url: string
+  label?: string
+  addedAt: string
+}
+
 export interface Story {
   id: string
   title: string
@@ -9,6 +16,7 @@ export interface Story {
   notes?: string
   outputUrl?: string
   specUrl?: string
+  attachments?: StoryAttachment[]
   createdAt: string
   completedAt?: string
 }

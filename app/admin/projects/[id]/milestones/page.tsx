@@ -1,11 +1,20 @@
-import { redirect } from "next/navigation"
+import { redirect, notFound } from "next/navigation"
 import { getSessionUser, isAdmin } from "@/lib/session"
+import { getProjectWithMilestones } from "@/lib/milestones-data"
 import { MilestonesAdminClient } from "./milestones-admin"
 
-export default async function AdminMilestonesPage() {
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function AdminMilestonesPage({ params }: PageProps) {
   const user = await getSessionUser()
   if (!user) redirect("/client/login?redirect=/admin")
   if (!isAdmin(user.uid)) redirect("/client/dashboard")
 
-  return <MilestonesAdminClient />
+  const { id } = await params
+  const project = await getProjectWithMilestones(id)
+  if (!project) notFound()
+
+  return <MilestonesAdminClient project={project} />
 }
