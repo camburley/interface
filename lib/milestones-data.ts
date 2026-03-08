@@ -12,7 +12,6 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
   const milestonesSnap = await db
     .collection("milestones")
     .where("projectId", "==", projectId)
-    .orderBy("order")
     .get()
 
   const milestones: Milestone[] = await Promise.all(
@@ -22,23 +21,24 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
       const storiesSnap = await db
         .collection("stories")
         .where("milestoneId", "==", doc.id)
-        .orderBy("createdAt")
         .get()
 
-      const stories: Story[] = storiesSnap.docs.map((s) => {
-        const sd = s.data()
-        return {
-          id: s.id,
-          title: sd.title,
-          status: sd.status,
-          notes: sd.notes || undefined,
-          outputUrl: sd.outputUrl || undefined,
-          specUrl: sd.specUrl || undefined,
-          attachments: sd.attachments ?? [],
-          createdAt: sd.createdAt,
-          completedAt: sd.completedAt || undefined,
-        }
-      })
+      const stories: Story[] = storiesSnap.docs
+        .map((s) => {
+          const sd = s.data()
+          return {
+            id: s.id,
+            title: sd.title,
+            status: sd.status,
+            notes: sd.notes || undefined,
+            outputUrl: sd.outputUrl || undefined,
+            specUrl: sd.specUrl || undefined,
+            attachments: sd.attachments ?? [],
+            createdAt: sd.createdAt,
+            completedAt: sd.completedAt || undefined,
+          }
+        })
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 
       return {
         id: doc.id,
@@ -59,6 +59,8 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
       }
     }),
   )
+
+  milestones.sort((a, b) => a.order - b.order)
 
   return {
     id: projectId,

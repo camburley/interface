@@ -13,8 +13,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { milestoneId } = await context.params
   const { db } = getFirebaseAdmin()
 
-  const snap = await db.collection("stories").where("milestoneId", "==", milestoneId).orderBy("createdAt").get()
-  const stories = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+  const snap = await db.collection("stories").where("milestoneId", "==", milestoneId).get()
+  const stories = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => ((a as Record<string, string>).createdAt ?? "").localeCompare((b as Record<string, string>).createdAt ?? ""))
 
   return NextResponse.json({ stories })
 }

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   if (!projectId) return NextResponse.json({ error: "projectId required" }, { status: 400 })
 
   const { db } = getFirebaseAdmin()
-  const snap = await db.collection("milestones").where("projectId", "==", projectId).orderBy("order").get()
+  const snap = await db.collection("milestones").where("projectId", "==", projectId).get()
 
   const milestones = await Promise.all(
     snap.docs.map(async (doc) => {
@@ -19,12 +19,15 @@ export async function GET(request: NextRequest) {
       const storiesSnap = await db
         .collection("stories")
         .where("milestoneId", "==", doc.id)
-        .orderBy("createdAt")
         .get()
-      const stories = storiesSnap.docs.map((s) => ({ id: s.id, ...s.data() }))
+      const stories = storiesSnap.docs
+        .map((s) => ({ id: s.id, ...s.data() }))
+        .sort((a, b) => ((a as Record<string, string>).createdAt ?? "").localeCompare((b as Record<string, string>).createdAt ?? ""))
       return { id: doc.id, ...data, stories }
     }),
   )
+
+  milestones.sort((a, b) => ((a.order as number) ?? 0) - ((b.order as number) ?? 0))
 
   return NextResponse.json({ milestones })
 }
