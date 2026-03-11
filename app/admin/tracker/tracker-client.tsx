@@ -9,9 +9,6 @@ import {
   ChevronRight,
   X,
   Check,
-  Calendar,
-  DollarSign,
-  Clock,
   ArrowRight,
   ArrowLeft,
   Activity,
@@ -397,10 +394,12 @@ function DetailPanel({
 }) {
   const status = deriveStatus(project)
   const { currentStep, completedSteps } = deriveProgressStep(project)
-  const spent = project.milestones
+  const completedAmount = project.completed ?? project.milestones
     .filter((m) => m.status === "completed")
     .reduce((s, m) => s + m.amount, 0)
-  const remaining = project.totalBudget - spent
+  const completedMilestoneCount = project.completedMilestoneCount ?? project.milestones.filter(
+    (m) => m.status === "completed",
+  ).length
 
   return (
     <div className="fixed inset-y-0 right-0 w-[480px] bg-background border-l border-border/40 z-50 overflow-y-auto">
@@ -433,43 +432,57 @@ function DetailPanel({
           </span>
         </div>
 
-        {/* Budget card */}
-        <div className="border border-border/40 rounded-sm p-4 space-y-3">
-          <div className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-            <DollarSign className="h-3.5 w-3.5" />
-            Budget
+        {/* Budget overview cards — matches milestones page */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="border border-border/50 rounded-sm p-4 space-y-1">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+              Total Budget
+            </p>
+            <p className="font-mono text-2xl font-bold text-foreground">
+              {formatCurrency(project.totalBudget)}
+            </p>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <p className="font-mono text-lg font-bold text-foreground">
-                {formatCurrency(project.totalBudget)}
-              </p>
-              <p className="font-mono text-[10px] text-muted-foreground">
-                Total
-              </p>
-            </div>
-            <div>
-              <p className="font-mono text-lg font-bold text-emerald-400">
-                {formatCurrency(spent)}
-              </p>
-              <p className="font-mono text-[10px] text-muted-foreground">
-                Spent
-              </p>
-            </div>
-            <div>
-              <p className="font-mono text-lg font-bold text-foreground">
-                {formatCurrency(remaining)}
-              </p>
-              <p className="font-mono text-[10px] text-muted-foreground">
-                Remaining
-              </p>
-            </div>
+          <div className="border border-border/50 rounded-sm p-4 space-y-1">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+              Funded
+            </p>
+            <p className={`font-mono text-2xl font-bold ${project.funded > 0 ? "text-emerald-400" : "text-foreground"}`}>
+              {formatCurrency(project.funded)}
+            </p>
+          </div>
+          <div className="border border-border/50 rounded-sm p-4 space-y-1">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+              Completed
+            </p>
+            <p className={`font-mono text-2xl font-bold ${completedAmount > 0 ? "text-emerald-400" : "text-foreground"}`}>
+              {formatCurrency(completedAmount)}
+            </p>
+          </div>
+          <div className="border border-border/50 rounded-sm p-4 space-y-1">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+              Milestones
+            </p>
+            <p className="font-mono text-2xl font-bold text-foreground">
+              {completedMilestoneCount} / {project.milestones.length}
+            </p>
+          </div>
+        </div>
+
+        {/* Budget progress bar */}
+        <div className="border border-border/40 rounded-sm p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+              Budget Progress
+            </p>
+            <p className="font-mono text-xs text-foreground">
+              {project.totalBudget > 0 ? Math.round((completedAmount / project.totalBudget) * 100) : 0}%
+            </p>
           </div>
           <div className="h-1.5 bg-muted/40 rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-400 rounded-full transition-all"
               style={{
-                width: `${project.totalBudget > 0 ? Math.round((spent / project.totalBudget) * 100) : 0}%`,
+                width: `${project.totalBudget > 0 ? Math.round((completedAmount / project.totalBudget) * 100) : 0}%`,
               }}
             />
           </div>

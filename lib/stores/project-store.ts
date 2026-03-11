@@ -27,6 +27,8 @@ export interface TrackerProject {
   }
   totalBudget: number
   funded: number
+  completed: number
+  completedMilestoneCount: number
   lastActivity?: string
 }
 

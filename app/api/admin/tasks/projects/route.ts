@@ -62,6 +62,12 @@ export async function GET(request: NextRequest) {
       const funded = milestones
         .filter((m) => m.fundingStatus === "funded")
         .reduce((s, m) => s + m.amount, 0)
+      const completed = milestones
+        .filter((m) => m.status === "completed")
+        .reduce((s, m) => s + m.amount, 0)
+      const completedMilestoneCount = milestones.filter(
+        (m) => m.status === "completed",
+      ).length
 
       const latestTask = taskDocs.sort((a, b) =>
         (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
@@ -76,6 +82,8 @@ export async function GET(request: NextRequest) {
         taskCounts,
         totalBudget,
         funded,
+        completed,
+        completedMilestoneCount,
         lastActivity: latestTask?.updatedAt,
       }
     }),

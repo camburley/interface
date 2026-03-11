@@ -10,8 +10,23 @@
  * Safe to run multiple times -- skips stories already migrated (checks by title + milestoneId).
  */
 
+import { readFileSync } from "fs"
+import { resolve } from "path"
 import { initializeApp, cert } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
+
+const envPath = resolve(process.cwd(), ".env")
+try {
+  const envContent = readFileSync(envPath, "utf8")
+  for (const line of envContent.split("\n")) {
+    if (!line || line.startsWith("#")) continue
+    const eqIdx = line.indexOf("=")
+    if (eqIdx === -1) continue
+    const key = line.slice(0, eqIdx).trim()
+    const val = line.slice(eqIdx + 1).trim().replace(/^"|"$/g, "")
+    if (!process.env[key]) process.env[key] = val
+  }
+} catch {}
 
 const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n")
 if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
