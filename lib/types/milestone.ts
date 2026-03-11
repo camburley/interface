@@ -13,6 +13,7 @@ export interface Story {
   id: string
   title: string
   status: StoryStatus
+  kind?: "bug" | "feature" | "note"
   placeholder?: boolean
   notes?: string
   outputUrl?: string
@@ -29,6 +30,7 @@ export interface Milestone {
   description?: string
   status: MilestoneStatus
   amount: number
+  includeInTotals?: boolean
   fundingSource: FundingSource
   fundingStatus: "funded" | "pending" | "partial"
   deliverables: string[]
@@ -47,6 +49,10 @@ export interface MilestoneProject {
   milestones: Milestone[]
 }
 
+export function isCountedMilestone(milestone: Milestone): boolean {
+  return milestone.includeInTotals !== false
+}
+
 export function getMilestoneProgress(milestone: Milestone): number {
   if (milestone.stories.length === 0) return 0
   const done = milestone.stories.filter((s) => s.status === "done").length
@@ -54,19 +60,22 @@ export function getMilestoneProgress(milestone: Milestone): number {
 }
 
 export function getProjectProgress(project: MilestoneProject): number {
-  if (project.milestones.length === 0) return 0
-  const completed = project.milestones.filter((m) => m.status === "completed").length
-  return Math.round((completed / project.milestones.length) * 100)
+  const countedMilestones = project.milestones.filter(isCountedMilestone)
+  if (countedMilestones.length === 0) return 0
+  const completed = countedMilestones.filter((m) => m.status === "completed").length
+  return Math.round((completed / countedMilestones.length) * 100)
 }
 
 export function getTotalFunded(project: MilestoneProject): number {
   return project.milestones
+    .filter(isCountedMilestone)
     .filter((m) => m.fundingStatus === "funded")
     .reduce((sum, m) => sum + m.amount, 0)
 }
 
 export function getTotalSpent(project: MilestoneProject): number {
   return project.milestones
+    .filter(isCountedMilestone)
     .filter((m) => m.status === "completed")
     .reduce((sum, m) => sum + m.amount, 0)
 }

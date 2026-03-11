@@ -57,7 +57,10 @@ interface Props {
 
 function deriveStatus(project: TrackerProject): ProjectStatus {
   const { milestones, taskCounts } = project
-  const allCompleted = milestones.length > 0 && milestones.every((m) => m.status === "completed")
+  const countedMilestones = milestones.filter((m) => m.includeInTotals !== false)
+  const allCompleted =
+    countedMilestones.length > 0 &&
+    countedMilestones.every((m) => m.status === "completed")
   if (allCompleted) return "completed"
   if (taskCounts.blocked > 0) return "off-track"
   if (taskCounts.inProgress === 0 && taskCounts.total > 0 && taskCounts.done < taskCounts.total) return "warning"
@@ -69,9 +72,14 @@ function deriveProgressStep(project: TrackerProject): {
   completedSteps: ProgressStep[]
 } {
   const { milestones, taskCounts } = project
-  const totalMilestones = milestones.length
-  const completedMilestones = milestones.filter((m) => m.status === "completed").length
-  const activeMilestones = milestones.filter((m) => m.status === "active").length
+  const countedMilestones = milestones.filter((m) => m.includeInTotals !== false)
+  const totalMilestones = countedMilestones.length
+  const completedMilestones = countedMilestones.filter(
+    (m) => m.status === "completed",
+  ).length
+  const activeMilestones = countedMilestones.filter(
+    (m) => m.status === "active",
+  ).length
   const ratio = totalMilestones > 0 ? completedMilestones / totalMilestones : 0
 
   if (ratio >= 1) {
@@ -394,10 +402,13 @@ function DetailPanel({
 }) {
   const status = deriveStatus(project)
   const { currentStep, completedSteps } = deriveProgressStep(project)
-  const completedAmount = project.completed ?? project.milestones
+  const countedMilestones = project.milestones.filter(
+    (m) => m.includeInTotals !== false,
+  )
+  const completedAmount = project.completed ?? countedMilestones
     .filter((m) => m.status === "completed")
     .reduce((s, m) => s + m.amount, 0)
-  const completedMilestoneCount = project.completedMilestoneCount ?? project.milestones.filter(
+  const completedMilestoneCount = project.completedMilestoneCount ?? countedMilestones.filter(
     (m) => m.status === "completed",
   ).length
 
@@ -463,7 +474,7 @@ function DetailPanel({
               Milestones
             </p>
             <p className="font-mono text-2xl font-bold text-foreground">
-              {completedMilestoneCount} / {project.milestones.length}
+              {completedMilestoneCount} / {countedMilestones.length}
             </p>
           </div>
         </div>

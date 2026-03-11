@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
+  Bug,
   Image as ImageIcon,
   Play,
   Link as LinkIcon,
@@ -26,7 +27,13 @@ import type {
   Story,
   StoryAttachment,
 } from "@/lib/types/milestone"
-import { getMilestoneProgress, getProjectProgress, getTotalFunded, getTotalSpent } from "@/lib/types/milestone"
+import {
+  getMilestoneProgress,
+  getProjectProgress,
+  getTotalFunded,
+  getTotalSpent,
+  isCountedMilestone,
+} from "@/lib/types/milestone"
 
 const MILESTONE_STATUS_CONFIG: Record<MilestoneStatus, { label: string; className: string }> = {
   draft: { label: "Draft", className: "text-muted-foreground bg-muted/30 border-border" },
@@ -118,7 +125,8 @@ export function MilestonesContent({ project: initialProject, editable = false }:
 
   const [newStoryTitle, setNewStoryTitle] = useState<Record<string, string>>({})
 
-  const totalBudget = project.milestones.reduce((s, m) => s + m.amount, 0)
+  const countedMilestones = project.milestones.filter(isCountedMilestone)
+  const totalBudget = countedMilestones.reduce((s, m) => s + m.amount, 0)
   const funded = getTotalFunded(project)
   const spent = getTotalSpent(project)
   const projectProgress = getProjectProgress(project)
@@ -378,7 +386,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
           { label: "Total Budget", value: formatCurrency(totalBudget) },
           { label: "Funded", value: formatCurrency(funded), accent: funded > 0 },
           { label: "Completed", value: formatCurrency(spent), accent: spent > 0 },
-          { label: "Milestones", value: `${project.milestones.filter((m) => m.status === "completed").length} / ${project.milestones.length}` },
+          { label: "Milestones", value: `${countedMilestones.filter((m) => m.status === "completed").length} / ${countedMilestones.length}` },
         ].map((card) => (
           <div key={card.label} className="border border-border/50 rounded-sm p-5 space-y-1">
             <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">{card.label}</p>
@@ -757,6 +765,9 @@ export function MilestonesContent({ project: initialProject, editable = false }:
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
+                                {story.kind === "bug" && (
+                                  <Bug className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                                )}
                                 <span className="font-mono text-xs text-foreground truncate">{story.title}</span>
                                 {story.placeholder && (
                                   <span className="inline-flex items-center px-2 py-0.5 border border-amber-400/30 rounded-sm font-mono text-[10px] uppercase tracking-widest text-amber-400 bg-amber-400/10 shrink-0">

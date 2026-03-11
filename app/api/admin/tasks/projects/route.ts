@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
             title: mData.title,
             status: mData.status,
             amount: mData.amount ?? 0,
+            includeInTotals: mData.includeInTotals !== false,
             fundingStatus: mData.fundingStatus ?? "pending",
             order: mData.order ?? 0,
             storyCount: storiesSnap.size,
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
       )
 
       milestones.sort((a, b) => a.order - b.order)
+      const countedMilestones = milestones.filter((m) => m.includeInTotals !== false)
 
       const tasksSnap = await db
         .collection("tasks")
@@ -58,14 +60,14 @@ export async function GET(request: NextRequest) {
         blocked: taskDocs.filter((t) => t.status === "blocked").length,
       }
 
-      const totalBudget = milestones.reduce((s, m) => s + m.amount, 0)
-      const funded = milestones
+      const totalBudget = countedMilestones.reduce((s, m) => s + m.amount, 0)
+      const funded = countedMilestones
         .filter((m) => m.fundingStatus === "funded")
         .reduce((s, m) => s + m.amount, 0)
-      const completed = milestones
+      const completed = countedMilestones
         .filter((m) => m.status === "completed")
         .reduce((s, m) => s + m.amount, 0)
-      const completedMilestoneCount = milestones.filter(
+      const completedMilestoneCount = countedMilestones.filter(
         (m) => m.status === "completed",
       ).length
 

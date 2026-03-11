@@ -7,6 +7,7 @@ export interface TrackerMilestone {
   title: string
   status: "draft" | "active" | "completed" | "on-hold"
   amount: number
+  includeInTotals?: boolean
   fundingStatus: string
   order: number
   storyCount: number
