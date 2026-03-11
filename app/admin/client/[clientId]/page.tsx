@@ -62,7 +62,12 @@ export default async function AdminClientPreviewPage({ params }: Props) {
         </div>
       </div>
 
-      <DashboardClient client={client} items={items} payments={payments} />
+      <DashboardClient
+        client={client}
+        items={items}
+        payments={payments}
+        milestonesHref={client.milestoneProjectId ? `/admin/projects/${client.milestoneProjectId}/milestones` : null}
+      />
     </div>
   )
 }

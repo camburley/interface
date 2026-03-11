@@ -39,6 +39,7 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [clientProject, setClientProject] = useState("")
+  const [clientMilestoneProjectId, setClientMilestoneProjectId] = useState("")
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [creatingClient, startCreateClient] = useTransition()
 
@@ -51,6 +52,10 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
 
   // Update item
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
+  const [linkingClientId, setLinkingClientId] = useState<string | null>(null)
+  const [clientMilestoneLinks, setClientMilestoneLinks] = useState<Record<string, string>>(
+    Object.fromEntries(clients.map((client) => [client.id, client.milestoneProjectId ?? ""])),
+  )
 
   function handleCreateClient(e: React.FormEvent) {
     e.preventDefault()
@@ -58,7 +63,12 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
       const res = await fetch("/api/admin/create-client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: clientName, email: clientEmail, projectName: clientProject }),
+        body: JSON.stringify({
+          name: clientName,
+          email: clientEmail,
+          projectName: clientProject,
+          milestoneProjectId: clientMilestoneProjectId || null,
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -70,8 +80,33 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
       setClientName("")
       setClientEmail("")
       setClientProject("")
+      setClientMilestoneProjectId("")
       router.refresh()
     })
+  }
+
+  async function handleLinkMilestones(clientId: string) {
+    setLinkingClientId(clientId)
+    try {
+      const res = await fetch("/api/admin/update-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId,
+          milestoneProjectId: clientMilestoneLinks[clientId] || null,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data.error ?? "Failed to update client")
+      }
+      toast.success(clientMilestoneLinks[clientId] ? "Milestones linked." : "Milestones unlinked.")
+      router.refresh()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update client")
+    } finally {
+      setLinkingClientId(null)
+    }
   }
 
   function handleCreateItem(e: React.FormEvent) {
@@ -186,6 +221,24 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
                     />
                   </div>
                 ))}
+                <div className="space-y-1.5">
+                  <label htmlFor="cmilestones" className="block font-mono text-xs text-muted-foreground uppercase tracking-widest">
+                    Milestones Project
+                  </label>
+                  <select
+                    id="cmilestones"
+                    value={clientMilestoneProjectId}
+                    onChange={(e) => setClientMilestoneProjectId(e.target.value)}
+                    className="w-full bg-muted/20 border border-border/50 rounded-sm px-4 py-2.5 font-mono text-sm text-foreground focus:outline-none focus:border-primary transition-colors"
+                  >
+                    <option value="">None</option>
+                    {milestoneProjects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.projectName} — {project.clientName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="submit"
                   disabled={creatingClient}
@@ -239,14 +292,46 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
                             <Eye className="h-3 w-3" />
                             View as client
                           </a>
-                          <a
-                            href={`/admin/projects/${c.id}/milestones`}
-                            className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
-                          >
-                            <ListChecks className="h-3 w-3" />
-                            Milestones
-                          </a>
+                          {c.milestoneProjectId ? (
+                            <a
+                              href={`/admin/projects/${c.milestoneProjectId}/milestones`}
+                              className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
+                            >
+                              <ListChecks className="h-3 w-3" />
+                              Milestones
+                            </a>
+                          ) : (
+                            <span className="font-mono text-[10px] text-muted-foreground border border-border/30 rounded-sm px-2.5 py-1">
+                              No milestones linked
+                            </span>
+                          )}
                         </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30">
+                        <select
+                          value={clientMilestoneLinks[c.id] ?? ""}
+                          onChange={(e) =>
+                            setClientMilestoneLinks((prev) => ({
+                              ...prev,
+                              [c.id]: e.target.value,
+                            }))
+                          }
+                          className="min-w-[240px] bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                        >
+                          <option value="">No milestone project</option>
+                          {milestoneProjects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.projectName} — {project.clientName}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => handleLinkMilestones(c.id)}
+                          disabled={linkingClientId === c.id}
+                          className="font-mono text-[10px] uppercase tracking-widest border border-border/40 rounded-sm px-2.5 py-2 text-muted-foreground hover:text-foreground hover:border-border transition-colors disabled:opacity-50"
+                        >
+                          {linkingClientId === c.id ? "Saving..." : "Save Milestones Link"}
+                        </button>
                       </div>
                       {ci.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/30">

@@ -68,9 +68,10 @@ interface Props {
   client: ClientData
   items: RetainerItem[]
   payments: RetainerPayment[]
+  milestonesHref?: string | null
 }
 
-function DashboardInner({ client, items, payments }: Props) {
+function DashboardInner({ client, items, payments, milestonesHref }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const justFunded = searchParams.get("funded") === "true"
@@ -123,6 +124,7 @@ function DashboardInner({ client, items, payments }: Props) {
   const pending = items.filter((i) => i.status === "pending_approval")
   const active = items.filter((i) => i.status === "approved" || i.status === "in_progress")
   const completed = items.filter((i) => i.status === "completed")
+  const resolvedMilestonesHref = milestonesHref ?? (client.milestoneProjectId ? "/client/milestones" : null)
 
   const balancePct = Math.min(100, Math.round((client.balance / 1000) * 100))
 
@@ -155,13 +157,15 @@ function DashboardInner({ client, items, payments }: Props) {
         <div>
           <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Active Project</p>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">{client.projectName}</h1>
-          <Link
-            href="/client/milestones"
-            className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors mt-2"
-          >
-            <ListChecks className="h-3.5 w-3.5" />
-            View project milestones
-          </Link>
+          {resolvedMilestonesHref && (
+            <Link
+              href={resolvedMilestonesHref}
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors mt-2"
+            >
+              <ListChecks className="h-3.5 w-3.5" />
+              View project milestones
+            </Link>
+          )}
         </div>
 
         {/* Balance card */}

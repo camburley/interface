@@ -9,12 +9,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }
 
-  const { name, email, projectName } = await request.json()
+  const { name, email, projectName, milestoneProjectId } = await request.json()
   if (!name || !email || !projectName) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
   const { auth, db } = getFirebaseAdmin()
+
+  if (milestoneProjectId) {
+    const milestoneProjectDoc = await db.collection("milestone_projects").doc(milestoneProjectId).get()
+    if (!milestoneProjectDoc.exists) {
+      return NextResponse.json({ error: "Milestone project not found" }, { status: 404 })
+    }
+  }
 
   // Create Firebase Auth user
   let uid: string
@@ -36,6 +43,7 @@ export async function POST(request: NextRequest) {
     name,
     email,
     projectName,
+    milestoneProjectId: milestoneProjectId || null,
     balance: 0,
     createdAt: new Date().toISOString(),
   }, { merge: true })

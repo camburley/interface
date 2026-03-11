@@ -41,6 +41,7 @@ export interface ClientData {
   name: string
   email: string
   projectName: string
+  milestoneProjectId?: string
   balance: number
   createdAt: string
 }
