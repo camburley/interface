@@ -4,6 +4,8 @@ import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { AdminClient } from "./admin-client"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
 
+export const dynamic = "force-dynamic"
+
 export interface MilestoneProjectSummary {
   id: string
   clientName: string

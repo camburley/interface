@@ -3,6 +3,8 @@ import { getSessionUser, isAdmin } from "@/lib/session"
 import { getProjectWithMilestones } from "@/lib/milestones-data"
 import { MilestonesAdminClient } from "./milestones-admin"
 
+export const dynamic = "force-dynamic"
+
 interface PageProps {
   params: Promise<{ id: string }>
 }

@@ -6,6 +6,8 @@ import type { ClientData, RetainerItem, RetainerPayment } from "@/app/client/das
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = "force-dynamic"
+
 interface Props {
   params: Promise<{ clientId: string }>
 }

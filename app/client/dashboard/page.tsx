@@ -3,6 +3,8 @@ import { getSessionUser } from "@/lib/session"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { DashboardClient } from "./dashboard-client"
 
+export const dynamic = "force-dynamic"
+
 export default async function DashboardPage() {
   const user = await getSessionUser()
   if (!user) redirect("/client/login")

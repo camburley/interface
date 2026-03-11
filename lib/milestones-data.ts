@@ -64,7 +64,7 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
   milestones.sort((a, b) => a.order - b.order)
 
   const projectName =
-    projectId === "doleright-mobile-app" ? "dolceRight" : projectData.projectName
+    projectId === "dolceright-mobile-app" ? "DolceRight" : projectData.projectName
 
   return {
     id: projectId,

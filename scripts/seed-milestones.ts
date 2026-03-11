@@ -29,7 +29,7 @@ const app =
 
 const db = getFirestore(app)
 
-const PROJECT_ID = "doleright-mobile-app"
+const PROJECT_ID = "dolceright-mobile-app"
 
 interface SeedStory {
   id: string
