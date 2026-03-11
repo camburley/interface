@@ -11,6 +11,7 @@ import {
   Pencil,
   Trash2,
   Bug,
+  Wrench,
   Image as ImageIcon,
   Play,
   Link as LinkIcon,
@@ -518,6 +519,12 @@ export function MilestonesContent({ project: initialProject, editable = false }:
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="font-mono text-xs text-muted-foreground shrink-0">M{milestone.order + 1}</span>
+                  {milestone.kind === "bug" && (
+                    <Bug className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                  )}
+                  {milestone.kind === "feature" && (
+                    <Wrench className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                  )}
                   {editable ? (
                     <select
                       value={milestone.status}

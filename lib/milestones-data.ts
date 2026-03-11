@@ -50,6 +50,7 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
         status: data.status,
         amount: data.amount,
         includeInTotals: data.includeInTotals !== false,
+        kind: data.kind || undefined,
         fundingSource: data.fundingSource,
         fundingStatus: data.fundingStatus,
         deliverables: data.deliverables ?? [],

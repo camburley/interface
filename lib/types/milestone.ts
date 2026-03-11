@@ -31,6 +31,7 @@ export interface Milestone {
   status: MilestoneStatus
   amount: number
   includeInTotals?: boolean
+  kind?: "bug" | "feature" | "note"
   fundingSource: FundingSource
   fundingStatus: "funded" | "pending" | "partial"
   deliverables: string[]
