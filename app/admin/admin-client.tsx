@@ -168,13 +168,27 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
               Admin
             </span>
           </div>
-          <a
-            href="/client/dashboard"
-            className="font-mono text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Client view
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="/admin/tracker"
+              className="font-mono text-xs text-muted-foreground hover:text-accent transition-colors"
+            >
+              Tracker
+            </a>
+            <a
+              href="/admin/board"
+              className="font-mono text-xs text-muted-foreground hover:text-accent transition-colors"
+            >
+              Board
+            </a>
+            <a
+              href="/client/dashboard"
+              className="font-mono text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Client view
+            </a>
+          </div>
         </div>
       </header>
 
