@@ -131,6 +131,10 @@ export function MilestonesContent({ project: initialProject, editable = false }:
   const funded = getTotalFunded(project)
   const spent = getTotalSpent(project)
   const projectProgress = getProjectProgress(project)
+  const displayMilestones =
+    project.milestones.length > 1
+      ? [project.milestones[0], ...project.milestones.slice(1).reverse()]
+      : project.milestones
 
   function toggleMilestone(id: string) {
     setExpandedMilestones((prev) => {
@@ -501,7 +505,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
         )}
 
         {/* Milestone list */}
-        {project.milestones.map((milestone) => {
+        {displayMilestones.map((milestone) => {
           const expanded = expandedMilestones.has(milestone.id)
           const progress = getMilestoneProgress(milestone)
           const done = milestone.stories.filter((s) => s.status === "done").length
