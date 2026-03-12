@@ -27,7 +27,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { milestoneId } = await context.params
   const body = await request.json()
-  const { title, notes, outputUrl, specUrl, placeholder } = body
+  const { title, notes, outputUrl, specUrl, placeholder, kind } = body
 
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 })
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const milestoneDoc = await db.collection("milestones").doc(milestoneId).get()
   if (!milestoneDoc.exists) return NextResponse.json({ error: "Milestone not found" }, { status: 404 })
 
-  const data = {
+  const data: Record<string, unknown> = {
     milestoneId,
     projectId: milestoneDoc.data()!.projectId,
     title,
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     createdAt: new Date().toISOString(),
     completedAt: null,
   }
+  if (kind) data.kind = kind
 
   const ref = await db.collection("stories").add(data)
   return NextResponse.json({ ok: true, id: ref.id })

@@ -394,6 +394,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
             return (
               <div
                 key={column.id}
+                data-column-id={column.id}
                 className="flex-shrink-0 w-72"
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column.id)}
@@ -462,6 +463,7 @@ function TaskCard({
 
   return (
     <div
+      data-task-id={task.id}
       draggable
       onDragStart={(e) => onDragStart(e, task.id)}
       className={`border border-border/40 rounded-sm bg-background transition-all cursor-grab active:cursor-grabbing ${

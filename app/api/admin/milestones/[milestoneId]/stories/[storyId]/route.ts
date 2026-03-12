@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { validateBearerOrAdmin } from "@/lib/api-auth"
+import { storyStatusToTaskStatus } from "@/lib/sync-status"
 import type { StoryAttachment } from "@/lib/types/milestone"
 
 interface RouteContext {
@@ -35,6 +36,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   if (body.title !== undefined) updates.title = body.title
+  if (body.kind !== undefined) updates.kind = body.kind
   if (body.placeholder !== undefined) updates.placeholder = Boolean(body.placeholder)
   if (body.notes !== undefined) updates.notes = body.notes
   if (body.outputUrl !== undefined) updates.outputUrl = body.outputUrl
@@ -60,6 +62,21 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   await ref.update(updates)
+
+  if (body.status !== undefined) {
+    const taskStatus = storyStatusToTaskStatus(body.status as Parameters<typeof storyStatusToTaskStatus>[0])
+    const tasksSnap = await db.collection("tasks").where("storyId", "==", storyId).get()
+    const now = new Date().toISOString()
+    for (const taskDoc of tasksSnap.docs) {
+      const taskUpdates: Record<string, unknown> = {
+        status: taskStatus,
+        updatedAt: now,
+        completedAt: taskStatus === "done" ? now : null,
+      }
+      await taskDoc.ref.update(taskUpdates)
+    }
+  }
+
   return NextResponse.json({ ok: true, id: storyId })
 }
 

@@ -3,6 +3,7 @@ import { validateBearerOrAdmin } from "@/lib/api-auth"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { appendHistory } from "@/lib/task-utils"
 import { validateTransition } from "@/lib/workflow"
+import { taskStatusToStoryStatus } from "@/lib/sync-status"
 import type { Task, TaskStatus } from "@/lib/types/task"
 
 interface RouteContext {
@@ -67,6 +68,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
       evidence: evidence ?? [],
     },
   })
+
+  if (task.storyId) {
+    const storyStatus = taskStatusToStoryStatus(newStatus)
+    const storyRef = db.collection("stories").doc(task.storyId)
+    const storyUpdates: Record<string, unknown> = {
+      status: storyStatus,
+      completedAt: storyStatus === "done" ? new Date().toISOString() : null,
+    }
+    await storyRef.update(storyUpdates)
+  }
 
   return NextResponse.json({
     ok: true,

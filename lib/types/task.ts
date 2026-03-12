@@ -65,6 +65,7 @@ export interface Task {
   priority: TaskPriority
   projectId: string
   milestoneId?: string
+  storyId?: string
   parentTaskId?: string
   dependencies: string[]
   assignee?: string
