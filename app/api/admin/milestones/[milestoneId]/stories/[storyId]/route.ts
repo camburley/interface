@@ -64,16 +64,41 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   await ref.update(updates)
 
   if (body.status !== undefined) {
-    const taskStatus = storyStatusToTaskStatus(body.status as Parameters<typeof storyStatusToTaskStatus>[0])
-    const tasksSnap = await db.collection("tasks").where("storyId", "==", storyId).get()
-    const now = new Date().toISOString()
-    for (const taskDoc of tasksSnap.docs) {
-      const taskUpdates: Record<string, unknown> = {
-        status: taskStatus,
-        updatedAt: now,
-        completedAt: taskStatus === "done" ? now : null,
+    try {
+      const taskStatus = storyStatusToTaskStatus(body.status as Parameters<typeof storyStatusToTaskStatus>[0])
+      const now = new Date().toISOString()
+      let tasksSnap = await db.collection("tasks").where("storyId", "==", storyId).get()
+      if (tasksSnap.empty) {
+        const storyData = doc.data()!
+        const milestoneId = storyData.milestoneId as string | undefined
+        const title = storyData.title as string | undefined
+        if (milestoneId && title) {
+          const byMilestone = await db
+            .collection("tasks")
+            .where("milestoneId", "==", milestoneId)
+            .get()
+          const match = byMilestone.docs.find((d) => d.data().title === title)
+          if (match) {
+            await match.ref.update({
+              storyId,
+              status: taskStatus,
+              updatedAt: now,
+              completedAt: taskStatus === "done" ? now : null,
+            })
+          }
+        }
+      } else {
+        for (const taskDoc of tasksSnap.docs) {
+          const taskUpdates: Record<string, unknown> = {
+            status: taskStatus,
+            updatedAt: now,
+            completedAt: taskStatus === "done" ? now : null,
+          }
+          await taskDoc.ref.update(taskUpdates)
+        }
       }
-      await taskDoc.ref.update(taskUpdates)
+    } catch (err) {
+      console.error("[milestone-story-sync] task dual-write failed:", err)
     }
   }
 

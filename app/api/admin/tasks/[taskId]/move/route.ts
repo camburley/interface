@@ -70,13 +70,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
   })
 
   if (task.storyId) {
-    const storyStatus = taskStatusToStoryStatus(newStatus)
-    const storyRef = db.collection("stories").doc(task.storyId)
-    const storyUpdates: Record<string, unknown> = {
-      status: storyStatus,
-      completedAt: storyStatus === "done" ? new Date().toISOString() : null,
+    try {
+      const storyStatus = taskStatusToStoryStatus(newStatus)
+      const storyRef = db.collection("stories").doc(task.storyId)
+      const storyUpdates: Record<string, unknown> = {
+        status: storyStatus,
+        completedAt: storyStatus === "done" ? new Date().toISOString() : null,
+      }
+      await storyRef.update(storyUpdates)
+    } catch (err) {
+      console.error("[task-move-sync] story dual-write failed:", err)
     }
-    await storyRef.update(storyUpdates)
   }
 
   return NextResponse.json({

@@ -55,10 +55,8 @@ export function BoardClient({ initialTasks, projects }: Props) {
   })
 
   useEffect(() => {
-    if (!initialized) {
-      useTaskStore.setState({ tasks: initialTasks })
-      setInitialized(true)
-    }
+    useTaskStore.setState({ tasks: initialTasks })
+    if (!initialized) setInitialized(true)
   }, [initialTasks, initialized])
 
   const visible = initialized ? filteredTasks() : initialTasks
