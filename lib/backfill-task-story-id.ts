@@ -5,14 +5,18 @@
 
 import type { Firestore } from "firebase-admin/firestore"
 
-export async function backfillTaskStoryId(db: Firestore): Promise<{ updated: number; skipped: number }> {
+export async function backfillTaskStoryId(
+  db: Firestore,
+  options?: { force?: boolean },
+): Promise<{ updated: number; skipped: number }> {
+  const force = options?.force === true
   const tasksSnap = await db.collection("tasks").get()
   let updated = 0
   let skipped = 0
 
   for (const taskDoc of tasksSnap.docs) {
     const data = taskDoc.data()
-    if (data.storyId) {
+    if (!force && data.storyId) {
       skipped++
       continue
     }
