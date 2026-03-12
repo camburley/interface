@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "verify:sync": "npx tsx scripts/verify-milestone-board-sync.ts"
+    "verify:sync": "npx tsx scripts/verify-milestone-board-sync.ts",
+    "link:dolceright": "npx tsx scripts/link-dolceright-tasks-to-stories.ts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
