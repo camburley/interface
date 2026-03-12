@@ -287,6 +287,11 @@ export function MilestonesContent({ project: initialProject, editable = false }:
       body: JSON.stringify({ status }),
     })
 
+    const data = await res.json().catch(() => ({})) as { ok?: boolean; taskUpdated?: boolean }
+    if (res.ok && data.taskUpdated === false) {
+      toast.warning("Story updated. No linked task on board — run backfill or add task.")
+    }
+
     if (!res.ok) {
       setProject((prev) => ({
         ...prev,
@@ -303,8 +308,7 @@ export function MilestonesContent({ project: initialProject, editable = false }:
             : m,
         ),
       }))
-      const err = await res.json().catch(() => ({ error: res.statusText }))
-      const msg = (err as { error?: string }).error ?? `Save failed (${res.status})`
+      const msg = (data as { error?: string }).error ?? `Save failed (${res.status})`
       toast.error(msg)
     }
   }, [project.milestones])

@@ -63,6 +63,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   await ref.update(updates)
 
+  let taskUpdated = false
   if (body.status !== undefined) {
     try {
       const taskStatus = storyStatusToTaskStatus(body.status as Parameters<typeof storyStatusToTaskStatus>[0])
@@ -104,6 +105,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         }
 
         if (match) {
+          taskUpdated = true
           console.info("[milestone-story-sync] fallback matched task", {
             storyId,
             taskId: match.id,
@@ -124,6 +126,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           })
         }
       } else {
+        taskUpdated = true
         for (const taskDoc of tasksSnap.docs) {
           const taskUpdates: Record<string, unknown> = {
             status: taskStatus,
@@ -138,7 +141,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
   }
 
-  return NextResponse.json({ ok: true, id: storyId })
+  return NextResponse.json({ ok: true, id: storyId, taskUpdated })
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {

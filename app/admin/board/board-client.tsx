@@ -60,8 +60,12 @@ export function BoardClient({ initialTasks, projects }: Props) {
     if (!initialized) setInitialized(true)
   }, [initialTasks, initialized])
 
-  // Refetch tasks when board tab becomes visible (e.g. after navigating back from milestone)
-  // so milestone→board sync is visible even if RSC was cached
+  // Always refetch on mount so board shows latest after navigating from milestone
+  useEffect(() => {
+    fetchTasks(filters.projectId)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- run once on mount
+
+  // Refetch when tab becomes visible
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible") fetchTasks(filters.projectId)
