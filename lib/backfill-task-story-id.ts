@@ -52,6 +52,16 @@ export async function backfillTaskStoryId(
       if (match) originalStoryId = match.id
     }
 
+    if (!originalStoryId && data.title && (force || !data.storyId)) {
+      const storiesSnap = await db.collection("stories").get()
+      const taskTitleNorm = String(data.title).trim().toLowerCase()
+      const match = storiesSnap.docs.find((d) => {
+        const t = (d.data().title as string)?.trim().toLowerCase() ?? ""
+        return t === taskTitleNorm || (taskTitleNorm.length > 10 && (taskTitleNorm.includes(t) || t.includes(taskTitleNorm)))
+      })
+      if (match) originalStoryId = match.id
+    }
+
     if (!originalStoryId) {
       skipped++
       continue
