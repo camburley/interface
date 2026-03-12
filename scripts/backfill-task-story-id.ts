@@ -16,6 +16,7 @@ import { readFileSync } from "fs"
 import { resolve } from "path"
 import { initializeApp, cert } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
+import { backfillTaskStoryId } from "../lib/backfill-task-story-id"
 
 const envPath = resolve(process.cwd(), ".env")
 try {
@@ -46,59 +47,11 @@ const app = initializeApp({
 
 const db = getFirestore(app)
 
-async function backfill() {
-  console.log("Backfilling task.storyId from history.originalStoryId...\n")
-
-  const tasksSnap = await db.collection("tasks").get()
-  let updated = 0
-  let skipped = 0
-
-  for (const taskDoc of tasksSnap.docs) {
-    const data = taskDoc.data()
-    if (data.storyId) {
-      skipped++
-      continue
-    }
-
-    const historySnap = await taskDoc.ref.collection("history").orderBy("timestamp", "asc").get()
-    let originalStoryId: string | null = null
-    for (const h of historySnap.docs) {
-      const details = h.data().details as { originalStoryId?: string } | undefined
-      if (details?.originalStoryId) {
-        originalStoryId = details.originalStoryId
-        break
-      }
-    }
-
-    if (!originalStoryId && data.milestoneId && data.title) {
-      const storiesSnap = await db
-        .collection("stories")
-        .where("milestoneId", "==", data.milestoneId)
-        .get()
-      const taskTitleNorm = String(data.title).trim().toLowerCase()
-      const match = storiesSnap.docs.find((d) => {
-        const t = (d.data().title as string)?.trim().toLowerCase() ?? ""
-        return t === taskTitleNorm || (taskTitleNorm.length > 10 && (taskTitleNorm.includes(t) || t.includes(taskTitleNorm)))
-      })
-      if (match) {
-        originalStoryId = match.id
-      }
-    }
-
-    if (!originalStoryId) {
-      skipped++
-      continue
-    }
-
-    await taskDoc.ref.update({ storyId: originalStoryId })
-    updated++
-    console.log(`  [${taskDoc.id}] storyId = ${originalStoryId}`)
-  }
-
-  console.log(`\nBackfill complete: ${updated} updated, ${skipped} skipped.`)
-}
-
-backfill().catch((err) => {
-  console.error("Backfill failed:", err)
-  process.exit(1)
-})
+backfillTaskStoryId(db)
+  .then(({ updated, skipped }) => {
+    console.log(`\nBackfill complete: ${updated} updated, ${skipped} skipped.`)
+  })
+  .catch((err) => {
+    console.error("Backfill failed:", err)
+    process.exit(1)
+  })
