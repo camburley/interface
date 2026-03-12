@@ -77,13 +77,34 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             .collection("tasks")
             .where("milestoneId", "==", milestoneId)
             .get()
-          const match = byMilestone.docs.find((d) => d.data().title === title)
+          const titleNorm = (title as string).trim().toLowerCase()
+          let match = byMilestone.docs.find(
+            (d) => (d.data().title as string)?.trim().toLowerCase() === titleNorm,
+          )
+          if (!match && titleNorm.length > 10) {
+            match = byMilestone.docs.find((d) => {
+              const t = (d.data().title as string)?.trim().toLowerCase() ?? ""
+              return t.length > 10 && (titleNorm.includes(t) || t.includes(titleNorm))
+            })
+          }
           if (match) {
+            console.info("[milestone-story-sync] fallback matched task by milestoneId+title", {
+              storyId,
+              taskId: match.id,
+              status: taskStatus,
+            })
             await match.ref.update({
               storyId,
               status: taskStatus,
               updatedAt: now,
               completedAt: taskStatus === "done" ? now : null,
+            })
+          } else {
+            console.warn("[milestone-story-sync] fallback: no task with matching title", {
+              storyId,
+              milestoneId,
+              titleNorm,
+              taskTitles: byMilestone.docs.map((d) => (d.data().title as string)?.slice(0, 50)),
             })
           }
         }

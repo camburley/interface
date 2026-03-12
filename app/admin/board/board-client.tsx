@@ -38,6 +38,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
     createTask,
     deleteTask,
     filteredTasks,
+    fetchTasks,
   } = useTaskStore()
 
   const [initialized, setInitialized] = useState(false)
@@ -58,6 +59,18 @@ export function BoardClient({ initialTasks, projects }: Props) {
     useTaskStore.setState({ tasks: initialTasks })
     if (!initialized) setInitialized(true)
   }, [initialTasks, initialized])
+
+  // Refetch tasks when board tab becomes visible (e.g. after navigating back from milestone)
+  // so milestone→board sync is visible even if RSC was cached
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchTasks(filters.projectId)
+    }
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisible)
+      return () => document.removeEventListener("visibilitychange", onVisible)
+    }
+  }, [filters.projectId, fetchTasks])
 
   const visible = initialized ? filteredTasks() : initialTasks
 

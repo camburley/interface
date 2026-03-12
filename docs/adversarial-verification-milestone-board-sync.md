@@ -6,6 +6,36 @@
 
 ---
 
+## Why sync might not show after deploy (and what was fixed)
+
+Even with the plan implemented, the board can still show 0 In Progress / wrong counts if:
+
+1. **Backfill used exact title match**  
+   The backfill script used to match task↔story only when `title` was exactly equal. Any trim/case/encoding difference meant no `storyId` was set, so the story PATCH couldn’t find a task by `storyId`.  
+   **Fix:** Backfill now uses normalized title (trim + lowercase) and optional fuzzy match. **Re-run backfill in production** after pulling:  
+   `npx tsx scripts/backfill-task-story-id.ts`  
+   (Use the same env as production, e.g. production Firebase.)
+
+2. **Board showed stale data after navigating back**  
+   Returning from the milestone page (e.g. back button or link) could show cached RSC, so the board didn’t refetch tasks.  
+   **Fix:** Board now refetches tasks when the tab becomes visible (`visibilitychange`). Refresh or switch tab and back once if you don’t see updates.
+
+3. **Failed PATCH was invisible**  
+   If the story PATCH failed (network, 403, 500), the UI still updated optimistically and the user didn’t see an error.  
+   **Fix:** Story status change now reverts the dropdown and shows a toast on non-ok response.
+
+4. **Production Firebase ≠ backfill target**  
+   If backfill was run only against local/dev Firebase, production tasks never got `storyId`.  
+   **Fix:** Run the backfill script once in the environment that points at the same Firebase as the deployed app (e.g. Vercel env vars).
+
+**Post-deploy checklist:**  
+- [ ] Deploy latest (backfill script + API fallback + board visibility refetch + milestone error handling).  
+- [ ] Run `npx tsx scripts/backfill-task-story-id.ts` with **production** Firebase env.  
+- [ ] Change a story on the milestone → open/refresh board (or switch tab and back) → confirm card in the right column.  
+- [ ] Optional: In Vercel logs, look for `[milestone-story-sync] fallback matched` or `no task with matching title` to confirm dual-write path.
+
+---
+
 ## Implementation summary
 
 | Component | Status | Notes |

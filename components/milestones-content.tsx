@@ -19,6 +19,7 @@ import {
   Check,
   Paperclip,
 } from "lucide-react"
+import { toast } from "sonner"
 import type {
   Milestone,
   MilestoneProject,
@@ -260,6 +261,10 @@ export function MilestonesContent({ project: initialProject, editable = false }:
   }, [])
 
   const updateStoryStatus = useCallback(async (milestoneId: string, storyId: string, status: StoryStatus) => {
+    const prevStatus = project.milestones
+      .find((m) => m.id === milestoneId)
+      ?.stories.find((s) => s.id === storyId)?.status
+
     setProject((prev) => ({
       ...prev,
       milestones: prev.milestones.map((m) =>
@@ -276,12 +281,33 @@ export function MilestonesContent({ project: initialProject, editable = false }:
       ),
     }))
 
-    await fetch(`/api/admin/milestones/${milestoneId}/stories/${storyId}`, {
+    const res = await fetch(`/api/admin/milestones/${milestoneId}/stories/${storyId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     })
-  }, [])
+
+    if (!res.ok) {
+      setProject((prev) => ({
+        ...prev,
+        milestones: prev.milestones.map((m) =>
+          m.id === milestoneId
+            ? {
+                ...m,
+                stories: m.stories.map((s) =>
+                  s.id === storyId && prevStatus !== undefined
+                    ? { ...s, status: prevStatus, completedAt: status === "done" ? undefined : s.completedAt }
+                    : s,
+                ),
+              }
+            : m,
+        ),
+      }))
+      const err = await res.json().catch(() => ({ error: res.statusText }))
+      const msg = (err as { error?: string }).error ?? `Save failed (${res.status})`
+      toast.error(msg)
+    }
+  }, [project.milestones])
 
   const addStory = useCallback(async (milestoneId: string) => {
     const title = newStoryTitle[milestoneId]?.trim()

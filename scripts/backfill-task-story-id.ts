@@ -74,11 +74,14 @@ async function backfill() {
       const storiesSnap = await db
         .collection("stories")
         .where("milestoneId", "==", data.milestoneId)
-        .where("title", "==", data.title)
-        .limit(1)
         .get()
-      if (!storiesSnap.empty) {
-        originalStoryId = storiesSnap.docs[0].id
+      const taskTitleNorm = String(data.title).trim().toLowerCase()
+      const match = storiesSnap.docs.find((d) => {
+        const t = (d.data().title as string)?.trim().toLowerCase() ?? ""
+        return t === taskTitleNorm || (taskTitleNorm.length > 10 && (taskTitleNorm.includes(t) || t.includes(taskTitleNorm)))
+      })
+      if (match) {
+        originalStoryId = match.id
       }
     }
 
