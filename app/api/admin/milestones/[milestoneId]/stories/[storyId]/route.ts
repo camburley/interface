@@ -70,8 +70,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       let tasksSnap = await db.collection("tasks").where("storyId", "==", storyId).get()
       if (tasksSnap.empty) {
         const storyData = doc.data()!
-        const milestoneId = storyData.milestoneId as string | undefined
-        const projectId = storyData.projectId as string | undefined
+        let milestoneId = storyData.milestoneId as string | undefined
+        let projectId = storyData.projectId as string | undefined
+        if (!projectId && milestoneId) {
+          const milestoneDoc = await db.collection("milestones").doc(milestoneId).get()
+          if (milestoneDoc.exists) projectId = milestoneDoc.data()?.projectId as string | undefined
+        }
         const title = storyData.title as string | undefined
         const titleNorm = title ? (title as string).trim().toLowerCase() : ""
 
@@ -80,7 +84,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
           if (!m && titleNorm.length > 10) {
             m = docs.find((d) => {
               const t = (d.data().title as string)?.trim().toLowerCase() ?? ""
-              return t.length > 10 && (titleNorm.includes(t) || t.includes(titleNorm))
+              if (t.length < 10) return false
+              if (titleNorm.includes(t) || t.includes(titleNorm)) return true
+              const minLen = Math.min(20, titleNorm.length, t.length)
+              return minLen >= 10 && titleNorm.slice(0, minLen) === t.slice(0, minLen)
             })
           }
           return m ?? null
