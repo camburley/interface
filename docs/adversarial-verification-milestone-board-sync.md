@@ -30,7 +30,8 @@ Even with the plan implemented, the board can still show 0 In Progress / wrong c
 
 **Post-deploy checklist:**  
 - [ ] Deploy latest (backfill script + API fallback + board visibility refetch + milestone error handling).  
-- [ ] Run `npx tsx scripts/backfill-task-story-id.ts` with **production** Firebase env.  
+- [ ] Run `pnpm run verify:sync` (or `npx tsx scripts/verify-milestone-board-sync.ts`) with **production** Firebase env — exit 0 means sync and board query work for that Firebase.  
+- [ ] Run `npx tsx scripts/backfill-task-story-id.ts` with **production** Firebase env if verify:sync fails or tasks lack `storyId`.  
 - [ ] Change a story on the milestone → open/refresh board (or switch tab and back) → confirm card in the right column.  
 - [ ] Optional: In Vercel logs, look for `[milestone-story-sync] fallback matched` or `no task with matching title` to confirm dual-write path.
 
