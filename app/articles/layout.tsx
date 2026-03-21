@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ArticleNav } from "@/components/articles/article-nav"
 
 export default function ArticlesLayout({
   children,
@@ -7,31 +8,7 @@ export default function ArticlesLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav: Switzer, 15px, weight 400 — matches every.to nav structure */}
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-foreground/5">
-        <div className="max-w-[1248px] mx-auto px-6 flex items-center justify-between" style={{ height: "56px" }}>
-          <Link
-            href="/"
-            className="font-[var(--font-bebas)] text-[22px] tracking-tight text-foreground"
-          >
-            BURLEY
-          </Link>
-          <div className="flex items-center" style={{ gap: "24px" }}>
-            <Link
-              href="/articles"
-              className="font-editorial-sans text-[15px] font-normal text-foreground/60 hover:text-foreground transition-colors"
-            >
-              Articles
-            </Link>
-            <Link
-              href="/#apply"
-              className="font-editorial-sans text-[15px] font-normal text-foreground/60 hover:text-foreground transition-colors"
-            >
-              Work with me
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <ArticleNav />
 
       <main>{children}</main>
 

@@ -9,6 +9,7 @@ export interface ArticleFrontmatter {
   description: string
   date: string
   author: string
+  authorBio?: string
   coverImage?: string
   tags?: string[]
   published: boolean

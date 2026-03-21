@@ -9,6 +9,7 @@ import {
 import { ArticleHeader } from "@/components/articles/article-header"
 import { ArticleBody } from "@/components/articles/article-body"
 import { ArticleCard } from "@/components/articles/article-card"
+import { AuthorSidebar } from "@/components/articles/author-sidebar"
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>
@@ -108,7 +109,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <>
       <ArticleJsonLd article={article} slug={slug} />
 
-      {/* Cover image: width 1248px centered, margin 80px auto 0 */}
       {article.frontmatter.coverImage && (
         <figure className="mx-auto" style={{ maxWidth: "1248px", margin: "80px auto 0" }}>
           <div className="relative w-full aspect-[16/9] overflow-hidden px-6">
@@ -120,7 +120,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               priority
             />
           </div>
-          {/* Caption: system font, 12px, color muted */}
           <div className="max-w-[736px] mx-auto px-6">
             <p className="text-[12px] text-foreground/30 mt-2">
               Illustration
@@ -129,18 +128,29 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         </figure>
       )}
 
-      {/* Content column: 736px */}
-      <article className="max-w-[736px] mx-auto px-6" style={{ paddingTop: article.frontmatter.coverImage ? "40px" : "80px", paddingBottom: "64px" }}>
-        <ArticleHeader
-          frontmatter={article.frontmatter}
-          readingTime={article.readingTime}
-          slug={slug}
-        />
+      {/* Two-column layout: author sidebar + main content */}
+      <div
+        className="mx-auto px-6"
+        style={{
+          maxWidth: "980px",
+          paddingTop: article.frontmatter.coverImage ? "40px" : "80px",
+          paddingBottom: "64px",
+        }}
+      >
+        <div className="flex gap-10">
+          <AuthorSidebar frontmatter={article.frontmatter} />
 
-        <ArticleBody content={article.content} />
-      </article>
+          <article className="min-w-0 flex-1 max-w-[736px]">
+            <ArticleHeader
+              frontmatter={article.frontmatter}
+              readingTime={article.readingTime}
+              slug={slug}
+            />
+            <ArticleBody content={article.content} />
+          </article>
+        </div>
+      </div>
 
-      {/* Related: heading is Switzer 18px weight 500, container 736px, padding 16px 0 */}
       {relatedArticles.length > 0 && (
         <section className="border-t border-foreground/5">
           <div
