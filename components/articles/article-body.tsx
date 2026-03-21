@@ -1,40 +1,49 @@
 "use client"
 
-import { MDXRemote, MDXRemoteProps } from "next-mdx-remote/rsc"
+import { MDXRemote } from "next-mdx-remote/rsc"
 import remarkGfm from "remark-gfm"
 import rehypeSlug from "rehype-slug"
 
 const components = {
   h2: (props: React.ComponentProps<"h2">) => (
     <h2
-      className="font-sans text-2xl font-bold text-foreground mt-12 mb-4 tracking-tight"
+      className="font-[var(--font-serif)] text-2xl font-normal text-foreground mt-14 mb-4 leading-[1.5]"
       {...props}
     />
   ),
   h3: (props: React.ComponentProps<"h3">) => (
     <h3
-      className="font-sans text-xl font-semibold text-foreground mt-10 mb-3 tracking-tight"
+      className="font-[var(--font-serif)] text-xl font-semibold text-foreground mt-10 mb-3 leading-[1.5]"
+      {...props}
+    />
+  ),
+  h4: (props: React.ComponentProps<"h4">) => (
+    <h4
+      className="font-[var(--font-serif)] text-lg font-semibold text-foreground mt-8 mb-2 leading-[1.5]"
       {...props}
     />
   ),
   p: (props: React.ComponentProps<"p">) => (
     <p
-      className="text-[1.125rem] leading-[1.8] text-foreground/85 mb-6"
+      className="font-[var(--font-serif)] text-[1.25rem] leading-[1.5] text-foreground/90 mb-7"
       {...props}
     />
   ),
   ul: (props: React.ComponentProps<"ul">) => (
-    <ul className="mb-6 space-y-2 pl-1" {...props} />
+    <ul className="mb-7 space-y-1.5" {...props} />
   ),
   ol: (props: React.ComponentProps<"ol">) => (
-    <ol className="mb-6 space-y-2 pl-1 list-decimal list-inside" {...props} />
+    <ol className="mb-7 space-y-1.5 list-decimal pl-6" {...props} />
   ),
   li: (props: React.ComponentProps<"li">) => (
-    <li className="text-[1.125rem] leading-[1.8] text-foreground/85 pl-4 relative before:content-['–'] before:absolute before:left-0 before:text-accent/60 [ol_&]:before:content-none [ol_&]:pl-0" {...props} />
+    <li
+      className="font-[var(--font-serif)] text-[1.25rem] leading-[1.5] text-foreground/90 pl-2"
+      {...props}
+    />
   ),
   blockquote: (props: React.ComponentProps<"blockquote">) => (
     <blockquote
-      className="border-l-2 border-accent/40 pl-6 my-8 italic text-foreground/70"
+      className="border-l-[3px] border-foreground/20 pl-6 my-10 [&>p]:italic [&>p]:text-foreground/70"
       {...props}
     />
   ),
@@ -42,26 +51,24 @@ const components = {
     <strong className="font-semibold text-foreground" {...props} />
   ),
   em: (props: React.ComponentProps<"em">) => (
-    <em className="italic text-foreground/90" {...props} />
+    <em className="italic" {...props} />
   ),
   a: (props: React.ComponentProps<"a">) => (
     <a
-      className="text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent transition-colors"
+      className="text-foreground underline decoration-foreground/30 underline-offset-2 hover:decoration-foreground/60 transition-colors"
       {...props}
     />
   ),
-  hr: () => (
-    <hr className="my-12 border-0 border-t border-border/30" />
-  ),
+  hr: () => <hr className="my-[50px] border-0 border-t border-foreground/10" />,
   code: (props: React.ComponentProps<"code">) => (
     <code
-      className="font-mono text-[0.9em] bg-secondary/50 px-1.5 py-0.5 rounded-sm text-accent"
+      className="font-mono text-[0.85em] bg-[oklch(0.15_0_0)] px-1.5 py-0.5 text-foreground/80"
       {...props}
     />
   ),
   pre: (props: React.ComponentProps<"pre">) => (
     <pre
-      className="font-mono text-sm bg-secondary/30 border border-border/20 p-5 mb-6 overflow-x-auto leading-relaxed"
+      className="font-mono text-sm bg-[oklch(0.12_0_0)] border border-[oklch(0.2_0_0)] p-5 mb-7 overflow-x-auto leading-relaxed"
       {...props}
     />
   ),
@@ -73,7 +80,7 @@ interface ArticleBodyProps {
 
 export function ArticleBody({ content }: ArticleBodyProps) {
   return (
-    <article className="article-body">
+    <div className="mt-10">
       <MDXRemote
         source={content}
         components={components}
@@ -84,6 +91,6 @@ export function ArticleBody({ content }: ArticleBodyProps) {
           },
         }}
       />
-    </article>
+    </div>
   )
 }

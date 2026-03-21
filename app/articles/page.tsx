@@ -29,20 +29,20 @@ export default function ArticlesPage() {
   const articles = getAllArticles()
 
   return (
-    <div className="max-w-[720px] mx-auto px-6 py-16">
-      <header className="mb-12">
-        <h1 className="font-sans text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-4">
+    <div className="max-w-[736px] mx-auto px-6 py-20">
+      <header className="mb-14">
+        <h1 className="font-[var(--font-serif)] text-[2.5rem] md:text-[3rem] font-normal text-foreground tracking-[-0.01em] mb-4">
           Articles
         </h1>
-        <p className="text-lg text-muted-foreground leading-relaxed">
+        <p className="font-[var(--font-serif)] text-xl text-foreground/50 leading-relaxed">
           On building products, shipping fast, and the craft of turning ideas
           into software.
         </p>
       </header>
 
       {articles.length === 0 ? (
-        <p className="font-mono text-sm text-muted-foreground">
-          New articles coming soon.
+        <p className="font-[var(--font-serif)] text-lg text-foreground/40">
+          New writing coming soon.
         </p>
       ) : (
         <div>

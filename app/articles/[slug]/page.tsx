@@ -1,9 +1,13 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import { notFound } from "next/navigation"
-import { getAllArticles, getArticleBySlug, getArticleSlugs } from "@/lib/articles"
+import {
+  getAllArticles,
+  getArticleBySlug,
+  getArticleSlugs,
+} from "@/lib/articles"
 import { ArticleHeader } from "@/components/articles/article-header"
 import { ArticleBody } from "@/components/articles/article-body"
-import { ShareBar } from "@/components/articles/share-bar"
 import { ArticleCard } from "@/components/articles/article-card"
 
 interface ArticlePageProps {
@@ -98,39 +102,50 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   if (!article || !article.frontmatter.published) notFound()
 
   const allArticles = getAllArticles()
-  const relatedArticles = allArticles
-    .filter((a) => a.slug !== slug)
-    .slice(0, 3)
+  const relatedArticles = allArticles.filter((a) => a.slug !== slug).slice(0, 3)
 
   return (
     <>
       <ArticleJsonLd article={article} slug={slug} />
 
-      <div className="max-w-[720px] mx-auto px-6 pt-16 pb-12">
+      {/* Cover image — spans wider than content, like every.to */}
+      {article.frontmatter.coverImage && (
+        <figure className="max-w-[1100px] mx-auto mt-10 px-6">
+          <div className="relative w-full aspect-[16/9] overflow-hidden">
+            <Image
+              src={article.frontmatter.coverImage}
+              alt={article.frontmatter.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        </figure>
+      )}
+
+      {/* Article content — narrow column */}
+      <article className="max-w-[736px] mx-auto px-6 pt-10 pb-16">
         <ArticleHeader
           frontmatter={article.frontmatter}
           readingTime={article.readingTime}
+          slug={slug}
         />
 
         <ArticleBody content={article.content} />
+      </article>
 
-        <div className="mt-12 pt-8 border-t border-border/30 flex items-center justify-between">
-          <ShareBar title={article.frontmatter.title} slug={slug} />
-          <span className="font-mono text-xs text-muted-foreground">
-            {article.readingTime} min read
-          </span>
-        </div>
-      </div>
-
+      {/* Related articles */}
       {relatedArticles.length > 0 && (
-        <section className="border-t border-border/20">
-          <div className="max-w-[720px] mx-auto px-6 py-16">
-            <h2 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-8">
-              More articles
+        <section className="border-t border-[oklch(0.15_0_0)]">
+          <div className="max-w-[736px] mx-auto px-6 py-16">
+            <h2 className="font-[var(--font-serif)] text-2xl font-normal text-foreground mb-10">
+              Related
             </h2>
-            {relatedArticles.map((a) => (
-              <ArticleCard key={a.slug} article={a} />
-            ))}
+            <div className="space-y-0">
+              {relatedArticles.map((a) => (
+                <ArticleCard key={a.slug} article={a} />
+              ))}
+            </div>
           </div>
         </section>
       )}

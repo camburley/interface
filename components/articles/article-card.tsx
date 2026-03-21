@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Article } from "@/lib/articles"
 import { format } from "date-fns"
 
@@ -12,40 +13,40 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
   return (
     <Link href={`/articles/${slug}`} className="group block">
-      <article className="py-8 border-b border-border/20 transition-colors">
-        {frontmatter.tags && frontmatter.tags.length > 0 && (
-          <div className="flex items-center gap-3 mb-3">
-            {frontmatter.tags.map((tag) => (
-              <span
-                key={tag}
-                className="font-mono text-[10px] uppercase tracking-widest text-accent/70"
-              >
-                {tag}
-              </span>
-            ))}
+      <article className="flex gap-6 py-7 border-b border-[oklch(0.15_0_0)]">
+        {/* Thumbnail */}
+        {frontmatter.coverImage && (
+          <div className="hidden sm:block flex-shrink-0 w-[140px] h-[90px] relative overflow-hidden bg-[oklch(0.12_0_0)]">
+            <Image
+              src={frontmatter.coverImage}
+              alt={frontmatter.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
           </div>
         )}
 
-        <h2 className="font-sans text-xl md:text-2xl font-bold text-foreground group-hover:text-accent transition-colors tracking-tight mb-2">
-          {frontmatter.title}
-        </h2>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-[var(--font-serif)] text-lg md:text-xl font-normal text-foreground group-hover:text-foreground/70 transition-colors leading-snug mb-1.5">
+            {frontmatter.title}
+          </h2>
 
-        <p className="text-[15px] leading-relaxed text-muted-foreground mb-4 line-clamp-2">
-          {frontmatter.description}
-        </p>
+          <p className="text-sm text-foreground/50 leading-relaxed mb-3 line-clamp-2">
+            {frontmatter.description}
+          </p>
 
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center">
-            <span className="font-mono text-[9px] text-accent font-medium">
-              CB
-            </span>
-          </div>
-          <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
-            <span>{frontmatter.author}</span>
-            <span className="text-border">·</span>
-            <time dateTime={frontmatter.date}>{formattedDate}</time>
-            <span className="text-border">·</span>
-            <span>{readingTime} min</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-[oklch(0.18_0_0)] flex items-center justify-center">
+                <span className="text-[7px] text-foreground/50 font-mono font-medium">
+                  CB
+                </span>
+              </div>
+              <span className="text-xs text-foreground/40">
+                {frontmatter.author}
+              </span>
+            </div>
+            <span className="text-xs text-foreground/25">{formattedDate}</span>
           </div>
         </div>
       </article>
