@@ -10,7 +10,7 @@ interface AuthorSidebarProps {
 
 export function AuthorSidebar({ frontmatter }: AuthorSidebarProps) {
   return (
-    <aside className="hidden lg:block w-[180px] shrink-0 pt-1">
+    <aside className="hidden lg:block w-[180px] shrink-0 pt-1 self-start sticky top-[72px]">
       <div className="w-[48px] h-[48px] rounded-full overflow-hidden mb-3 border border-foreground/10">
         <Image
           src="/images/cam-burley.png"
