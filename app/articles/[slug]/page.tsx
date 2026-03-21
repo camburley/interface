@@ -108,10 +108,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <>
       <ArticleJsonLd article={article} slug={slug} />
 
-      {/* Cover image — spans wider than content, like every.to */}
+      {/* Cover image: width 1248px centered, margin 80px auto 0 */}
       {article.frontmatter.coverImage && (
-        <figure className="max-w-[1100px] mx-auto mt-10 px-6">
-          <div className="relative w-full aspect-[16/9] overflow-hidden">
+        <figure className="mx-auto" style={{ maxWidth: "1248px", margin: "80px auto 0" }}>
+          <div className="relative w-full aspect-[16/9] overflow-hidden px-6">
             <Image
               src={article.frontmatter.coverImage}
               alt={article.frontmatter.title}
@@ -120,11 +120,17 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               priority
             />
           </div>
+          {/* Caption: system font, 12px, color muted */}
+          <div className="max-w-[736px] mx-auto px-6">
+            <p className="text-[12px] text-foreground/30 mt-2">
+              Illustration
+            </p>
+          </div>
         </figure>
       )}
 
-      {/* Article content — narrow column */}
-      <article className="max-w-[736px] mx-auto px-6 pt-10 pb-16">
+      {/* Content column: 736px */}
+      <article className="max-w-[736px] mx-auto px-6" style={{ paddingTop: article.frontmatter.coverImage ? "40px" : "80px", paddingBottom: "64px" }}>
         <ArticleHeader
           frontmatter={article.frontmatter}
           readingTime={article.readingTime}
@@ -134,18 +140,22 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <ArticleBody content={article.content} />
       </article>
 
-      {/* Related articles */}
+      {/* Related: heading is Switzer 18px weight 500, container 736px, padding 16px 0 */}
       {relatedArticles.length > 0 && (
-        <section className="border-t border-[oklch(0.15_0_0)]">
-          <div className="max-w-[736px] mx-auto px-6 py-16">
-            <h2 className="font-[var(--font-serif)] text-2xl font-normal text-foreground mb-10">
+        <section className="border-t border-foreground/5">
+          <div
+            className="max-w-[736px] mx-auto px-6"
+            style={{ padding: "16px 24px 64px" }}
+          >
+            <h2
+              className="font-editorial-sans text-[18px] font-medium leading-[27px] text-foreground"
+              style={{ marginBottom: "16px" }}
+            >
               Related
             </h2>
-            <div className="space-y-0">
-              {relatedArticles.map((a) => (
-                <ArticleCard key={a.slug} article={a} />
-              ))}
-            </div>
+            {relatedArticles.map((a) => (
+              <ArticleCard key={a.slug} article={a} />
+            ))}
           </div>
         </section>
       )}

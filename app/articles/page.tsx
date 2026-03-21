@@ -29,19 +29,23 @@ export default function ArticlesPage() {
   const articles = getAllArticles()
 
   return (
-    <div className="max-w-[736px] mx-auto px-6 py-20">
-      <header className="mb-14">
-        <h1 className="font-[var(--font-serif)] text-[2.5rem] md:text-[3rem] font-normal text-foreground tracking-[-0.01em] mb-4">
+    <div className="max-w-[736px] mx-auto px-6" style={{ paddingTop: "80px", paddingBottom: "64px" }}>
+      <header style={{ marginBottom: "40px" }}>
+        {/* Page title: Newsreader, 48px, weight 400 */}
+        <h1
+          className="font-editorial-serif text-[48px] font-normal leading-normal text-foreground"
+          style={{ marginBottom: "12px" }}
+        >
           Articles
         </h1>
-        <p className="font-[var(--font-serif)] text-xl text-foreground/50 leading-relaxed">
+        <p className="font-editorial-serif text-[24px] font-normal leading-normal text-foreground/40">
           On building products, shipping fast, and the craft of turning ideas
           into software.
         </p>
       </header>
 
       {articles.length === 0 ? (
-        <p className="font-[var(--font-serif)] text-lg text-foreground/40">
+        <p className="font-editorial-serif text-[20px] font-normal leading-[30px] text-foreground/30">
           New writing coming soon.
         </p>
       ) : (

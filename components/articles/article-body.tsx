@@ -2,71 +2,93 @@ import { MDXRemote } from "next-mdx-remote/rsc"
 import remarkGfm from "remark-gfm"
 import rehypeSlug from "rehype-slug"
 
+const serifClass = "font-editorial-serif"
+
 const components = {
   h2: (props: React.ComponentProps<"h2">) => (
     <h2
-      className="font-[var(--font-serif)] text-2xl font-normal text-foreground mt-14 mb-4 leading-[1.5]"
+      className={`${serifClass} text-[30px] font-bold leading-[37.5px] text-foreground`}
+      style={{ margin: "30px 0 12px" }}
       {...props}
     />
   ),
   h3: (props: React.ComponentProps<"h3">) => (
     <h3
-      className="font-[var(--font-serif)] text-xl font-semibold text-foreground mt-10 mb-3 leading-[1.5]"
+      className={`${serifClass} text-[26px] font-bold leading-[33px] text-foreground`}
+      style={{ margin: "28px 0 10px" }}
       {...props}
     />
   ),
   h4: (props: React.ComponentProps<"h4">) => (
     <h4
-      className="font-[var(--font-serif)] text-lg font-semibold text-foreground mt-8 mb-2 leading-[1.5]"
+      className={`${serifClass} text-[24px] font-bold leading-[30px] text-foreground`}
+      style={{ margin: "24px 0 9.6px" }}
       {...props}
     />
   ),
   p: (props: React.ComponentProps<"p">) => (
     <p
-      className="font-[var(--font-serif)] text-[1.25rem] leading-[1.5] text-foreground/90 mb-7"
+      className={`${serifClass} text-[20px] font-normal leading-[30px] text-foreground/90`}
+      style={{ margin: "0 0 20px" }}
       {...props}
     />
   ),
   ul: (props: React.ComponentProps<"ul">) => (
-    <ul className="mb-7 space-y-1.5" {...props} />
+    <ul
+      className="list-disc pl-8"
+      style={{ margin: "0 0 20px" }}
+      {...props}
+    />
   ),
   ol: (props: React.ComponentProps<"ol">) => (
-    <ol className="mb-7 space-y-1.5 list-decimal pl-6" {...props} />
+    <ol
+      className="list-decimal pl-8"
+      style={{ margin: "0 0 20px" }}
+      {...props}
+    />
   ),
   li: (props: React.ComponentProps<"li">) => (
     <li
-      className="font-[var(--font-serif)] text-[1.25rem] leading-[1.5] text-foreground/90 pl-2"
+      className={`${serifClass} text-[20px] font-normal leading-[30px] text-foreground/90`}
+      style={{ margin: "0 0 6px" }}
       {...props}
     />
   ),
   blockquote: (props: React.ComponentProps<"blockquote">) => (
     <blockquote
-      className="border-l-[3px] border-foreground/20 pl-6 my-10 [&>p]:italic [&>p]:text-foreground/70"
+      className="border-l-[3px] border-foreground/20 pl-6"
+      style={{ margin: "30px 0" }}
       {...props}
     />
   ),
   strong: (props: React.ComponentProps<"strong">) => (
-    <strong className="font-semibold text-foreground" {...props} />
+    <strong className="font-bold text-foreground" {...props} />
   ),
   em: (props: React.ComponentProps<"em">) => (
     <em className="italic" {...props} />
   ),
   a: (props: React.ComponentProps<"a">) => (
     <a
-      className="text-foreground underline decoration-foreground/30 underline-offset-2 hover:decoration-foreground/60 transition-colors"
+      className={`${serifClass} text-foreground underline`}
       {...props}
     />
   ),
-  hr: () => <hr className="my-[50px] border-0 border-t border-foreground/10" />,
+  hr: () => (
+    <hr
+      className="border-0 h-[2px] bg-foreground/15"
+      style={{ margin: "50px 0" }}
+    />
+  ),
   code: (props: React.ComponentProps<"code">) => (
     <code
-      className="font-mono text-[0.85em] bg-[oklch(0.15_0_0)] px-1.5 py-0.5 text-foreground/80"
+      className="font-mono text-[0.85em] bg-foreground/10 px-1.5 py-0.5 text-foreground/80"
       {...props}
     />
   ),
   pre: (props: React.ComponentProps<"pre">) => (
     <pre
-      className="font-mono text-sm bg-[oklch(0.12_0_0)] border border-[oklch(0.2_0_0)] p-5 mb-7 overflow-x-auto leading-relaxed"
+      className="font-mono text-sm bg-foreground/5 border border-foreground/10 p-5 overflow-x-auto leading-relaxed"
+      style={{ margin: "0 0 20px" }}
       {...props}
     />
   ),
@@ -78,7 +100,7 @@ interface ArticleBodyProps {
 
 export function ArticleBody({ content }: ArticleBodyProps) {
   return (
-    <div className="mt-10">
+    <div style={{ paddingTop: "10px" }}>
       <MDXRemote
         source={content}
         components={components}

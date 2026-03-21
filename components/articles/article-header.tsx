@@ -17,39 +17,57 @@ export function ArticleHeader({
 
   return (
     <header>
-      {/* Author byline — sits above the title like every.to */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-full bg-[oklch(0.18_0_0)] flex items-center justify-center border border-[oklch(0.25_0_0)]">
-          <span className="font-mono text-[11px] text-foreground/70 font-medium">
+      {/* Byline — above title, matches every.to structure exactly */}
+      <div className="flex items-center gap-3 mb-6">
+        <div
+          className="w-[40px] h-[40px] rounded-full bg-[oklch(0.18_0_0)] flex items-center justify-center shrink-0"
+        >
+          <span className="font-editorial-sans text-[11px] text-foreground/60 font-medium">
             CB
           </span>
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-foreground">
+          {/* Author: Switzer, 14px, weight 500 */}
+          <span className="font-editorial-sans text-[14px] font-medium leading-[21px] text-foreground">
             {frontmatter.author}
           </span>
-          <span className="text-[13px] text-muted-foreground">
-            {frontmatter.tags?.join(" · ")}
-          </span>
+          {/* Column/tags: Switzer, 14px, weight 400 */}
+          {frontmatter.tags && (
+            <span className="font-editorial-sans text-[14px] font-normal leading-[21px] text-foreground/50">
+              {frontmatter.tags.join(" · ")}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Title — large serif, regular weight */}
-      <h1 className="font-[var(--font-serif)] text-[2.5rem] md:text-[3rem] leading-[1.1] font-normal text-foreground tracking-[-0.01em] mb-4">
+      {/* H1: Signifier→Newsreader, 48px, weight 400, line-height normal, margin -8px 0 20px */}
+      <h1
+        className="font-editorial-serif text-[48px] font-normal leading-normal text-foreground"
+        style={{ margin: "-8px 0 20px" }}
+      >
         {frontmatter.title}
       </h1>
 
-      {/* Subtitle / description — serif, lighter */}
-      <p className="font-[var(--font-serif)] text-xl md:text-2xl leading-normal text-foreground/60 mb-8">
+      {/* Subtitle: Signifier→Newsreader, 24px, weight 400, line-height normal */}
+      <p className="font-editorial-serif text-[24px] font-normal leading-normal text-foreground/60">
         {frontmatter.description}
       </p>
 
-      {/* Date + share row */}
-      <div className="flex items-center justify-between pb-8 border-b border-[oklch(0.2_0_0)]">
-        <span className="text-[15px] text-foreground/80">{formattedDate}</span>
-        <div className="flex items-center gap-1">
-          <ShareBar title={frontmatter.title} slug={slug} />
-        </div>
+      {/* Date + share row: flex, padding 12px 0, space-between */}
+      <div
+        className="flex items-center justify-between"
+        style={{ padding: "12px 0" }}
+      >
+        {/* Date: Switzer, 16px, weight 400, line-height 24px */}
+        <time
+          dateTime={frontmatter.date}
+          className="font-editorial-sans text-[16px] font-normal leading-[24px] text-foreground"
+        >
+          {formattedDate}
+        </time>
+
+        {/* Share: flex, gap 8px */}
+        <ShareBar title={frontmatter.title} slug={slug} />
       </div>
     </header>
   )

@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue, Source_Serif_4 } from "next/font/google"
+import { IBM_Plex_Sans, IBM_Plex_Mono, Bebas_Neue, Newsreader } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SmoothScroll } from "@/components/smooth-scroll"
 import { Toaster } from "sonner"
@@ -17,10 +17,10 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
 })
 const bebasNeue = Bebas_Neue({ weight: "400", subsets: ["latin"], variable: "--font-bebas" })
-const sourceSerif = Source_Serif_4({
-  weight: ["400", "600"],
+const newsreader = Newsreader({
+  weight: ["400", "700"],
   subsets: ["latin"],
-  variable: "--font-source-serif",
+  variable: "--font-newsreader",
   style: ["normal", "italic"],
 })
 
@@ -55,8 +55,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark bg-background">
+      <head>
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=switzer@100,200,300,400,500,600,700,800,900,1,2&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
-        className={`${ibmPlexSans.variable} ${bebasNeue.variable} ${ibmPlexMono.variable} ${sourceSerif.variable} font-sans antialiased overflow-x-hidden`}
+        className={`${ibmPlexSans.variable} ${bebasNeue.variable} ${ibmPlexMono.variable} ${newsreader.variable} font-sans antialiased overflow-x-hidden`}
       >
         <div className="noise-overlay" aria-hidden="true" />
         <SmoothScroll>{children}</SmoothScroll>
