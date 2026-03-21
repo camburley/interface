@@ -138,3 +138,14 @@
   background: oklch(0.7 0.2 45);
   color: oklch(0.08 0 0);
 }
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

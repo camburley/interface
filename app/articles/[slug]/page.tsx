@@ -145,6 +145,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               frontmatter={article.frontmatter}
               readingTime={article.readingTime}
               slug={slug}
+              articleContent={article.content}
             />
             <ArticleBody content={article.content} />
           </article>

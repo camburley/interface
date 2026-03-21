@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { ArticleFrontmatter } from "@/lib/articles"
 import { format } from "date-fns"
 import { ShareBar } from "./share-bar"
@@ -7,12 +8,14 @@ interface ArticleHeaderProps {
   frontmatter: ArticleFrontmatter
   readingTime: number
   slug: string
+  articleContent: string
 }
 
 export function ArticleHeader({
   frontmatter,
   readingTime,
   slug,
+  articleContent,
 }: ArticleHeaderProps) {
   const [year, month, day] = frontmatter.date.split("-").map(Number)
   const formattedDate = format(new Date(year, month - 1, day), "MMMM d, yyyy")
@@ -21,13 +24,14 @@ export function ArticleHeader({
     <header>
       {/* Mobile-only byline (sidebar handles desktop) */}
       <div className="flex items-center gap-3 mb-6 lg:hidden">
-        <div className="w-[40px] h-[40px] rounded-full bg-[oklch(0.18_0_0)] flex items-center justify-center shrink-0">
-          <span className="font-editorial-sans text-[11px] text-foreground/60 font-medium">
-            {frontmatter.author
-              .split(" ")
-              .map((n) => n[0])
-              .join("")}
-          </span>
+        <div className="w-[40px] h-[40px] rounded-full overflow-hidden shrink-0 border border-foreground/10">
+          <Image
+            src="/images/cam-burley.png"
+            alt={frontmatter.author}
+            width={40}
+            height={40}
+            className="object-cover w-full h-full"
+          />
         </div>
         <div className="flex flex-col">
           <span className="font-editorial-sans text-[14px] font-medium leading-[21px] text-foreground">
@@ -63,7 +67,11 @@ export function ArticleHeader({
           >
             {formattedDate}
           </time>
-          <ListenButton readingTime={readingTime} />
+          <ListenButton
+            articleTitle={frontmatter.title}
+            articleContent={articleContent}
+            readingTime={readingTime}
+          />
         </div>
 
         <ShareBar title={frontmatter.title} slug={slug} />

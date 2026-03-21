@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { ArticleFrontmatter } from "@/lib/articles"
 
 const DEFAULT_BIO =
@@ -8,18 +9,16 @@ interface AuthorSidebarProps {
 }
 
 export function AuthorSidebar({ frontmatter }: AuthorSidebarProps) {
-  const initials = frontmatter.author
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-
   return (
     <aside className="hidden lg:block w-[180px] shrink-0 pt-1">
-      <div className="w-[48px] h-[48px] rounded-full bg-[oklch(0.18_0_0)] border border-foreground/10 flex items-center justify-center mb-3">
-        <span className="font-editorial-sans text-[13px] text-foreground/60 font-medium">
-          {initials}
-        </span>
+      <div className="w-[48px] h-[48px] rounded-full overflow-hidden mb-3 border border-foreground/10">
+        <Image
+          src="/images/cam-burley.png"
+          alt={frontmatter.author}
+          width={48}
+          height={48}
+          className="object-cover w-full h-full"
+        />
       </div>
 
       <div className="mb-2">
