@@ -7,7 +7,7 @@ import { AudioPlayerBar } from "./audio-player-bar"
 export function ArticleNav() {
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-foreground/5">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-foreground/5">
         <div
           className="max-w-[1248px] mx-auto px-6 flex items-center justify-between"
           style={{ height: "56px" }}
@@ -38,6 +38,8 @@ export function ArticleNav() {
         </div>
       </nav>
       <AudioPlayerBar />
+      {/* Spacer to offset fixed nav height */}
+      <div style={{ height: "56px" }} />
     </>
   )
 }

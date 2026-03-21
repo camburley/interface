@@ -17,7 +17,7 @@ export function AudioPlayerBar() {
 
   return (
     <div
-      className="sticky top-[56px] z-40 bg-[oklch(0.12_0_0)] border-b border-foreground/5 overflow-hidden"
+      className="fixed top-[56px] left-0 right-0 z-40 bg-[oklch(0.12_0_0)] border-b border-foreground/5 overflow-hidden"
       style={{
         animation: "slideDown 0.3s ease-out",
       }}
