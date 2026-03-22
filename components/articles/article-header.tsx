@@ -57,13 +57,13 @@ export function ArticleHeader({
       </p>
 
       <div
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         style={{ padding: "12px 0" }}
       >
         <div className="flex items-center gap-4">
           <time
             dateTime={frontmatter.date}
-            className="font-editorial-sans text-[16px] font-normal leading-[24px] text-foreground"
+            className="font-editorial-sans text-[16px] font-normal leading-[24px] text-foreground whitespace-nowrap"
           >
             {formattedDate}
           </time>

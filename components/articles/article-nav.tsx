@@ -14,8 +14,8 @@ export function ArticleNav() {
         >
           <Link href="/" className="flex items-center">
             <SplitFlapAudioProvider>
-              <div className="h-[32px] w-[100px] flex items-center shrink-0">
-                <div className="scale-[0.18] origin-left whitespace-nowrap">
+              <div className="h-[40px] w-[120px] md:h-[32px] md:w-[140px] flex items-center shrink-0">
+                <div className="scale-[0.66] md:scale-[0.18] origin-left whitespace-nowrap">
                   <SplitFlapText text="BURLEY" speed={40} />
                 </div>
               </div>
