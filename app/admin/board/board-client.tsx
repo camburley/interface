@@ -550,7 +550,7 @@ function TaskCard({
   isDragging: boolean
   onDragStart: (e: React.DragEvent, id: string) => void
 }) {
-  const priorityCfg = TASK_PRIORITY_CONFIG[task.priority]
+  const priorityCfg = TASK_PRIORITY_CONFIG[task.priority] ?? TASK_PRIORITY_CONFIG.medium
 
   return (
     <div

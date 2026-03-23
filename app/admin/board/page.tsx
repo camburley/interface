@@ -16,9 +16,11 @@ export default async function BoardPage() {
   const { db } = getFirebaseAdmin()
 
   const tasksSnap = await db.collection("tasks").get()
-  const tasks: Task[] = tasksSnap.docs.map(
-    (d) => ({ id: d.id, ...d.data() } as Task),
-  )
+  const tasks: Task[] = tasksSnap.docs.map((d) => {
+    const data = d.data()
+    // Serialize Firestore Timestamps to ISO strings for client component
+    return JSON.parse(JSON.stringify({ id: d.id, ...data })) as Task
+  })
 
   const projectsSnap = await db.collection("milestone_projects").get()
   const projects: BoardProject[] = projectsSnap.docs.map((d, i) => ({
