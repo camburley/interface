@@ -85,6 +85,28 @@ This project is optimized for deployment on Vercel:
 2. Add your custom domain in Vercel settings
 3. Deploy automatically on every push to `main`
 
+## Agent/Programmatic Board API
+
+The burley.ai board (Clients, Products, Ops) is fully agent-automatable.
+
+- All project/task/board ops are REST endpoints
+- Auth: Bearer token (`MILESTONES_API_TOKEN`)
+- X-Agent-Id header required for attribution/audit
+- Strict workflow transitions (see ENDPOINTS.md)
+- Example shell/agent skill: `~/.openclaw/skills/burley-board/SKILL.md`
+- Full API: [ENDPOINTS.md](./ENDPOINTS.md)
+
+Key ops:
+- List/filter projects: `/api/admin/tasks/projects?boardType=internal`
+- List/create/update/move/delete tasks: `/api/admin/tasks` and `/api/admin/tasks/:id`
+- Move tasks: `/api/admin/tasks/:taskId/move` (must follow workflow rules)
+- Block, claim, split, artifact, comment, complete: see ENDPOINTS.md
+
+**For agent integration:**
+1. Read ENDPOINTS.md
+2. Follow workflow transitions (e.g. todo→in_progress, then review, then done)
+3. Use your OpenClaw agent skill to read/write these endpoints
+
 ## License
 
 Private project - All rights reserved
