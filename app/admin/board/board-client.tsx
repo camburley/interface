@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Plus,
@@ -14,6 +15,9 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
+  Briefcase,
+  Rocket,
+  Settings,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTaskStore } from "@/lib/stores/task-store"
@@ -23,6 +27,14 @@ import {
   TASK_STATUS_CONFIG,
 } from "@/lib/types/task"
 import type { Task, TaskStatus, TaskPriority, BoardProject } from "@/lib/types/task"
+
+type BoardType = "client" | "internal" | "ops"
+
+const BOARD_TABS: { id: BoardType; label: string; icon: typeof Briefcase }[] = [
+  { id: "client", label: "Clients", icon: Briefcase },
+  { id: "internal", label: "Products", icon: Rocket },
+  { id: "ops", label: "Operations", icon: Settings },
+]
 
 interface Props {
   initialTasks: Task[]
@@ -41,13 +53,35 @@ export function BoardClient({ initialTasks, projects }: Props) {
     fetchTasks,
   } = useTaskStore()
 
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const activeBoardType = (searchParams.get("type") as BoardType) || "client"
+
+  const setActiveBoardType = useCallback(
+    (type: BoardType) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set("type", type)
+      router.replace(`/admin/board?${params.toString()}`)
+      setFilters({ projectId: undefined })
+    },
+    [searchParams, router, setFilters],
+  )
+
+  // Filter projects by active board type
+  const boardProjects = projects.filter(
+    (p) => (p.boardType ?? "client") === activeBoardType,
+  )
+
+  // Project IDs for the active board
+  const boardProjectIds = new Set(boardProjects.map((p) => p.id))
+
   const [initialized, setInitialized] = useState(false)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [newTask, setNewTask] = useState({
     title: "",
-    projectId: projects[0]?.id ?? "",
+    projectId: boardProjects[0]?.id ?? "",
     priority: "medium" as TaskPriority,
     status: "backlog" as TaskStatus,
     tags: "",
@@ -76,7 +110,16 @@ export function BoardClient({ initialTasks, projects }: Props) {
     }
   }, [filters.projectId, fetchTasks])
 
-  const visible = initialized ? filteredTasks() : initialTasks
+  // Reset default project when board type changes
+  useEffect(() => {
+    if (boardProjects.length > 0) {
+      setNewTask((prev) => ({ ...prev, projectId: boardProjects[0].id }))
+    }
+  }, [activeBoardType]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const allFiltered = initialized ? filteredTasks() : initialTasks
+  // Scope visible tasks to the active board type
+  const visible = allFiltered.filter((t) => boardProjectIds.has(t.projectId))
 
   const getProjectColor = useCallback(
     (projectId: string) =>
@@ -150,11 +193,12 @@ export function BoardClient({ initialTasks, projects }: Props) {
   const columnTasks = (status: TaskStatus) =>
     visible.filter((t) => t.status === status)
 
-  const totalTasks = tasks.length
-  const inProgressCount = tasks.filter(
+  const boardScopedTasks = tasks.filter((t) => boardProjectIds.has(t.projectId))
+  const totalTasks = boardScopedTasks.length
+  const inProgressCount = boardScopedTasks.filter(
     (t) => t.status === "in_progress",
   ).length
-  const blockedCount = tasks.filter((t) => t.status === "blocked").length
+  const blockedCount = boardScopedTasks.filter((t) => t.status === "blocked").length
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -189,6 +233,38 @@ export function BoardClient({ initialTasks, projects }: Props) {
       </header>
 
       <div className="max-w-[1600px] mx-auto px-6 py-6">
+        {/* Board type tabs */}
+        <div className="flex items-center gap-1 mb-6 border-b border-border/40 pb-3">
+          {BOARD_TABS.map((tab) => {
+            const isActive = activeBoardType === tab.id
+            const Icon = tab.icon
+            const tabProjects = projects.filter(
+              (p) => (p.boardType ?? "client") === tab.id,
+            )
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveBoardType(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-all ${
+                  isActive
+                    ? "bg-primary/10 text-primary border border-primary/30"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30 border border-transparent"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+                <span
+                  className={`text-[10px] ${
+                    isActive ? "text-primary/70" : "text-muted-foreground/50"
+                  }`}
+                >
+                  {tabProjects.length}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Stats bar */}
         <div className="flex items-center gap-6 mb-6 font-mono text-xs">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -227,7 +303,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
               className="bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
             >
               <option value="">All Projects</option>
-              {projects.map((p) => (
+              {boardProjects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
@@ -286,7 +362,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
                   }
                   className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
                 >
-                  {projects.map((p) => (
+                  {boardProjects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
                     </option>

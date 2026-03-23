@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { validateBearerOrAdmin } from "@/lib/api-auth"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { PROJECT_COLORS } from "@/lib/types/task"
+import type { BoardType } from "@/lib/types/milestone"
+
+const VALID_BOARD_TYPES: BoardType[] = ["client", "internal", "ops"]
 
 export async function GET(request: NextRequest) {
   const { authorized } = await validateBearerOrAdmin(request)
@@ -10,7 +13,14 @@ export async function GET(request: NextRequest) {
 
   const { db } = getFirebaseAdmin()
 
-  const projectsSnap = await db.collection("milestone_projects").get()
+  const boardType = request.nextUrl.searchParams.get("boardType") as BoardType | null
+
+  let projectsQuery: FirebaseFirestore.Query = db.collection("milestone_projects")
+  if (boardType && VALID_BOARD_TYPES.includes(boardType)) {
+    projectsQuery = projectsQuery.where("boardType", "==", boardType)
+  }
+
+  const projectsSnap = await projectsQuery.get()
   const projects = await Promise.all(
     projectsSnap.docs.map(async (doc, idx) => {
       const data = doc.data()
@@ -79,6 +89,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         clientName: data.clientName,
         projectName: data.projectName,
+        boardType: (data.boardType ?? "client") as BoardType,
         color: PROJECT_COLORS[idx % PROJECT_COLORS.length],
         milestones,
         taskCounts,

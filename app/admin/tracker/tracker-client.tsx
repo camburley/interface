@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Search,
@@ -13,9 +14,20 @@ import {
   ArrowLeft,
   Activity,
   LayoutGrid,
+  Briefcase,
+  Rocket,
+  Settings,
 } from "lucide-react"
 import type { TrackerProject, TrackerMilestone } from "@/lib/stores/project-store"
 import { useProjectStore } from "@/lib/stores/project-store"
+
+type BoardType = "client" | "internal" | "ops"
+
+const BOARD_TABS: { id: BoardType; label: string; icon: typeof Briefcase }[] = [
+  { id: "client", label: "Clients", icon: Briefcase },
+  { id: "internal", label: "Products", icon: Rocket },
+  { id: "ops", label: "Operations", icon: Settings },
+]
 
 type ProjectStatus = "on-track" | "warning" | "off-track" | "completed"
 
@@ -123,7 +135,26 @@ export function TrackerClient({ initialProjects }: Props) {
   const [selectedProject, setSelectedProject] = useState<TrackerProject | null>(null)
   const [refreshing, setRefreshing] = useState(false)
 
-  const filtered = projects.filter((p) => {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const activeBoardType = (searchParams.get("type") as BoardType) || "client"
+
+  const setActiveBoardType = useCallback(
+    (type: BoardType) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set("type", type)
+      router.replace(`/admin/tracker?${params.toString()}`)
+      setSelectedProject(null)
+    },
+    [searchParams, router],
+  )
+
+  // Filter by board type first, then by search
+  const boardFiltered = projects.filter(
+    (p) => (p.boardType ?? "client") === activeBoardType,
+  )
+
+  const filtered = boardFiltered.filter((p) => {
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -135,9 +166,9 @@ export function TrackerClient({ initialProjects }: Props) {
   const active = filtered.filter((p) => deriveStatus(p) !== "completed")
   const completed = filtered.filter((p) => deriveStatus(p) === "completed")
 
-  const offTrack = projects.filter((p) => deriveStatus(p) === "off-track").length
-  const warning = projects.filter((p) => deriveStatus(p) === "warning").length
-  const onTrack = projects.filter((p) => deriveStatus(p) === "on-track").length
+  const offTrack = boardFiltered.filter((p) => deriveStatus(p) === "off-track").length
+  const warning = boardFiltered.filter((p) => deriveStatus(p) === "warning").length
+  const onTrack = boardFiltered.filter((p) => deriveStatus(p) === "on-track").length
 
   async function handleRefresh() {
     setRefreshing(true)
@@ -185,6 +216,38 @@ export function TrackerClient({ initialProjects }: Props) {
       </header>
 
       <div className="max-w-5xl mx-auto px-6 py-6">
+        {/* Board type tabs */}
+        <div className="flex items-center gap-1 mb-6 border-b border-border/40 pb-3">
+          {BOARD_TABS.map((tab) => {
+            const isActive = activeBoardType === tab.id
+            const Icon = tab.icon
+            const tabProjects = projects.filter(
+              (p) => (p.boardType ?? "client") === tab.id,
+            )
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveBoardType(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-all ${
+                  isActive
+                    ? "bg-primary/10 text-primary border border-primary/30"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/30 border border-transparent"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {tab.label}
+                <span
+                  className={`text-[10px] ${
+                    isActive ? "text-primary/70" : "text-muted-foreground/50"
+                  }`}
+                >
+                  {tabProjects.length}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Summary bar */}
         <div className="flex items-center gap-6 mb-6 font-mono text-xs">
           {offTrack > 0 && (

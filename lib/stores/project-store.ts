@@ -18,6 +18,7 @@ export interface TrackerProject {
   id: string
   clientName: string
   projectName: string
+  boardType: "client" | "internal" | "ops"
   color: string
   milestones: TrackerMilestone[]
   taskCounts: {
@@ -61,6 +62,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
             name: p.projectName,
             color: p.color || PROJECT_COLORS[i % PROJECT_COLORS.length],
             clientName: p.clientName,
+            boardType: p.boardType ?? "client",
           }),
         ),
         loading: false,

@@ -1,6 +1,7 @@
 export type MilestoneStatus = "draft" | "active" | "completed" | "on-hold"
 export type StoryStatus = "todo" | "in-progress" | "review" | "done" | "blocked"
-export type FundingSource = "upwork-escrow" | "retainer" | "invoice" | "prepaid"
+export type FundingSource = "upwork-escrow" | "retainer" | "invoice" | "prepaid" | "self-funded"
+export type BoardType = "client" | "internal" | "ops"
 
 export interface StoryAttachment {
   type: "screenshot" | "loom" | "url"
@@ -47,6 +48,7 @@ export interface MilestoneProject {
   id: string
   clientName: string
   projectName: string
+  boardType: BoardType
   milestones: Milestone[]
 }
 

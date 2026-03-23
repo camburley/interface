@@ -59,6 +59,7 @@ const FUNDING_LABELS: Record<FundingSource, string> = {
   retainer: "Retainer",
   invoice: "Invoice",
   prepaid: "Prepaid",
+  "self-funded": "Self-Funded",
 }
 
 const STORY_STATUS_OPTIONS: StoryStatus[] = ["todo", "in-progress", "review", "done", "blocked"]

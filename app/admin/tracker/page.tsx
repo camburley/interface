@@ -70,15 +70,25 @@ export default async function TrackerPage() {
         (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
       )[0]
 
+      const completed = milestones
+        .filter((m) => m.status === "completed")
+        .reduce((s, m) => s + m.amount, 0)
+      const completedMilestoneCount = milestones.filter(
+        (m) => m.status === "completed",
+      ).length
+
       return {
         id: doc.id,
         clientName: data.clientName,
         projectName: data.projectName,
+        boardType: data.boardType ?? "client",
         color: PROJECT_COLORS[idx % PROJECT_COLORS.length],
         milestones,
         taskCounts,
         totalBudget,
         funded,
+        completed,
+        completedMilestoneCount,
         lastActivity: latestTask?.updatedAt,
       }
     }),

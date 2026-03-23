@@ -26,6 +26,7 @@ export default async function BoardPage() {
     name: d.data().projectName,
     color: PROJECT_COLORS[i % PROJECT_COLORS.length],
     clientName: d.data().clientName,
+    boardType: d.data().boardType ?? "client",
   }))
 
   return <BoardClient initialTasks={tasks} projects={projects} />

@@ -166,6 +166,7 @@ export interface BoardProject {
   name: string
   color: string
   clientName: string
+  boardType: "client" | "internal" | "ops"
 }
 
 export const PROJECT_COLORS = [

@@ -73,6 +73,7 @@ export async function getProjectWithMilestones(projectId: string): Promise<Miles
     id: projectId,
     clientName: projectData.clientName,
     projectName,
+    boardType: projectData.boardType ?? "client",
     milestones,
   }
 }
