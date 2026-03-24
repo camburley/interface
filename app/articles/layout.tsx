@@ -21,7 +21,7 @@ export default function ArticlesLayout({
                 BURLEY
               </div>
               <p className="font-editorial-serif text-[18px] font-normal text-foreground/40">
-                New ideas on building products — in your inbox.
+                From thought to thing.
               </p>
               <a
                 href="mailto:cam@burley.ai"
