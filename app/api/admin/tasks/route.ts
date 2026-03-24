@@ -7,6 +7,7 @@ import {
   fetchTasksFromFirestore,
 } from "@/lib/task-utils"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
+import { taskStatusToStoryStatus } from "@/lib/sync-status"
 import type { TaskStatus } from "@/lib/types/task"
 
 export async function GET(request: NextRequest) {
@@ -63,5 +64,49 @@ export async function POST(request: NextRequest) {
     details: { title: taskData.title, status: taskData.status },
   })
 
-  return NextResponse.json({ ok: true, id: ref.id, taskId })
+  // AUTO-LINK: If task has a milestoneId, auto-create or link a story
+  let storyId: string | null = body.storyId ?? null
+  if (!storyId && taskData.milestoneId) {
+    try {
+      // Check if a story with this exact title already exists in the milestone
+      const existingStories = await db
+        .collection("stories")
+        .where("milestoneId", "==", taskData.milestoneId)
+        .get()
+      const titleNorm = taskData.title.trim().toLowerCase()
+      const match = existingStories.docs.find(
+        (d) => (d.data().title as string)?.trim().toLowerCase() === titleNorm,
+      )
+
+      if (match) {
+        // Link to existing story
+        storyId = match.id
+      } else {
+        // Create a new story
+        const storyStatus = taskStatusToStoryStatus(taskData.status as TaskStatus)
+        const storyData = {
+          milestoneId: taskData.milestoneId,
+          projectId: taskData.projectId,
+          title: taskData.title,
+          status: storyStatus,
+          placeholder: false,
+          notes: taskData.description ?? "",
+          outputUrl: taskData.outputUrl ?? null,
+          specUrl: taskData.specUrl ?? null,
+          attachments: [],
+          createdAt: taskData.createdAt,
+          completedAt: storyStatus === "done" ? taskData.completedAt : null,
+        }
+        const storyRef = await db.collection("stories").add(storyData)
+        storyId = storyRef.id
+      }
+
+      // Link task to story
+      await ref.update({ storyId })
+    } catch (err) {
+      console.error("[task-create-auto-link] story creation failed:", err)
+    }
+  }
+
+  return NextResponse.json({ ok: true, id: ref.id, taskId, storyId })
 }
