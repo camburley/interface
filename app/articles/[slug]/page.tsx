@@ -111,12 +111,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
       {article.frontmatter.coverImage && (
         <figure className="mx-auto" style={{ maxWidth: "1248px", margin: "80px auto 0" }}>
-          <div className="relative w-full aspect-[16/9] overflow-hidden px-6">
+          <div className="w-full px-6 flex justify-center">
             <Image
               src={article.frontmatter.coverImage}
               alt={article.frontmatter.title}
-              fill
-              className="object-cover"
+              width={1248}
+              height={1248}
+              className="max-w-full max-h-[80vh] w-auto h-auto"
               priority
             />
           </div>
