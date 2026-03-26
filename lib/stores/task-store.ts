@@ -43,6 +43,7 @@ interface TaskStore {
     sprint?: string
     cardType?: CardType
     recurrenceFrequency?: RecurrenceFrequency
+    targetCount?: number
   }) => Promise<{ id: string; taskId: string } | null>
 
   updateTask: (
@@ -54,6 +55,7 @@ interface TaskStore {
     id: string,
     newStatus: TaskStatus,
     actor?: string,
+    comment?: string,
   ) => Promise<boolean>
 
   deleteTask: (id: string) => Promise<boolean>
@@ -127,6 +129,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
                 nextDue: computeNextDue(data.recurrenceFrequency),
                 lastCompleted: null,
                 streak: 0,
+                completionLog: [],
+                todayCount: 0,
+                targetCount: data.targetCount ?? null,
+                lastReset: new Date().toISOString().slice(0, 10),
               }
             : undefined,
         createdAt: now,
@@ -159,30 +165,40 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  moveTask: async (id, newStatus, actor) => {
+  moveTask: async (id, newStatus, actor, comment) => {
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return false
 
     const previousStatus = task.status
+    const now = new Date().toISOString()
     set((state) => ({
       tasks: state.tasks.map((t) => {
         if (t.id !== id) return t
         const updated: Task = {
           ...t,
           status: newStatus,
-          updatedAt: new Date().toISOString(),
-          completedAt: newStatus === "done" ? new Date().toISOString() : t.completedAt,
+          updatedAt: now,
+          completedAt: newStatus === "done" ? now : t.completedAt,
         }
         if (
           newStatus === "done" &&
           t.cardType === "recurring" &&
           t.recurrence
         ) {
+          const newStreak = (t.recurrence.streak ?? 0) + 1
+          const entry = {
+            completedAt: now,
+            actor: actor ?? "admin",
+            comment: comment ?? "",
+            cycleNumber: newStreak,
+          }
           updated.recurrence = {
             ...t.recurrence,
-            lastCompleted: new Date().toISOString(),
-            streak: (t.recurrence.streak ?? 0) + 1,
+            lastCompleted: now,
+            streak: newStreak,
             nextDue: computeNextDue(t.recurrence.frequency),
+            todayCount: (t.recurrence.todayCount ?? 0) + 1,
+            completionLog: [...(t.recurrence.completionLog ?? []), entry],
           }
         }
         return updated
@@ -190,10 +206,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }))
 
     try {
+      const payload: Record<string, unknown> = {
+        status: newStatus,
+        actor: actor ?? "admin",
+      }
+      if (comment) payload.comment = comment
+
       const res = await fetch(`/api/admin/tasks/${id}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus, actor: actor ?? "admin" }),
+        body: JSON.stringify(payload),
       })
 
       if (!res.ok) {

@@ -52,6 +52,7 @@ export function buildNewTask(
     storyId?: string
     cardType?: CardType
     recurrenceFrequency?: RecurrenceFrequency
+    targetCount?: number
   },
 ): Omit<Task, "id"> {
   const now = new Date().toISOString()
@@ -62,6 +63,7 @@ export function buildNewTask(
       ? "in_progress"
       : fields.status ?? "backlog"
 
+  const today = now.slice(0, 10)
   const recurrence =
     cardType === "recurring" && fields.recurrenceFrequency
       ? {
@@ -69,6 +71,10 @@ export function buildNewTask(
           nextDue: computeNextDue(fields.recurrenceFrequency),
           lastCompleted: null as string | null,
           streak: 0,
+          completionLog: [] as { completedAt: string; actor: string; comment: string; cycleNumber: number }[],
+          todayCount: 0,
+          targetCount: fields.targetCount ?? null,
+          lastReset: today,
         }
       : null
 

@@ -22,6 +22,7 @@ import {
   Pin,
   RefreshCw,
   Timer,
+  MessageSquare,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTaskStore } from "@/lib/stores/task-store"
@@ -92,6 +93,12 @@ export function BoardClient({ initialTasks, projects }: Props) {
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [completionModal, setCompletionModal] = useState<{
+    taskId: string
+    taskTitle: string
+  } | null>(null)
+  const [completionComment, setCompletionComment] = useState("")
+  const [completing, setCompleting] = useState(false)
   const [newTask, setNewTask] = useState({
     title: "",
     projectId: boardProjects[0]?.id ?? "",
@@ -102,6 +109,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
     description: "",
     cardType: "one_off" as CardType,
     recurrenceFrequency: "daily" as RecurrenceFrequency,
+    targetCount: "",
   })
 
   useEffect(() => {
@@ -166,9 +174,42 @@ export function BoardClient({ initialTasks, projects }: Props) {
     const task = tasks.find((t) => t.id === taskId)
     if (!task || task.status === newStatus) return
 
+    if (
+      newStatus === "done" &&
+      (task.cardType ?? "one_off") === "recurring" &&
+      task.recurrence
+    ) {
+      setCompletionModal({ taskId: task.id, taskTitle: task.title })
+      setCompletionComment("")
+      return
+    }
+
     const success = await moveTask(taskId, newStatus)
     if (!success) {
       toast.error(`Cannot move to ${TASK_STATUS_CONFIG[newStatus].label}`)
+    }
+  }
+
+  async function handleCompleteRecurring() {
+    if (!completionModal) return
+    if (completionComment.trim().length < 10) {
+      toast.error("Comment must be at least 10 characters")
+      return
+    }
+    setCompleting(true)
+    const success = await moveTask(
+      completionModal.taskId,
+      "done",
+      "admin",
+      completionComment.trim(),
+    )
+    setCompleting(false)
+    if (success) {
+      toast.success("Completed & logged")
+      setCompletionModal(null)
+      setCompletionComment("")
+    } else {
+      toast.error("Failed to complete task")
     }
   }
 
@@ -190,6 +231,10 @@ export function BoardClient({ initialTasks, projects }: Props) {
         newTask.cardType === "recurring"
           ? newTask.recurrenceFrequency
           : undefined,
+      targetCount:
+        newTask.cardType === "recurring" && newTask.targetCount
+          ? Number(newTask.targetCount)
+          : undefined,
     })
     setCreating(false)
 
@@ -205,6 +250,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
         description: "",
         cardType: "one_off",
         recurrenceFrequency: "daily",
+        targetCount: "",
       })
       setShowCreate(false)
     } else {
@@ -459,29 +505,47 @@ export function BoardClient({ initialTasks, projects }: Props) {
                 </select>
               </div>
               {newTask.cardType === "recurring" && (
-                <div className="space-y-1.5">
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
-                    Frequency
-                  </label>
-                  <select
-                    value={newTask.recurrenceFrequency}
-                    onChange={(e) =>
-                      setNewTask((p) => ({
-                        ...p,
-                        recurrenceFrequency: e.target.value as RecurrenceFrequency,
-                      }))
-                    }
-                    className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
-                  >
-                    {(Object.entries(RECURRENCE_FREQUENCY_LABELS) as [RecurrenceFrequency, string][]).map(
-                      ([val, label]) => (
-                        <option key={val} value={val}>
-                          {label}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
+                <>
+                  <div className="space-y-1.5">
+                    <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                      Frequency
+                    </label>
+                    <select
+                      value={newTask.recurrenceFrequency}
+                      onChange={(e) =>
+                        setNewTask((p) => ({
+                          ...p,
+                          recurrenceFrequency: e.target.value as RecurrenceFrequency,
+                        }))
+                      }
+                      className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                    >
+                      {(Object.entries(RECURRENCE_FREQUENCY_LABELS) as [RecurrenceFrequency, string][]).map(
+                        ([val, label]) => (
+                          <option key={val} value={val}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                      Target/day (optional)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={newTask.targetCount}
+                      onChange={(e) =>
+                        setNewTask((p) => ({ ...p, targetCount: e.target.value }))
+                      }
+                      placeholder="e.g. 3"
+                      className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                </>
               )}
               <div className="space-y-1.5">
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
@@ -606,6 +670,68 @@ export function BoardClient({ initialTasks, projects }: Props) {
           })}
         </div>
       </div>
+
+      {/* Recurring completion modal */}
+      {completionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-background border border-border/60 rounded-sm w-full max-w-md mx-4 shadow-2xl">
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-blue-400" />
+                  <p className="font-mono text-xs text-primary uppercase tracking-widest">
+                    Complete Recurring Task
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCompletionModal(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <p className="font-mono text-xs text-foreground leading-relaxed">
+                {completionModal.taskTitle}
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                  What did you find/do?
+                </label>
+                <textarea
+                  autoFocus
+                  rows={3}
+                  value={completionComment}
+                  onChange={(e) => setCompletionComment(e.target.value)}
+                  placeholder="Checked 3 contracts. New msg from Ali re: mapping. Drafted response."
+                  className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors resize-none"
+                />
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {completionComment.trim().length}/10 min characters
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={handleCompleteRecurring}
+                  disabled={completing || completionComment.trim().length < 10}
+                  className="flex items-center gap-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono text-xs uppercase tracking-widest px-5 py-2.5 rounded-sm hover:bg-emerald-500/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {completing ? "Completing..." : "Complete & Reset"}
+                </button>
+                <button
+                  onClick={() => setCompletionModal(null)}
+                  className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -684,23 +810,56 @@ function TaskCard({
           {projectName}
         </p>
 
-        {/* Recurrence info: streak + frequency + countdown */}
+        {/* Recurrence info: progress + streak + frequency + last comment */}
         {isRecurring && task.recurrence && (
-          <div className="flex items-center gap-2 font-mono text-[10px]">
-            {task.recurrence.streak > 0 && (
-              <span className="flex items-center gap-0.5 text-orange-400">
-                <Flame className="h-3 w-3" />
-                {task.recurrence.streak}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 font-mono text-[10px]">
+              {task.recurrence.targetCount ? (
+                <span className="text-muted-foreground">
+                  {task.recurrence.todayCount ?? 0}/{task.recurrence.targetCount} today
+                </span>
+              ) : (task.recurrence.todayCount ?? 0) > 0 ? (
+                <span className="text-muted-foreground">
+                  {task.recurrence.todayCount} today
+                </span>
+              ) : null}
+              {task.recurrence.streak > 0 && (
+                <span className="flex items-center gap-0.5 text-orange-400">
+                  <Flame className="h-3 w-3" />
+                  {task.recurrence.streak}
+                </span>
+              )}
+              <span className="text-muted-foreground">
+                {RECURRENCE_FREQUENCY_LABELS[task.recurrence.frequency]}
               </span>
+              {task.status === "done" && task.recurrence.nextDue && (
+                <span className="flex items-center gap-0.5 text-blue-400">
+                  <Timer className="h-3 w-3" />
+                  {formatCountdown(task.recurrence.nextDue)}
+                </span>
+              )}
+            </div>
+            {task.recurrence.targetCount != null && task.recurrence.targetCount > 0 && (
+              <div className="flex gap-0.5">
+                {Array.from({ length: task.recurrence.targetCount }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full ${
+                      i < (task.recurrence?.todayCount ?? 0)
+                        ? "bg-emerald-400"
+                        : "bg-muted/40"
+                    }`}
+                  />
+                ))}
+              </div>
             )}
-            <span className="text-muted-foreground">
-              {RECURRENCE_FREQUENCY_LABELS[task.recurrence.frequency]}
-            </span>
-            {task.status === "done" && task.recurrence.nextDue && (
-              <span className="flex items-center gap-0.5 text-blue-400">
-                <Timer className="h-3 w-3" />
-                {formatCountdown(task.recurrence.nextDue)}
-              </span>
+            {task.recurrence.completionLog && task.recurrence.completionLog.length > 0 && (
+              <div className="flex items-start gap-1 text-muted-foreground">
+                <MessageSquare className="h-3 w-3 mt-0.5 shrink-0" />
+                <p className="font-mono text-[10px] line-clamp-1">
+                  {task.recurrence.completionLog[task.recurrence.completionLog.length - 1].comment}
+                </p>
+              </div>
             )}
           </div>
         )}

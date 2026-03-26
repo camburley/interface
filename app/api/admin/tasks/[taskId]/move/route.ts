@@ -18,10 +18,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { taskId } = await context.params
   const body = await request.json()
-  const { status: newStatus, actor, evidence } = body as {
+  const { status: newStatus, actor, evidence, comment } = body as {
     status: TaskStatus
     actor?: string
     evidence?: string[]
+    comment?: string
   }
 
   if (!newStatus) {
@@ -38,6 +39,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 })
 
   const task = { id: doc.id, ...doc.data() } as Task
+  const isRecurringDone =
+    newStatus === "done" && task.cardType === "recurring" && task.recurrence
+
+  if (isRecurringDone && (!comment || comment.trim().length < 10)) {
+    return NextResponse.json(
+      { error: "Recurring tasks require a completion comment (min 10 chars)" },
+      { status: 400 },
+    )
+  }
+
   const result = validateTransition(task, newStatus, actor)
 
   if (!result.valid) {
@@ -47,18 +58,30 @@ export async function POST(request: NextRequest, context: RouteContext) {
     )
   }
 
+  const now = new Date().toISOString()
   const updates: Record<string, unknown> = {
     status: newStatus,
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
   }
 
   if (newStatus === "done") {
-    updates.completedAt = new Date().toISOString()
+    updates.completedAt = now
 
-    if (task.cardType === "recurring" && task.recurrence) {
-      updates["recurrence.lastCompleted"] = new Date().toISOString()
-      updates["recurrence.streak"] = (task.recurrence.streak ?? 0) + 1
-      updates["recurrence.nextDue"] = computeNextDue(task.recurrence.frequency)
+    if (isRecurringDone) {
+      const newStreak = (task.recurrence!.streak ?? 0) + 1
+      updates["recurrence.lastCompleted"] = now
+      updates["recurrence.streak"] = newStreak
+      updates["recurrence.nextDue"] = computeNextDue(task.recurrence!.frequency)
+      updates["recurrence.todayCount"] = (task.recurrence!.todayCount ?? 0) + 1
+
+      const entry = {
+        completedAt: now,
+        actor: actor ?? "admin",
+        comment: comment!.trim(),
+        cycleNumber: newStreak,
+      }
+      const existingLog = task.recurrence!.completionLog ?? []
+      updates["recurrence.completionLog"] = [...existingLog, entry]
     }
   } else if (task.completedAt) {
     updates.completedAt = null

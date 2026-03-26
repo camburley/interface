@@ -18,11 +18,22 @@ export type RecurrenceFrequency =
   | "monthly"
   | "quarterly"
 
+export interface CompletionEntry {
+  completedAt: string
+  actor: string
+  comment: string
+  cycleNumber: number
+}
+
 export interface Recurrence {
   frequency: RecurrenceFrequency
   nextDue: string | null
   lastCompleted: string | null
   streak: number
+  completionLog: CompletionEntry[]
+  todayCount: number
+  targetCount: number | null
+  lastReset: string | null
 }
 
 export type TaskRelation =
