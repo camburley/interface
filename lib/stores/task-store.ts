@@ -197,6 +197,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       })
 
       if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error("[moveTask] API error:", res.status, body)
         set((state) => ({
           tasks: state.tasks.map((t) =>
             t.id === id ? { ...t, status: previousStatus } : t,
@@ -206,7 +208,8 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }
 
       return true
-    } catch {
+    } catch (err) {
+      console.error("[moveTask] fetch error:", err)
       set((state) => ({
         tasks: state.tasks.map((t) =>
           t.id === id ? { ...t, status: previousStatus } : t,
