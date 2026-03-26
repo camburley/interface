@@ -4,6 +4,7 @@ import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { appendHistory } from "@/lib/task-utils"
 import { validateTransition } from "@/lib/workflow"
 import { taskStatusToStoryStatus } from "@/lib/sync-status"
+import { computeNextDue } from "@/lib/types/task"
 import type { Task, TaskStatus } from "@/lib/types/task"
 
 interface RouteContext {
@@ -53,6 +54,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   if (newStatus === "done") {
     updates.completedAt = new Date().toISOString()
+
+    if (task.cardType === "recurring" && task.recurrence) {
+      updates["recurrence.lastCompleted"] = new Date().toISOString()
+      updates["recurrence.streak"] = (task.recurrence.streak ?? 0) + 1
+      updates["recurrence.nextDue"] = computeNextDue(task.recurrence.frequency)
+    }
   } else if (task.completedAt) {
     updates.completedAt = null
   }

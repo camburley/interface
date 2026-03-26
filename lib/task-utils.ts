@@ -1,5 +1,13 @@
 import { getFirebaseAdmin } from "./firebase-admin"
-import type { Task, TaskStatus, TaskPriority, TaskContext } from "./types/task"
+import type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  TaskContext,
+  CardType,
+  RecurrenceFrequency,
+} from "./types/task"
+import { computeNextDue } from "./types/task"
 
 const COUNTER_DOC = "task_id_counter"
 const COUNTER_COLLECTION = "counters"
@@ -41,17 +49,38 @@ export function buildNewTask(
     outputUrl?: string
     dueDate?: string
     sprint?: string
+    storyId?: string
+    cardType?: CardType
+    recurrenceFrequency?: RecurrenceFrequency
   },
 ): Omit<Task, "id"> {
   const now = new Date().toISOString()
+  const cardType: CardType = fields.cardType ?? "one_off"
+
+  const status: TaskStatus =
+    cardType === "standing"
+      ? "in_progress"
+      : fields.status ?? "backlog"
+
+  const recurrence =
+    cardType === "recurring" && fields.recurrenceFrequency
+      ? {
+          frequency: fields.recurrenceFrequency,
+          nextDue: computeNextDue(fields.recurrenceFrequency),
+          lastCompleted: null as string | null,
+          streak: 0,
+        }
+      : undefined
+
   return {
     taskId: fields.taskId,
     title: fields.title,
     description: fields.description ?? "",
-    status: fields.status ?? "backlog",
+    status,
     priority: fields.priority ?? "medium",
     projectId: fields.projectId,
     milestoneId: fields.milestoneId ?? null,
+    storyId: fields.storyId ?? null,
     parentTaskId: fields.parentTaskId ?? null,
     dependencies: fields.dependencies ?? [],
     assignee: fields.assignee ?? null,
@@ -74,6 +103,8 @@ export function buildNewTask(
     outputUrl: fields.outputUrl ?? null,
     dueDate: fields.dueDate ?? null,
     sprint: fields.sprint ?? null,
+    cardType,
+    recurrence,
     createdAt: now,
     updatedAt: now,
     completedAt: null,

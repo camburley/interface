@@ -59,6 +59,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     "outputUrl",
     "dueDate",
     "sprint",
+    "cardType",
+    "recurrence",
   ]
 
   const updates: Record<string, unknown> = {}

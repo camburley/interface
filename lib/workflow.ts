@@ -54,6 +54,11 @@ export function validateTransition(
   const rule = WORKFLOW[task.status]
   const errors: string[] = []
 
+  if (task.cardType === "standing" && newStatus === "done") {
+    errors.push("Standing cards cannot be moved to done")
+    return { valid: false, errors }
+  }
+
   if (!rule.allowedNext.includes(newStatus)) {
     errors.push(
       `Cannot transition from "${task.status}" to "${newStatus}". Allowed: ${rule.allowedNext.join(", ")}`,

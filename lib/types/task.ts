@@ -9,6 +9,22 @@ export type TaskStatus =
 
 export type TaskPriority = "low" | "medium" | "high" | "urgent"
 
+export type CardType = "one_off" | "recurring" | "standing"
+
+export type RecurrenceFrequency =
+  | "daily"
+  | "weekly"
+  | "biweekly"
+  | "monthly"
+  | "quarterly"
+
+export interface Recurrence {
+  frequency: RecurrenceFrequency
+  nextDue: string | null
+  lastCompleted: string | null
+  streak: number
+}
+
 export type TaskRelation =
   | "parent"
   | "child"
@@ -80,6 +96,8 @@ export interface Task {
   outputUrl?: string
   dueDate?: string
   sprint?: string
+  cardType: CardType
+  recurrence?: Recurrence
   createdAt: string
   updatedAt: string
   completedAt?: string
@@ -167,6 +185,58 @@ export interface BoardProject {
   color: string
   clientName: string
   boardType: "client" | "internal" | "ops"
+}
+
+export const CARD_TYPE_CONFIG: Record<
+  CardType,
+  { label: string; icon: string; className: string }
+> = {
+  one_off: {
+    label: "One-off",
+    icon: "",
+    className: "",
+  },
+  recurring: {
+    label: "Recurring",
+    icon: "🔄",
+    className: "text-blue-400 bg-blue-400/10 border-blue-400/20",
+  },
+  standing: {
+    label: "Standing",
+    icon: "📌",
+    className: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+  },
+}
+
+export const RECURRENCE_FREQUENCY_LABELS: Record<RecurrenceFrequency, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  biweekly: "Biweekly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+}
+
+export function computeNextDue(frequency: RecurrenceFrequency, from?: Date): string {
+  const base = from ?? new Date()
+  const next = new Date(base)
+  switch (frequency) {
+    case "daily":
+      next.setDate(next.getDate() + 1)
+      break
+    case "weekly":
+      next.setDate(next.getDate() + 7)
+      break
+    case "biweekly":
+      next.setDate(next.getDate() + 14)
+      break
+    case "monthly":
+      next.setMonth(next.getMonth() + 1)
+      break
+    case "quarterly":
+      next.setMonth(next.getMonth() + 3)
+      break
+  }
+  return next.toISOString()
 }
 
 export const PROJECT_COLORS = [

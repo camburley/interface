@@ -1,5 +1,12 @@
 import { create } from "zustand"
-import type { Task, TaskStatus, TaskPriority } from "../types/task"
+import type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  CardType,
+  RecurrenceFrequency,
+} from "../types/task"
+import { computeNextDue } from "../types/task"
 
 interface TaskFilters {
   projectId?: string
@@ -34,6 +41,8 @@ interface TaskStore {
     outputUrl?: string
     dueDate?: string
     sprint?: string
+    cardType?: CardType
+    recurrenceFrequency?: RecurrenceFrequency
   }) => Promise<{ id: string; taskId: string } | null>
 
   updateTask: (
@@ -88,12 +97,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       const result = await res.json()
 
       const now = new Date().toISOString()
+      const cardType: CardType = data.cardType ?? "one_off"
       const optimistic: Task = {
         id: result.id,
         taskId: result.taskId,
         title: data.title,
         description: data.description ?? "",
-        status: data.status ?? "backlog",
+        status: cardType === "standing" ? "in_progress" : (data.status ?? "backlog"),
         priority: data.priority ?? "medium",
         projectId: data.projectId,
         milestoneId: data.milestoneId,
@@ -109,6 +119,16 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         outputUrl: data.outputUrl,
         dueDate: data.dueDate,
         sprint: data.sprint,
+        cardType,
+        recurrence:
+          cardType === "recurring" && data.recurrenceFrequency
+            ? {
+                frequency: data.recurrenceFrequency,
+                nextDue: computeNextDue(data.recurrenceFrequency),
+                lastCompleted: null,
+                streak: 0,
+              }
+            : undefined,
         createdAt: now,
         updatedAt: now,
       }
@@ -145,16 +165,28 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
     const previousStatus = task.status
     set((state) => ({
-      tasks: state.tasks.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              status: newStatus,
-              updatedAt: new Date().toISOString(),
-              completedAt: newStatus === "done" ? new Date().toISOString() : t.completedAt,
-            }
-          : t,
-      ),
+      tasks: state.tasks.map((t) => {
+        if (t.id !== id) return t
+        const updated: Task = {
+          ...t,
+          status: newStatus,
+          updatedAt: new Date().toISOString(),
+          completedAt: newStatus === "done" ? new Date().toISOString() : t.completedAt,
+        }
+        if (
+          newStatus === "done" &&
+          t.cardType === "recurring" &&
+          t.recurrence
+        ) {
+          updated.recurrence = {
+            ...t.recurrence,
+            lastCompleted: new Date().toISOString(),
+            streak: (t.recurrence.streak ?? 0) + 1,
+            nextDue: computeNextDue(t.recurrence.frequency),
+          }
+        }
+        return updated
+      }),
     }))
 
     try {

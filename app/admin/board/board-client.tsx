@@ -18,6 +18,10 @@ import {
   Briefcase,
   Rocket,
   Settings,
+  Flame,
+  Pin,
+  RefreshCw,
+  Timer,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTaskStore } from "@/lib/stores/task-store"
@@ -25,8 +29,17 @@ import {
   BOARD_COLUMNS,
   TASK_PRIORITY_CONFIG,
   TASK_STATUS_CONFIG,
+  CARD_TYPE_CONFIG,
+  RECURRENCE_FREQUENCY_LABELS,
 } from "@/lib/types/task"
-import type { Task, TaskStatus, TaskPriority, BoardProject } from "@/lib/types/task"
+import type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  BoardProject,
+  CardType,
+  RecurrenceFrequency,
+} from "@/lib/types/task"
 
 type BoardType = "client" | "internal" | "ops"
 
@@ -87,6 +100,8 @@ export function BoardClient({ initialTasks, projects }: Props) {
     tags: "",
     hours: "",
     description: "",
+    cardType: "one_off" as CardType,
+    recurrenceFrequency: "daily" as RecurrenceFrequency,
   })
 
   useEffect(() => {
@@ -164,12 +179,17 @@ export function BoardClient({ initialTasks, projects }: Props) {
       title: newTask.title,
       projectId: newTask.projectId,
       priority: newTask.priority,
-      status: newTask.status,
+      status: newTask.cardType === "standing" ? "in_progress" : newTask.status,
       description: newTask.description || undefined,
       tags: newTask.tags
         ? newTask.tags.split(",").map((t) => t.trim()).filter(Boolean)
         : undefined,
       hours: newTask.hours ? Number(newTask.hours) : undefined,
+      cardType: newTask.cardType,
+      recurrenceFrequency:
+        newTask.cardType === "recurring"
+          ? newTask.recurrenceFrequency
+          : undefined,
     })
     setCreating(false)
 
@@ -183,6 +203,8 @@ export function BoardClient({ initialTasks, projects }: Props) {
         tags: "",
         hours: "",
         description: "",
+        cardType: "one_off",
+        recurrenceFrequency: "daily",
       })
       setShowCreate(false)
     } else {
@@ -190,8 +212,15 @@ export function BoardClient({ initialTasks, projects }: Props) {
     }
   }
 
-  const columnTasks = (status: TaskStatus) =>
-    visible.filter((t) => t.status === status)
+  const columnTasks = (status: TaskStatus) => {
+    const col = visible.filter((t) => t.status === status)
+    col.sort((a, b) => {
+      const aStanding = a.cardType === "standing" ? 0 : 1
+      const bStanding = b.cardType === "standing" ? 0 : 1
+      return aStanding - bStanding
+    })
+    return col
+  }
 
   const boardScopedTasks = tasks.filter((t) => boardProjectIds.has(t.projectId))
   const totalTasks = boardScopedTasks.length
@@ -412,6 +441,50 @@ export function BoardClient({ initialTasks, projects }: Props) {
               </div>
               <div className="space-y-1.5">
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                  Card Type
+                </label>
+                <select
+                  value={newTask.cardType}
+                  onChange={(e) =>
+                    setNewTask((p) => ({
+                      ...p,
+                      cardType: e.target.value as CardType,
+                    }))
+                  }
+                  className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                >
+                  <option value="one_off">One-off (default)</option>
+                  <option value="recurring">Recurring</option>
+                  <option value="standing">Standing</option>
+                </select>
+              </div>
+              {newTask.cardType === "recurring" && (
+                <div className="space-y-1.5">
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                    Frequency
+                  </label>
+                  <select
+                    value={newTask.recurrenceFrequency}
+                    onChange={(e) =>
+                      setNewTask((p) => ({
+                        ...p,
+                        recurrenceFrequency: e.target.value as RecurrenceFrequency,
+                      }))
+                    }
+                    className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                  >
+                    {(Object.entries(RECURRENCE_FREQUENCY_LABELS) as [RecurrenceFrequency, string][]).map(
+                      ([val, label]) => (
+                        <option key={val} value={val}>
+                          {label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
                   Hours (est.)
                 </label>
                 <input
@@ -537,6 +610,15 @@ export function BoardClient({ initialTasks, projects }: Props) {
   )
 }
 
+function formatCountdown(isoDate: string): string | null {
+  const diff = new Date(isoDate).getTime() - Date.now()
+  if (diff <= 0) return "overdue"
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d`
+}
+
 function TaskCard({
   task,
   projectColor,
@@ -551,25 +633,42 @@ function TaskCard({
   onDragStart: (e: React.DragEvent, id: string) => void
 }) {
   const priorityCfg = TASK_PRIORITY_CONFIG[task.priority] ?? TASK_PRIORITY_CONFIG.medium
+  const cardType = task.cardType ?? "one_off"
+  const typeCfg = CARD_TYPE_CONFIG[cardType]
+  const isStanding = cardType === "standing"
+  const isRecurring = cardType === "recurring"
 
   return (
     <div
       data-task-id={task.id}
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
-      className={`border border-border/40 rounded-sm bg-background transition-all cursor-grab active:cursor-grabbing ${
-        isDragging ? "opacity-40 scale-95" : "hover:border-border"
-      }`}
+      draggable={!isStanding}
+      onDragStart={(e) => !isStanding && onDragStart(e, task.id)}
+      className={`border border-border/40 rounded-sm bg-background transition-all ${
+        isStanding
+          ? "cursor-default ring-1 ring-amber-400/20"
+          : "cursor-grab active:cursor-grabbing"
+      } ${isDragging ? "opacity-40 scale-95" : "hover:border-border"}`}
       style={{ borderLeftWidth: "4px", borderLeftColor: projectColor }}
     >
       <div className="p-3 space-y-2">
-        {/* Top row: priority + task ID */}
+        {/* Top row: priority + card type badge + task ID */}
         <div className="flex items-center justify-between">
-          <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest ${priorityCfg.className}`}
-          >
-            {priorityCfg.label}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest ${priorityCfg.className}`}
+            >
+              {priorityCfg.label}
+            </span>
+            {cardType !== "one_off" && (
+              <span
+                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border ${typeCfg.className}`}
+              >
+                {isRecurring && <RefreshCw className="h-2.5 w-2.5" />}
+                {isStanding && <Pin className="h-2.5 w-2.5" />}
+                {typeCfg.label}
+              </span>
+            )}
+          </div>
           <span className="font-mono text-[10px] text-muted-foreground">
             {task.taskId}
           </span>
@@ -584,6 +683,27 @@ function TaskCard({
         <p className="font-mono text-[10px] text-muted-foreground">
           {projectName}
         </p>
+
+        {/* Recurrence info: streak + frequency + countdown */}
+        {isRecurring && task.recurrence && (
+          <div className="flex items-center gap-2 font-mono text-[10px]">
+            {task.recurrence.streak > 0 && (
+              <span className="flex items-center gap-0.5 text-orange-400">
+                <Flame className="h-3 w-3" />
+                {task.recurrence.streak}
+              </span>
+            )}
+            <span className="text-muted-foreground">
+              {RECURRENCE_FREQUENCY_LABELS[task.recurrence.frequency]}
+            </span>
+            {task.status === "done" && task.recurrence.nextDue && (
+              <span className="flex items-center gap-0.5 text-blue-400">
+                <Timer className="h-3 w-3" />
+                {formatCountdown(task.recurrence.nextDue)}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Tags */}
         {task.tags.length > 0 && (
