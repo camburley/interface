@@ -40,6 +40,7 @@ import type {
   BoardProject,
   CardType,
   RecurrenceFrequency,
+  TaskHistoryEntry,
 } from "@/lib/types/task"
 
 type BoardType = "client" | "internal" | "ops"
@@ -90,6 +91,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
   const boardProjectIds = new Set(boardProjects.map((p) => p.id))
 
   const [initialized, setInitialized] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -654,6 +656,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
                       projectName={getProjectName(task.projectId)}
                       isDragging={draggingId === task.id}
                       onDragStart={handleDragStart}
+                      onTaskClick={setSelectedTask}
                     />
                   ))}
 
@@ -670,6 +673,15 @@ export function BoardClient({ initialTasks, projects }: Props) {
           })}
         </div>
       </div>
+
+      {/* Task detail modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          getProjectName={getProjectName}
+        />
+      )}
 
       {/* Recurring completion modal */}
       {completionModal && (
@@ -736,6 +748,218 @@ export function BoardClient({ initialTasks, projects }: Props) {
   )
 }
 
+function TaskDetailModal({
+  task,
+  onClose,
+  getProjectName,
+}: {
+  task: Task
+  onClose: () => void
+  getProjectName: (id: string) => string
+}) {
+  const [history, setHistory] = useState<TaskHistoryEntry[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingHistory(true)
+    fetch(`/api/admin/tasks/${task.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) {
+          setHistory(data.history ?? [])
+          setLoadingHistory(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoadingHistory(false)
+      })
+    return () => { cancelled = true }
+  }, [task.id])
+
+  const priorityCfg = TASK_PRIORITY_CONFIG[task.priority] ?? TASK_PRIORITY_CONFIG.medium
+  const statusCfg = TASK_STATUS_CONFIG[task.status] ?? TASK_STATUS_CONFIG.backlog
+  const cardType = task.cardType ?? "one_off"
+  const typeCfg = CARD_TYPE_CONFIG[cardType]
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border/60 rounded-sm w-full max-w-2xl mx-4 shadow-2xl max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 space-y-4">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0">
+              <p className="font-mono text-sm text-foreground leading-relaxed">{task.title}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-[10px] text-muted-foreground">{task.taskId}</span>
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest border ${statusCfg.className}`}>
+                  {statusCfg.label}
+                </span>
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm font-mono text-[10px] uppercase tracking-widest ${priorityCfg.className}`}>
+                  {priorityCfg.label}
+                </span>
+                {cardType !== "one_off" && (
+                  <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border ${typeCfg.className}`}>
+                    {typeCfg.label}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Meta grid */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-xs">
+            <div>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Project</span>
+              <p className="text-foreground">{getProjectName(task.projectId)}</p>
+            </div>
+            {task.assignee && (
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Assignee</span>
+                <p className="text-foreground">{task.assignee}</p>
+              </div>
+            )}
+            {task.hours != null && (
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Hours</span>
+                <p className="text-foreground">{task.hours}h</p>
+              </div>
+            )}
+            {task.sprint && (
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Sprint</span>
+                <p className="text-foreground">{task.sprint}</p>
+              </div>
+            )}
+            {task.dueDate && (
+              <div>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">Due</span>
+                <p className="text-foreground">{new Date(task.dueDate).toLocaleDateString()}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          {task.description && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Description</p>
+              <p className="font-mono text-xs text-foreground leading-relaxed whitespace-pre-wrap">{task.description}</p>
+            </div>
+          )}
+
+          {/* Acceptance Criteria */}
+          {task.acceptanceCriteria.length > 0 && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Acceptance Criteria</p>
+              <ul className="space-y-1">
+                {task.acceptanceCriteria.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 font-mono text-xs text-foreground">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Definition of Done */}
+          {task.definitionOfDone.length > 0 && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Definition of Done</p>
+              <ul className="space-y-1">
+                {task.definitionOfDone.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 font-mono text-xs text-foreground">
+                    <CheckCircle className="h-3.5 w-3.5 text-blue-400 shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Tags */}
+          {task.tags.length > 0 && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Tags</p>
+              <div className="flex flex-wrap gap-1">
+                {task.tags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center px-1.5 py-0.5 bg-muted/40 rounded-sm font-mono text-[10px] text-muted-foreground">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Artifacts */}
+          {task.artifacts.length > 0 && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Artifacts</p>
+              <div className="space-y-1">
+                {task.artifacts.map((a, i) => (
+                  <a key={i} href={a.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 font-mono text-xs text-blue-400 hover:underline">
+                    <ExternalLink className="h-3 w-3 shrink-0" />
+                    {a.label || a.type}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Links */}
+          {(task.specUrl || task.outputUrl) && (
+            <div className="flex items-center gap-4">
+              {task.specUrl && (
+                <a href={task.specUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 font-mono text-xs text-blue-400 hover:underline">
+                  <FileText className="h-3 w-3" /> Spec
+                </a>
+              )}
+              {task.outputUrl && (
+                <a href={task.outputUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 font-mono text-xs text-blue-400 hover:underline">
+                  <ExternalLink className="h-3 w-3" /> Output
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* History */}
+          <div>
+            <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">History</p>
+            {loadingHistory ? (
+              <p className="font-mono text-[10px] text-muted-foreground">Loading...</p>
+            ) : history.length === 0 ? (
+              <p className="font-mono text-[10px] text-muted-foreground">No history</p>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {history.map((entry) => (
+                  <div key={entry.id} className="border-l-2 border-border/40 pl-3 py-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-foreground">{entry.event}</span>
+                      <span className="font-mono text-[10px] text-muted-foreground">{entry.actor}</span>
+                    </div>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {new Date(entry.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function formatCountdown(isoDate: string): string | null {
   const diff = new Date(isoDate).getTime() - Date.now()
   if (diff <= 0) return "overdue"
@@ -751,12 +975,14 @@ function TaskCard({
   projectName,
   isDragging,
   onDragStart,
+  onTaskClick,
 }: {
   task: Task
   projectColor: string
   projectName: string
   isDragging: boolean
   onDragStart: (e: React.DragEvent, id: string) => void
+  onTaskClick: (task: Task) => void
 }) {
   const priorityCfg = TASK_PRIORITY_CONFIG[task.priority] ?? TASK_PRIORITY_CONFIG.medium
   const cardType = task.cardType ?? "one_off"
@@ -769,6 +995,7 @@ function TaskCard({
       data-task-id={task.id}
       draggable={!isStanding}
       onDragStart={(e) => !isStanding && onDragStart(e, task.id)}
+      onClick={() => onTaskClick(task)}
       className={`border border-border/40 rounded-sm bg-background transition-all ${
         isStanding
           ? "cursor-default ring-1 ring-amber-400/20"
