@@ -70,7 +70,7 @@ export function buildNewTask(
           lastCompleted: null as string | null,
           streak: 0,
         }
-      : undefined
+      : null
 
   return {
     taskId: fields.taskId,
