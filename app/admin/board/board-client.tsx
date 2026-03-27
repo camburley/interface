@@ -1040,13 +1040,11 @@ function TaskCard({
   return (
     <div
       data-task-id={task.id}
-      draggable={!isStanding}
-      onDragStart={(e) => !isStanding && onDragStart(e, task.id)}
+      draggable
+      onDragStart={(e) => onDragStart(e, task.id)}
       onClick={() => onTaskClick(task)}
-      className={`border border-border/40 rounded-sm bg-background transition-all ${
-        isStanding
-          ? "cursor-default ring-1 ring-amber-400/20"
-          : "cursor-grab active:cursor-grabbing"
+      className={`border border-border/40 rounded-sm bg-background transition-all cursor-grab active:cursor-grabbing ${
+        isStanding ? "ring-1 ring-amber-400/20" : ""
       } ${isDragging ? "opacity-40 scale-95" : "hover:border-border"}`}
       style={{ borderLeftWidth: "4px", borderLeftColor: projectColor }}
     >

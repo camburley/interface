@@ -53,13 +53,13 @@ export function validateTransition(
 ): TransitionResult {
   const errors: string[] = []
 
+  if (actor === "admin") {
+    return { valid: true, errors: [] }
+  }
+
   if (task.cardType === "standing" && newStatus === "done") {
     errors.push("Standing cards cannot be moved to done")
     return { valid: false, errors }
-  }
-
-  if (actor === "admin") {
-    return { valid: true, errors: [] }
   }
 
   const rule = WORKFLOW[task.status]
