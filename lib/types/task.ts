@@ -188,6 +188,7 @@ export const BOARD_COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: "review", title: "Review" },
   { id: "qa", title: "QA" },
   { id: "done", title: "Done" },
+  { id: "blocked", title: "Blocked" },
 ]
 
 export interface BoardProject {
