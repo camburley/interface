@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Timer,
   MessageSquare,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useTaskStore } from "@/lib/stores/task-store"
@@ -680,6 +681,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           getProjectName={getProjectName}
+          onDelete={deleteTask}
         />
       )}
 
@@ -752,13 +754,17 @@ function TaskDetailModal({
   task,
   onClose,
   getProjectName,
+  onDelete,
 }: {
   task: Task
   onClose: () => void
   getProjectName: (id: string) => string
+  onDelete: (id: string) => Promise<boolean>
 }) {
   const [history, setHistory] = useState<TaskHistoryEntry[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -930,6 +936,47 @@ function TaskDetailModal({
               )}
             </div>
           )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2 border-t border-border/20">
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 font-mono text-xs text-red-400 hover:text-red-300 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete Task
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={async () => {
+                    setDeleting(true)
+                    const ok = await onDelete(task.id)
+                    setDeleting(false)
+                    if (ok) {
+                      toast.success(`${task.taskId} deleted`)
+                      onClose()
+                    } else {
+                      toast.error("Failed to delete")
+                      setConfirmDelete(false)
+                    }
+                  }}
+                  disabled={deleting}
+                  className="flex items-center gap-1.5 bg-red-500/20 text-red-400 border border-red-500/30 font-mono text-xs uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {deleting ? "Deleting..." : "Confirm Delete"}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
 
           {/* History */}
           <div>

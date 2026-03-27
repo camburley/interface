@@ -51,13 +51,18 @@ export function validateTransition(
   newStatus: TaskStatus,
   actor?: string,
 ): TransitionResult {
-  const rule = WORKFLOW[task.status]
   const errors: string[] = []
 
   if (task.cardType === "standing" && newStatus === "done") {
     errors.push("Standing cards cannot be moved to done")
     return { valid: false, errors }
   }
+
+  if (actor === "admin") {
+    return { valid: true, errors: [] }
+  }
+
+  const rule = WORKFLOW[task.status]
 
   if (!rule.allowedNext.includes(newStatus)) {
     errors.push(
@@ -78,7 +83,7 @@ export function validateTransition(
   }
 
   if (targetRule.transitionRoles && actor) {
-    if (!targetRule.transitionRoles.includes(actor) && actor !== "admin") {
+    if (!targetRule.transitionRoles.includes(actor)) {
       errors.push(
         `Actor "${actor}" is not authorized. Required roles: ${targetRule.transitionRoles.join(", ")}`,
       )

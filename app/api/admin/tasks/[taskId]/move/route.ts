@@ -12,18 +12,19 @@ interface RouteContext {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  const { authorized } = await validateBearerOrAdmin(request)
-  if (!authorized)
+  const auth = await validateBearerOrAdmin(request)
+  if (!auth.authorized)
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
 
   const { taskId } = await context.params
   const body = await request.json()
-  const { status: newStatus, actor, evidence, comment } = body as {
+  const { status: newStatus, actor: bodyActor, evidence, comment } = body as {
     status: TaskStatus
     actor?: string
     evidence?: string[]
     comment?: string
   }
+  const actor = auth.actor || bodyActor || "admin"
 
   if (!newStatus) {
     return NextResponse.json(
