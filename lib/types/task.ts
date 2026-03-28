@@ -63,6 +63,7 @@ export interface TaskArtifact {
   label?: string
   addedAt: string
   addedBy?: string
+  content?: string
 }
 
 export interface TaskContext {
