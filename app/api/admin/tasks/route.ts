@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const tasks = await fetchTasksFromFirestore(filters)
 
   tasks.sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    (a, b) => (a.position ?? 99999) - (b.position ?? 99999),
   )
 
   return NextResponse.json({ tasks })

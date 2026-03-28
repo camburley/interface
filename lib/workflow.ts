@@ -31,7 +31,7 @@ export const WORKFLOW: Record<TaskStatus, TransitionRule> = {
   },
   qa: {
     allowedNext: ["done", "in_progress", "blocked"],
-    transitionRoles: ["qa-agent", "lead-agent", "admin"],
+    transitionRoles: ["qa-agent", "lead-agent", "admin", "bob"],
   },
   done: {
     allowedNext: ["todo"],

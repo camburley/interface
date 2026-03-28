@@ -111,6 +111,7 @@ export interface Task {
   sprint?: string
   cardType: CardType
   recurrence?: Recurrence
+  position?: number
   createdAt: string
   updatedAt: string
   completedAt?: string

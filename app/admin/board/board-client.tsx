@@ -27,6 +27,23 @@ import {
   Paperclip,
 } from "lucide-react"
 import { toast } from "sonner"
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { useTaskStore } from "@/lib/stores/task-store"
 import { ArtifactsPanel } from "@/components/artifacts-panel"
 import {
@@ -68,6 +85,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
     moveTask,
     createTask,
     deleteTask,
+    reorderTasks,
     filteredTasks,
     fetchTasks,
   } = useTaskStore()
@@ -111,7 +129,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
 
   const [initialized, setInitialized] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [completionModal, setCompletionModal] = useState<{
@@ -161,6 +179,10 @@ export function BoardClient({ initialTasks, projects }: Props) {
     }
   }, [activeBoardType]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  )
+
   const allFiltered = initialized ? filteredTasks() : initialTasks
   // Scope visible tasks to the active board type
   const visible = allFiltered.filter((t) => boardProjectIds.has(t.projectId))
@@ -177,37 +199,53 @@ export function BoardClient({ initialTasks, projects }: Props) {
     [projects],
   )
 
-  function handleDragStart(e: React.DragEvent, taskId: string) {
-    e.dataTransfer.setData("text/plain", taskId)
-    setDraggingId(taskId)
+  function handleDragStart(event: DragStartEvent) {
+    const task = tasks.find((t) => t.id === event.active.id)
+    setActiveTask(task ?? null)
   }
 
-  function handleDragOver(e: React.DragEvent) {
-    e.preventDefault()
-  }
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    setActiveTask(null)
+    if (!over || active.id === over.id) return
 
-  async function handleDrop(e: React.DragEvent, newStatus: TaskStatus) {
-    e.preventDefault()
-    const taskId = e.dataTransfer.getData("text/plain")
-    setDraggingId(null)
-    if (!taskId) return
+    const activeTaskObj = tasks.find((t) => t.id === active.id)
+    if (!activeTaskObj) return
 
-    const task = tasks.find((t) => t.id === taskId)
-    if (!task || task.status === newStatus) return
-
-    if (
-      newStatus === "done" &&
-      (task.cardType ?? "one_off") === "recurring" &&
-      task.recurrence
-    ) {
-      setCompletionModal({ taskId: task.id, taskTitle: task.title })
-      setCompletionComment("")
+    // Check if dropping on a column (status change)
+    const columnId = over.data?.current?.columnId as TaskStatus | undefined
+    if (columnId && columnId !== activeTaskObj.status) {
+      if (
+        columnId === "done" &&
+        (activeTaskObj.cardType ?? "one_off") === "recurring" &&
+        activeTaskObj.recurrence
+      ) {
+        setCompletionModal({ taskId: activeTaskObj.id, taskTitle: activeTaskObj.title })
+        setCompletionComment("")
+        return
+      }
+      const success = await moveTask(activeTaskObj.id, columnId)
+      if (!success) {
+        toast.error(`Cannot move to ${TASK_STATUS_CONFIG[columnId].label}`)
+      }
       return
     }
 
-    const success = await moveTask(taskId, newStatus)
+    // Within-column reorder
+    const overTaskObj = tasks.find((t) => t.id === over.id)
+    if (!overTaskObj || activeTaskObj.status !== overTaskObj.status) return
+
+    const col = columnTasks(activeTaskObj.status)
+    const oldIndex = col.findIndex((t) => t.id === active.id)
+    const newIndex = col.findIndex((t) => t.id === over.id)
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+    const reordered = arrayMove(col, oldIndex, newIndex)
+    const items = reordered.map((t, i) => ({ id: t.id, position: i }))
+
+    const success = await reorderTasks(items)
     if (!success) {
-      toast.error(`Cannot move to ${TASK_STATUS_CONFIG[newStatus].label}`)
+      toast.error("Failed to reorder tasks")
     }
   }
 
@@ -281,11 +319,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
 
   const columnTasks = (status: TaskStatus) => {
     const col = visible.filter((t) => t.status === status)
-    col.sort((a, b) => {
-      const aStanding = a.cardType === "standing" ? 0 : 1
-      const bStanding = b.cardType === "standing" ? 0 : 1
-      return aStanding - bStanding
-    })
+    col.sort((a, b) => (a.position ?? 99999) - (b.position ?? 99999))
     return col
   }
 
@@ -656,65 +690,87 @@ export function BoardClient({ initialTasks, projects }: Props) {
         )}
 
         {/* Kanban board */}
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {BOARD_COLUMNS.map((column) => {
-            const colTasks = columnTasks(column.id)
-            const totalHours = colTasks.reduce(
-              (s, t) => s + (t.hours ?? 0),
-              0,
-            )
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {BOARD_COLUMNS.map((column) => {
+              const colTasks = columnTasks(column.id)
+              const totalHours = colTasks.reduce(
+                (s, t) => s + (t.hours ?? 0),
+                0,
+              )
 
-            return (
-              <div
-                key={column.id}
-                data-column-id={column.id}
-                className="flex-shrink-0 w-72"
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, column.id)}
-              >
-                {/* Column header */}
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-foreground uppercase tracking-widest">
-                      {column.title}
-                    </span>
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {colTasks.length}
-                    </span>
-                  </div>
-                  {totalHours > 0 && (
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {totalHours}h
-                    </span>
-                  )}
-                </div>
-
-                {/* Cards */}
-                <div className="space-y-2 min-h-[200px]">
-                  {colTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      projectColor={getProjectColor(task.projectId)}
-                      projectName={getProjectName(task.projectId)}
-                      isDragging={draggingId === task.id}
-                      onDragStart={handleDragStart}
-                      onTaskClick={setSelectedTask}
-                    />
-                  ))}
-
-                  {colTasks.length === 0 && (
-                    <div className="border border-dashed border-border/30 rounded-sm p-6 text-center">
-                      <p className="font-mono text-[10px] text-muted-foreground">
-                        Drop tasks here
-                      </p>
+              return (
+                <div
+                  key={column.id}
+                  data-column-id={column.id}
+                  className="flex-shrink-0 w-72"
+                >
+                  {/* Column header */}
+                  <div className="flex items-center justify-between mb-3 px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-foreground uppercase tracking-widest">
+                        {column.title}
+                      </span>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {colTasks.length}
+                      </span>
                     </div>
-                  )}
+                    {totalHours > 0 && (
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {totalHours}h
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Cards */}
+                  <SortableContext
+                    items={colTasks.map((t) => t.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2 min-h-[200px]">
+                      {colTasks.map((task) => (
+                        <SortableTaskCard
+                          key={task.id}
+                          task={task}
+                          projectColor={getProjectColor(task.projectId)}
+                          projectName={getProjectName(task.projectId)}
+                          onTaskClick={setSelectedTask}
+                        />
+                      ))}
+
+                      {colTasks.length === 0 && (
+                        <div className="border border-dashed border-border/30 rounded-sm p-6 text-center">
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            Drop tasks here
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </SortableContext>
                 </div>
+              )
+            })}
+          </div>
+
+          <DragOverlay>
+            {activeTask ? (
+              <div className="opacity-80 scale-105 shadow-2xl">
+                <TaskCard
+                  task={activeTask}
+                  projectColor={getProjectColor(activeTask.projectId)}
+                  projectName={getProjectName(activeTask.projectId)}
+                  isDragging={false}
+                  onTaskClick={() => {}}
+                />
               </div>
-            )
-          })}
-        </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
         </>)}
       </div>
 
@@ -1059,19 +1115,56 @@ function formatCountdown(isoDate: string): string | null {
   return `${days}d`
 }
 
+function SortableTaskCard({
+  task,
+  projectColor,
+  projectName,
+  onTaskClick,
+}: {
+  task: Task
+  projectColor: string
+  projectName: string
+  onTaskClick: (task: Task) => void
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <TaskCard
+        task={task}
+        projectColor={projectColor}
+        projectName={projectName}
+        isDragging={isDragging}
+        onTaskClick={onTaskClick}
+      />
+    </div>
+  )
+}
+
 function TaskCard({
   task,
   projectColor,
   projectName,
   isDragging,
-  onDragStart,
   onTaskClick,
 }: {
   task: Task
   projectColor: string
   projectName: string
   isDragging: boolean
-  onDragStart: (e: React.DragEvent, id: string) => void
   onTaskClick: (task: Task) => void
 }) {
   const priorityCfg = TASK_PRIORITY_CONFIG[task.priority] ?? TASK_PRIORITY_CONFIG.medium
@@ -1083,8 +1176,6 @@ function TaskCard({
   return (
     <div
       data-task-id={task.id}
-      draggable
-      onDragStart={(e) => onDragStart(e, task.id)}
       onClick={() => onTaskClick(task)}
       className={`border border-border/40 rounded-sm bg-background transition-all cursor-grab active:cursor-grabbing ${
         isStanding ? "ring-1 ring-amber-400/20" : ""

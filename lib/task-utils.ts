@@ -53,6 +53,7 @@ export function buildNewTask(
     cardType?: CardType
     recurrenceFrequency?: RecurrenceFrequency
     targetCount?: number
+    position?: number
   },
 ): Omit<Task, "id"> {
   const now = new Date().toISOString()
@@ -111,6 +112,7 @@ export function buildNewTask(
     sprint: fields.sprint ?? null,
     cardType,
     recurrence,
+    position: fields.position ?? 99999,
     createdAt: now,
     updatedAt: now,
     completedAt: null,
