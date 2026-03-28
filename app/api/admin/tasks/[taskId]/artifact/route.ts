@@ -15,11 +15,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { taskId } = await context.params
   const body = await request.json()
-  const { type, url, label, actor } = body as {
+  const { type, url, label, actor, content } = body as {
     type: ArtifactType
     url: string
     label?: string
     actor?: string
+    content?: string
   }
 
   if (!type || !url) {
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     label,
     addedAt: now,
     addedBy: actor ?? "admin",
+    ...(content ? { content } : {}),
   }
 
   const existing: TaskArtifact[] = doc.data()!.artifacts ?? []
