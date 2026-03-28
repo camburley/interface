@@ -24,6 +24,7 @@ import {
   Timer,
   MessageSquare,
   Trash2,
+  Paperclip,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -44,6 +45,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { useTaskStore } from "@/lib/stores/task-store"
+import { ArtifactsPanel } from "@/components/artifacts-panel"
 import {
   BOARD_COLUMNS,
   TASK_PRIORITY_CONFIG,
@@ -62,6 +64,7 @@ import type {
 } from "@/lib/types/task"
 
 type BoardType = "client" | "internal" | "ops"
+type ViewMode = "board" | "artifacts"
 
 const BOARD_TABS: { id: BoardType; label: string; icon: typeof Briefcase }[] = [
   { id: "client", label: "Clients", icon: Briefcase },
@@ -99,6 +102,21 @@ export function BoardClient({ initialTasks, projects }: Props) {
       setFilters({ projectId: undefined })
     },
     [searchParams, router, setFilters],
+  )
+
+  const viewMode = (searchParams.get("view") as ViewMode) || "board"
+
+  const setViewMode = useCallback(
+    (mode: ViewMode) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (mode === "board") {
+        params.delete("view")
+      } else {
+        params.set("view", mode)
+      }
+      router.replace(`/admin/board?${params.toString()}`)
+    },
+    [searchParams, router],
   )
 
   // Filter projects by active board type
@@ -348,7 +366,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
         {/* Board type tabs */}
         <div className="flex items-center gap-1 mb-6 border-b border-border/40 pb-3">
           {BOARD_TABS.map((tab) => {
-            const isActive = activeBoardType === tab.id
+            const isActive = activeBoardType === tab.id && viewMode === "board"
             const Icon = tab.icon
             const tabProjects = projects.filter(
               (p) => (p.boardType ?? "client") === tab.id,
@@ -356,7 +374,10 @@ export function BoardClient({ initialTasks, projects }: Props) {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveBoardType(tab.id)}
+                onClick={() => {
+                  setActiveBoardType(tab.id)
+                  setViewMode("board")
+                }}
                 className={`flex items-center gap-2 px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-all ${
                   isActive
                     ? "bg-primary/10 text-primary border border-primary/30"
@@ -375,9 +396,30 @@ export function BoardClient({ initialTasks, projects }: Props) {
               </button>
             )
           })}
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-border/40 mx-2" />
+
+          {/* Artifacts tab */}
+          <button
+            onClick={() => setViewMode("artifacts")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-sm font-mono text-xs uppercase tracking-widest transition-all ${
+              viewMode === "artifacts"
+                ? "bg-primary/10 text-primary border border-primary/30"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/30 border border-transparent"
+            }`}
+          >
+            <Paperclip className="h-3.5 w-3.5" />
+            Artifacts
+          </button>
         </div>
 
+        {/* Artifacts view */}
+        {viewMode === "artifacts" && <ArtifactsPanel />}
+
         {/* Stats bar */}
+        {viewMode === "board" && (<>
+        
         <div className="flex items-center gap-6 mb-6 font-mono text-xs">
           <div className="flex items-center gap-2 text-muted-foreground">
             <CheckCircle className="h-3.5 w-3.5" />
@@ -729,6 +771,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
             ) : null}
           </DragOverlay>
         </DndContext>
+        </>)}
       </div>
 
       {/* Task detail modal */}

@@ -54,6 +54,8 @@ export type ArtifactType =
   | "url"
   | "document"
   | "test_report"
+  | "slack_thread"
+  | "file"
 
 export interface TaskArtifact {
   type: ArtifactType
