@@ -71,6 +71,15 @@ function ArtifactContentModal({
 }) {
   const [copied, setCopied] = useState(false)
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const original = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [])
+
   function handleCopy() {
     if (artifact.content) {
       navigator.clipboard.writeText(artifact.content)
