@@ -60,6 +60,8 @@ interface TaskStore {
 
   deleteTask: (id: string) => Promise<boolean>
 
+  reorderTasks: (items: { id: string; position: number }[]) => Promise<boolean>
+
   filteredTasks: () => Task[]
 }
 
@@ -237,6 +239,33 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           t.id === id ? { ...t, status: previousStatus } : t,
         ),
       }))
+      return false
+    }
+  },
+
+  reorderTasks: async (items) => {
+    // Optimistic update
+    const prev = get().tasks
+    set((state) => ({
+      tasks: state.tasks.map((t) => {
+        const match = items.find((i) => i.id === t.id)
+        return match ? { ...t, position: match.position } : t
+      }),
+    }))
+
+    try {
+      const res = await fetch("/api/admin/tasks/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      })
+      if (!res.ok) {
+        set({ tasks: prev })
+        return false
+      }
+      return true
+    } catch {
+      set({ tasks: prev })
       return false
     }
   },
