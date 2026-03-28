@@ -260,11 +260,14 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         body: JSON.stringify({ items }),
       })
       if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        console.error("[reorderTasks] API error:", res.status, body)
         set({ tasks: prev })
         return false
       }
       return true
-    } catch {
+    } catch (err) {
+      console.error("[reorderTasks] fetch error:", err)
       set({ tasks: prev })
       return false
     }
