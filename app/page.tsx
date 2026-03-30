@@ -1,33 +1,45 @@
-import { HeroSection } from "@/components/hero-section"
-import { TechStackSection } from "@/components/tech-stack-section"
-import { MvpBenefitsSection } from "@/components/mvp-benefits-section"
-import { PullQuoteSection } from "@/components/pull-quote-section"
-import { WorkSection } from "@/components/work-section"
-import { ProcessSection } from "@/components/process-section"
-import { FaqSection } from "@/components/faq-section"
-import { ApplicationFormSection } from "@/components/application-form-section"
-import { FooterSection } from "@/components/footer-section"
-import { SideNav } from "@/components/side-nav"
+import { PartnersHero } from "@/components/partners/hero"
+import { PartnersLogoBar } from "@/components/partners/logo-bar"
+import { PartnersHowItWorks } from "@/components/partners/how-it-works"
+import { PartnersAbout } from "@/components/partners/about"
+import { PartnersBenefits } from "@/components/partners/benefits"
+import { PartnersPricing } from "@/components/partners/pricing"
+import { PartnersRiskReversal } from "@/components/partners/risk-reversal"
+import { PartnersTestimonials } from "@/components/partners/testimonials"
+import { PartnersRecentWork } from "@/components/partners/recent-work"
+import { PartnersFaq } from "@/components/partners/faq"
+import { PartnersBooking } from "@/components/partners/booking"
+import { PartnersFooter } from "@/components/partners/footer"
+import { PartnersTaskBuilder } from "@/components/partners/task-builder"
+import type { Metadata } from "next"
 
-export default function Page() {
+export const metadata: Metadata = {
+  title: "Burley — Async Software Delivery, Subscribed",
+  description:
+    "Add tasks to your queue. Work moves through the board. Standard-sized items turn around fast. No hourly billing, no scoping calls. One monthly price, predictable delivery.",
+}
+
+export default function HomePage() {
   return (
     <main className="relative min-h-screen">
-      <SideNav />
       <div className="grid-bg fixed inset-0 opacity-30" aria-hidden="true" />
-
       <div className="relative z-10">
-        <HeroSection />
-        <TechStackSection />
-        <MvpBenefitsSection />
-        <PullQuoteSection />
-        <WorkSection />
-        <ProcessSection />
-        <FaqSection />
-        <ApplicationFormSection />
-        <FooterSection />
+        <PartnersHero />
+        <PartnersLogoBar />
+        <PartnersHowItWorks />
+        <PartnersAbout />
+        <PartnersTestimonials />
+        <PartnersBenefits />
+        <PartnersPricing />
+        <PartnersTaskBuilder />
+        <PartnersRiskReversal />
+        <PartnersRecentWork />
+        <PartnersFaq />
+        <PartnersBooking />
+        <PartnersFooter />
       </div>
     </main>
   )
 }
 
-export const dynamic = 'force-static'
+export const dynamic = "force-static"

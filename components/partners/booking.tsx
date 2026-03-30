@@ -31,12 +31,12 @@ export function PartnersBooking() {
     <section ref={ref} id="book" className="relative py-32 px-6 md:px-12 lg:px-28 border-t border-border/30">
       <div className="booking-content max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">/ Apply</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">/ Get Started</span>
           <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">
             STOP RE-SCOPING.<br />START SHIPPING.
           </h2>
           <p className="mt-4 font-mono text-sm text-muted-foreground max-w-xl mx-auto">
-            If you have a backlog of software work and want it moving without hourly billing or constant meetings, apply for a build lane.
+            Schedule a quick 15-minute intro call. No pressure, no pitch deck — just a conversation about what you&apos;re building.
           </p>
         </div>
 

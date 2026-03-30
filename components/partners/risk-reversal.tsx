@@ -40,9 +40,9 @@ export function PartnersRiskReversal() {
         </div>
         <div className="risk-card border border-accent/40 bg-accent/5 p-8 text-center">
           <span className="text-3xl">🛡</span>
-          <h3 className="mt-4 font-[var(--font-bebas)] text-2xl tracking-tight">Try it for a week</h3>
+          <h3 className="mt-4 font-[var(--font-bebas)] text-2xl tracking-tight">No lock-in</h3>
           <p className="mt-3 font-mono text-xs text-muted-foreground leading-relaxed">
-            Not the right fit after the first week? Get a full refund, no questions asked. Zero risk.
+            No long-term contracts. No minimum commitment. Subscribe for a month, get your work done, and cancel if it&apos;s not for you.
           </p>
         </div>
       </div>

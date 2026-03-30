@@ -80,11 +80,11 @@ export function PartnersHero() {
       </SplitFlapAudioProvider>
 
       {/* Hero content */}
-      <div ref={contentRef} className="flex-1 flex items-start md:items-center pt-16 md:pt-12">
+      <div ref={contentRef} className="flex-1 flex items-start md:items-center pt-8 md:pt-12">
         <div className="w-full max-w-4xl">
-          <div className="mb-6">
-            <span className="inline-block border border-accent/40 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
-              Async delivery · Queue-based · Predictable
+          <div className="mb-4 md:mb-6">
+            <span className="inline-block border border-accent/40 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.15em] md:tracking-[0.3em] text-accent">
+              Async · Queue-based · Predictable
             </span>
           </div>
 
@@ -112,7 +112,7 @@ export function PartnersHero() {
               href="#book"
               className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
-              Apply for a build lane →
+              Book a 15-min intro call →
             </a>
           </div>
 

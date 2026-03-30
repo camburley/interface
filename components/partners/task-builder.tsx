@@ -300,21 +300,21 @@ export function PartnersTaskBuilder() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <LaneCard
-                name="Core"
-                price="$5,000"
-                detail="1 active task at a time"
+                name="Continuity"
+                price="$1,995"
+                detail="Lower throughput"
                 highlighted={false}
               />
               <LaneCard
-                name="Priority"
-                price="$8,000"
-                detail="2 active tasks at a time"
+                name="Core"
+                price="$4,995"
+                detail="1 active task at a time"
                 highlighted={true}
               />
               <LaneCard
-                name="Continuity"
-                price="$2,000"
-                detail="Lower throughput"
+                name="Priority"
+                price="$7,995"
+                detail="2 active tasks at a time"
                 highlighted={false}
               />
             </div>
@@ -326,7 +326,7 @@ export function PartnersTaskBuilder() {
               href="#book"
               className="border border-accent px-6 py-3 font-mono text-xs uppercase tracking-widest text-accent hover:bg-accent hover:text-background transition-all duration-200"
             >
-              Apply for a build lane
+              Book an intro call
             </a>
             <button
               onClick={() => {

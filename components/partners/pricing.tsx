@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -10,7 +10,8 @@ gsap.registerPlugin(ScrollTrigger)
 const plans = [
   {
     name: "Continuity",
-    price: "$2,000",
+    price: "$1,995",
+    priceId: "continuity",
     period: "/month",
     description: "For existing clients who want to keep momentum without a full build lane.",
     features: [
@@ -21,13 +22,12 @@ const plans = [
       "Async updates and delivery",
       "Pause or cancel anytime",
     ],
-    cta: "Apply now",
-    href: "#book",
     highlighted: false,
   },
   {
     name: "Core",
-    price: "$5,000",
+    price: "$4,995",
+    priceId: "core",
     period: "/month",
     description: "Best for steady product work, improvements, automation, and feature delivery.",
     features: [
@@ -40,13 +40,12 @@ const plans = [
       "Ongoing product improvements",
       "Pause or cancel anytime",
     ],
-    cta: "Apply now",
-    href: "#book",
     highlighted: true,
   },
   {
     name: "Priority",
-    price: "$8,000",
+    price: "$7,995",
+    priceId: "priority",
     period: "/month",
     description: "Heavier throughput for clients with multiple concurrent priorities.",
     features: [
@@ -59,8 +58,6 @@ const plans = [
       "Multiple concurrent priorities",
       "Pause or cancel anytime",
     ],
-    cta: "Apply now",
-    href: "#book",
     highlighted: false,
   },
 ]
@@ -68,6 +65,7 @@ const plans = [
 export function PartnersPricing() {
   const sectionRef = useRef<HTMLElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
 
   useEffect(() => {
     if (!sectionRef.current || !headerRef.current) return
@@ -86,6 +84,27 @@ export function PartnersPricing() {
     }, sectionRef)
     return () => ctx.revert()
   }, [])
+
+  async function handleCheckout(priceId: string) {
+    setLoadingPlan(priceId)
+    try {
+      const res = await fetch("/api/partners/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: priceId }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        console.error("Checkout error:", data.error)
+      }
+    } catch (err) {
+      console.error("Checkout failed:", err)
+    } finally {
+      setLoadingPlan(null)
+    }
+  }
 
   return (
     <section ref={sectionRef} id="pricing" className="relative py-32 px-6 md:px-12 lg:px-28">
@@ -134,17 +153,19 @@ export function PartnersPricing() {
               </ul>
             </div>
 
-            <a
-              href={plan.href}
+            <button
+              onClick={() => handleCheckout(plan.priceId)}
+              disabled={loadingPlan === plan.priceId}
               className={cn(
-                "mt-8 block text-center py-3 font-mono text-xs uppercase tracking-widest transition-all duration-200",
+                "mt-8 block w-full text-center py-3 font-mono text-xs uppercase tracking-widest transition-all duration-200",
                 plan.highlighted
                   ? "bg-accent text-background hover:bg-accent/90"
-                  : "border border-foreground/20 text-foreground hover:border-accent hover:text-accent"
+                  : "border border-foreground/20 text-foreground hover:border-accent hover:text-accent",
+                loadingPlan === plan.priceId && "opacity-50 cursor-wait"
               )}
             >
-              {plan.cta}
-            </a>
+              {loadingPlan === plan.priceId ? "Loading..." : "Get started"}
+            </button>
           </div>
         ))}
       </div>
