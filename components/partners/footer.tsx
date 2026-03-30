@@ -4,9 +4,6 @@ export function PartnersFooter() {
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-6">
           <span className="font-[var(--font-bebas)] text-xl tracking-tight">BURLEY</span>
-          <span className="font-mono text-[10px] text-muted-foreground/50">
-            Philadelphia, PA
-          </span>
         </div>
         <div className="flex items-center gap-6">
           <a

@@ -7,17 +7,18 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 gsap.registerPlugin(ScrollTrigger)
 
 const categories = [
-  "Full-stack apps",
-  "AI integrations",
-  "Mobile apps",
+  "Feature work",
+  "Bug fixes",
+  "Redesigns",
+  "Internal tools",
   "Dashboards",
+  "Integrations",
+  "Automation",
+  "Refactors",
+  "Admin panels",
   "Landing pages",
-  "APIs & backends",
-  "Browser extensions",
-  "Programmatic SEO",
-  "Voice agents",
-  "Data pipelines",
-  "+ more",
+  "API work",
+  "Workflow improvements",
 ]
 
 export function PartnersRecentWork() {
@@ -44,9 +45,9 @@ export function PartnersRecentWork() {
   return (
     <section ref={ref} className="relative py-32 px-6 md:px-12 lg:px-28">
       <div className="work-content max-w-4xl">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">04 / Recent Work</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">04 / What Fits Well</span>
         <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">
-          APPS, APIS, AI &<br />EVERYTHING IN BETWEEN
+          STRONG FIT FOR<br />QUEUE-BASED DELIVERY
         </h2>
 
         <div className="mt-10 flex flex-wrap gap-3">

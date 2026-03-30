@@ -9,12 +9,13 @@ import { PartnersRecentWork } from "@/components/partners/recent-work"
 import { PartnersFaq } from "@/components/partners/faq"
 import { PartnersBooking } from "@/components/partners/booking"
 import { PartnersFooter } from "@/components/partners/footer"
+import { PartnersTaskBuilder } from "@/components/partners/task-builder"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Burley — Software Development, Subscribed",
+  title: "Burley — Async Software Delivery, Subscribed",
   description:
-    "Production-grade software development as a subscription. One flat monthly rate. Pause or cancel anytime. AI-powered delivery by Cam Burley.",
+    "Add tasks to your queue. Work moves through the board. Standard-sized items turn around fast. No hourly billing, no scoping calls. One monthly price, predictable delivery.",
 }
 
 export default function PartnersPage() {
@@ -28,6 +29,7 @@ export default function PartnersPage() {
         <PartnersAbout />
         <PartnersBenefits />
         <PartnersPricing />
+        <PartnersTaskBuilder />
         <PartnersRiskReversal />
         <PartnersRecentWork />
         <PartnersFaq />

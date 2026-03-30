@@ -9,54 +9,54 @@ gsap.registerPlugin(ScrollTrigger)
 
 const faqs = [
   {
-    question: "How fast will I receive my builds?",
+    question: "Is this unlimited development?",
     answer:
-      "On average, most requests are completed within 48 hours. More complex features may take longer, but you'll always have visibility into progress on your dashboard.",
+      "It is an unlimited queue, not unlimited simultaneous work. You can add as many items as you want, but work moves through the queue according to your lane.",
+  },
+  {
+    question: "What counts as a task?",
+    answer:
+      "A task should be a standard-sized unit of work with a clear outcome. Larger initiatives are broken into smaller tasks and delivered incrementally. Each task should describe one clear outcome with relevant context and acceptance criteria.",
+  },
+  {
+    question: "What does \"48 business hours\" mean?",
+    answer:
+      "Standard-sized tasks typically move within 48 business hours once active. Some items may require clarification, dependency work, or breakdown into smaller steps before starting.",
+  },
+  {
+    question: "Do we need meetings?",
+    answer:
+      "No recurring meetings are required. The service is designed to run asynchronously through the board and written updates. Priorities, context, approvals, and delivery stay organized in one place.",
+  },
+  {
+    question: "Can I pause?",
+    answer:
+      "Yes. Billing cycles are 31 days. If you pause on day 15, you'll have 16 days remaining. When you unpause, those 16 days pick up where they left off.",
+  },
+  {
+    question: "What if I have a bigger project?",
+    answer:
+      "That's fine. Bigger projects are handled by breaking them into sequential tasks and moving them through the queue. The task builder on this page can show you how your project maps to the queue.",
+  },
+  {
+    question: "What fits well?",
+    answer:
+      "Feature work, bug fixes, redesigns, internal tools, dashboards, integrations, automation, refactors, admin panels, landing pages, API work, and workflow improvements.",
+  },
+  {
+    question: "What does not fit well?",
+    answer:
+      "Giant single-scope projects submitted as one task, unclear research-heavy initiatives with no concrete deliverable, work requiring frequent live meetings, and projects needing deep enterprise procurement or compliance process.",
   },
   {
     question: "Who does the work?",
     answer:
-      "Me—Cam. I don't outsource or hire subcontractors. Every line of code is written or reviewed by me personally. AI handles ~80% of the delivery; I review 100% of it.",
+      "Cam Burley. No outsourcing, no subcontractors. Every line of code is written or reviewed personally. AI tools accelerate delivery—you get senior-quality output at a speed that would normally require a full team.",
   },
   {
-    question: "How does the AI-powered part work?",
+    question: "Why choose this over hiring or an agency?",
     answer:
-      "I use AI coding tools (Cursor, Claude, OpenAI) to accelerate development. This means you get senior-quality output at a speed that would normally require a full team. The AI does the heavy lifting; I do the thinking, architecture, and quality control.",
-  },
-  {
-    question: "Is there a limit to how many requests I can make?",
-    answer:
-      "No. You can add as many requests to your board as you'd like. They'll be worked on based on your plan's active slots—one at a time for Standard, two at a time for Pro.",
-  },
-  {
-    question: "How does the pause feature work?",
-    answer:
-      "Billing cycles are 31 days. If you pause on day 15, you'll have 16 days remaining. When you unpause, those 16 days pick up where they left off. Simple.",
-  },
-  {
-    question: "What tech stack do you use?",
-    answer:
-      "Primarily Next.js, React, TypeScript, Vercel, Postgres, Firebase, and Stripe. But I'm flexible—if your project needs Python, React Native, or something else, I'll make it work.",
-  },
-  {
-    question: "What if I need a full MVP first?",
-    answer:
-      "Perfect. Your first request can be an MVP sprint—a complete vertical slice of your product in about a week. Then transition to ongoing feature development. Many subscribers start this way.",
-  },
-  {
-    question: "How do I submit requests?",
-    answer:
-      "Through your personal dashboard on burley.ai. Add tasks, set priorities, and track progress in real-time. You also get direct Slack access for quick questions.",
-  },
-  {
-    question: "What if I don't like the result?",
-    answer:
-      "Unlimited revisions on active requests. I'll iterate until you're satisfied. Plus, you get a Loom walkthrough with every delivery so nothing gets lost in translation.",
-  },
-  {
-    question: "Can I use this for just one month?",
-    answer:
-      "Absolutely. No minimum commitment. Subscribe for a month, get your work done, and cancel if it's not for you. Most subscribers stay because the value compounds over time.",
+      "Traditional software projects are frustrating: scope has to be defined up front, pricing is unpredictable, every next idea becomes another quote, meetings eat time, and follow-on work gets delayed by process. This model removes that friction.",
   },
 ]
 

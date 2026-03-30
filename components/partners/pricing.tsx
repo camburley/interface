@@ -9,43 +9,59 @@ gsap.registerPlugin(ScrollTrigger)
 
 const plans = [
   {
-    name: "Standard",
-    price: "$4,995",
+    name: "Continuity",
+    price: "$2,000",
     period: "/month",
-    description: "One request at a time. Perfect for ongoing product development.",
+    description: "For existing clients who want to keep momentum without a full build lane.",
     features: [
-      "One request at a time",
-      "Avg. 48 hour delivery",
-      "Unlimited requests",
-      "Unlimited revisions",
-      "Your own dashboard",
-      "Loom walkthroughs",
-      "Direct Slack access",
+      "Unlimited queue",
+      "Lower throughput",
+      "Maintenance, fixes, and support",
+      "Incremental improvements",
+      "Async updates and delivery",
       "Pause or cancel anytime",
     ],
-    cta: "Get started",
+    cta: "Apply now",
     href: "#book",
     highlighted: false,
   },
   {
-    name: "Pro",
-    price: "$7,995",
+    name: "Core",
+    price: "$5,000",
     period: "/month",
-    description: "Two requests at a time. For teams that move fast and need more throughput.",
+    description: "Best for steady product work, improvements, automation, and feature delivery.",
     features: [
-      "Two requests at a time",
-      "Avg. 48 hour delivery",
-      "Unlimited requests",
-      "Unlimited revisions",
-      "Your own dashboard",
+      "Unlimited queue",
+      "One active task at a time",
+      "Standard tasks within 48 business hrs",
+      "Async updates and delivery",
+      "Your own board",
       "Loom walkthroughs",
-      "Direct Slack access",
+      "Ongoing product improvements",
       "Pause or cancel anytime",
-      "Priority support",
     ],
-    cta: "Get started",
+    cta: "Apply now",
     href: "#book",
     highlighted: true,
+  },
+  {
+    name: "Priority",
+    price: "$8,000",
+    period: "/month",
+    description: "Heavier throughput for clients with multiple concurrent priorities.",
+    features: [
+      "Unlimited queue",
+      "Two active tasks at a time",
+      "Standard tasks within 48 business hrs",
+      "Async updates and delivery",
+      "Your own board",
+      "Loom walkthroughs",
+      "Multiple concurrent priorities",
+      "Pause or cancel anytime",
+    ],
+    cta: "Apply now",
+    href: "#book",
+    highlighted: false,
   },
 ]
 
@@ -74,13 +90,16 @@ export function PartnersPricing() {
   return (
     <section ref={sectionRef} id="pricing" className="relative py-32 px-6 md:px-12 lg:px-28">
       <div ref={headerRef} className="mb-16 text-center">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">03 / Pricing</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">03 / Lanes</span>
         <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">
-          ONE SUBSCRIPTION,<br />ENDLESS POSSIBILITIES
+          CHOOSE YOUR LANE
         </h2>
+        <p className="mt-4 max-w-xl mx-auto font-mono text-sm text-muted-foreground leading-relaxed">
+          The subscription covers the lane, not a fixed quantity of hours. This is a managed delivery system, not hourly consulting.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {plans.map((plan) => (
           <div
             key={plan.name}
@@ -93,7 +112,7 @@ export function PartnersPricing() {
           >
             {plan.highlighted && (
               <span className="inline-block self-start mb-4 border border-accent px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
-                Most Popular
+                Recommended
               </span>
             )}
             <h3 className="font-[var(--font-bebas)] text-3xl tracking-tight">{plan.name}</h3>
@@ -131,7 +150,7 @@ export function PartnersPricing() {
       </div>
 
       <p className="mt-8 text-center font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/50">
-        Pause or cancel anytime · No contracts · Billing cycles are 31 days
+        Pause or cancel anytime · No contracts · Async by default
       </p>
     </section>
   )

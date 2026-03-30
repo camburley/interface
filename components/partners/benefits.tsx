@@ -9,23 +9,23 @@ gsap.registerPlugin(ScrollTrigger)
 const benefits = [
   {
     icon: "⚡",
-    title: "Your own dashboard",
-    description: "Track every task in real-time on your personal board. Full transparency, no guessing.",
+    title: "Unlimited queue",
+    description: "Add as many tasks as you want. They sit in priority order. Your lane determines throughput.",
   },
   {
     icon: "◈",
-    title: "Fixed monthly rate",
-    description: "No surprises. Pay the same price every month regardless of scope or complexity.",
+    title: "Predictable monthly cost",
+    description: "No hourly billing. No per-project quotes. No surprise invoices. One flat monthly rate.",
   },
   {
     icon: "→",
-    title: "~48hr delivery",
-    description: "Most requests completed and deployed within two business days. Not weeks. Days.",
+    title: "48hr turnaround",
+    description: "Standard-sized tasks move within 48 business hours once active. Not weeks. Days.",
   },
   {
     icon: "◉",
-    title: "AI-powered speed",
-    description: "80% of delivery is AI-automated. 100% is human-reviewed. Speed without compromise.",
+    title: "Async by default",
+    description: "Requests, updates, delivery, and revisions happen through the board. No recurring meetings required.",
   },
   {
     icon: "‖",
@@ -69,7 +69,7 @@ export function PartnersBenefits() {
           IT&apos;S &quot;YOU&apos;LL NEVER GO<br />BACK&quot; BETTER
         </h2>
         <p className="mt-4 max-w-xl font-mono text-sm text-muted-foreground leading-relaxed">
-          Replaces unreliable freelancers and expensive agencies for one flat monthly fee, with builds delivered so fast you won&apos;t want to go anywhere else.
+          Built for founders, operators, and business owners who have ideas, updates, fixes, and tools they want shipped without hiring a full team or managing a traditional dev shop.
         </p>
       </div>
 

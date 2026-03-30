@@ -9,18 +9,18 @@ gsap.registerPlugin(ScrollTrigger)
 const steps = [
   {
     number: "01",
-    title: "Subscribe",
-    description: "Choose a plan and subscribe. No contracts, no onboarding calls required. You can start submitting requests immediately.",
+    title: "Subscribe to a lane",
+    description: "Choose the lane that matches your pace. No contracts, no onboarding calls required. Start adding tasks immediately.",
   },
   {
     number: "02",
-    title: "Request",
-    description: "Add tasks to your board—features, bug fixes, integrations, new pages. One at a time or two in parallel, depending on your plan.",
+    title: "Add tasks to your board",
+    description: "Drop in as many tasks as you want. They sit in the queue in priority order. Reorder anytime as business needs change.",
   },
   {
     number: "03",
-    title: "Receive",
-    description: "Get production-grade builds delivered in ~48 hours on average. Each delivery includes a Loom walkthrough and full source code.",
+    title: "Work moves through",
+    description: "Your lane determines how many tasks can be active at once. Standard-sized tasks move within 48 business hours. Review, request refinements, keep the queue moving.",
   },
 ]
 
@@ -54,7 +54,7 @@ export function PartnersHowItWorks() {
           THE WAY DEV SHOULD&apos;VE<br />BEEN DONE ALL ALONG
         </h2>
         <p className="mt-4 max-w-xl font-mono text-sm text-muted-foreground leading-relaxed">
-          No scope documents. No sprint planning meetings. No project managers. Just subscribe, submit, and receive production-grade software.
+          No scope documents. No project-by-project renegotiation. No constant meetings. Just a queue that moves.
         </p>
       </div>
 
