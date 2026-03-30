@@ -280,11 +280,4 @@ Name these explicitly if they come up:
 - ❌ Accepting "build me an app" as enough information to start
 - ❌ Converting S/M/L into hours or days — size is relative complexity, not a time commitment
 
----
 
-## Integration With Other Skills
-
-- After sizing, use **create-loom-script** to demo completed tasks
-- After sizing, use **pre-delivery-product-qa** to verify each task matches the original request
-- After sizing, use **package-client-offer** if the client needs to be onboarded to a lane
-- After sizing, use **upwork-client-response** if delivering the breakdown as a message
