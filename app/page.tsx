@@ -14,7 +14,7 @@ import { PartnersTaskBuilder } from "@/components/partners/task-builder"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Burley — Async Software Delivery, Subscribed",
+  title: "Burley — Ship Software on Subscription",
   description:
     "Add tasks to your queue. Work moves through the board. Standard-sized items turn around fast. No hourly billing, no scoping calls. One monthly price, predictable delivery.",
 }

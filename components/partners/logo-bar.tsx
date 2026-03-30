@@ -13,6 +13,14 @@ const clients = [
   "Grain Copilot",
   "Prediction Engine",
   "Supermarket Puzzle",
+  "Open Deep Research",
+  "Office Profit",
+  "Approval Hub",
+  "MCP Servers",
+  "Canelo Crawford",
+  "Assist AI",
+  "FurOnWheels",
+  "Realtime Voice Agents",
 ]
 
 export function PartnersLogoBar() {

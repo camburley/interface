@@ -115,13 +115,6 @@ export function PartnersTestimonials() {
       {/* Stats bar */}
       <div className="flex flex-wrap items-center gap-8 md:gap-12 mb-16">
         <div>
-          <span className="font-[var(--font-bebas)] text-4xl text-accent">$75K+</span>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-            Earned on Upwork
-          </p>
-        </div>
-        <div className="hidden sm:block w-px h-10 bg-border/40" />
-        <div>
           <span className="font-[var(--font-bebas)] text-4xl text-accent">5.0</span>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
             Client rating

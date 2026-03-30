@@ -10,8 +10,7 @@ import { readFileSync } from "fs"
 import { resolve } from "path"
 import { initializeApp, cert } from "firebase-admin/app"
 import { getFirestore } from "firebase-admin/firestore"
-import { storyStatusToTaskStatus } from "../lib/sync-status"
-import type { StoryStatus } from "../lib/types/milestone"
+import { syncTaskStatusFromStories } from "../lib/sync-task-status-from-stories"
 
 const envPath = resolve(process.cwd(), ".env")
 try {
@@ -164,30 +163,8 @@ async function main() {
 
   console.log(`\nDone: ${updated} tasks linked to DolceRight stories.`)
 
-  // Sync status from each story to its linked task so board columns match milestone
-  const allProjectTasksSnap = await db
-    .collection("tasks")
-    .where("projectId", "==", PROJECT_ID)
-    .get()
-  const linkedTasksSnap = { docs: allProjectTasksSnap.docs.filter((d) => d.data().storyId) }
-
-  let statusSynced = 0
-  for (const taskDoc of linkedTasksSnap.docs) {
-    const taskData = taskDoc.data()
-    const storyId = taskData.storyId as string
-    const storyDoc = await db.collection("stories").doc(storyId).get()
-    if (!storyDoc.exists) continue
-    const storyStatus = (storyDoc.data()?.status as StoryStatus) ?? "todo"
-    const taskStatus = storyStatusToTaskStatus(storyStatus)
-    const now = new Date().toISOString()
-    await taskDoc.ref.update({
-      status: taskStatus,
-      updatedAt: now,
-      completedAt: storyStatus === "done" ? now : null,
-    })
-    statusSynced++
-  }
-  console.log(`Synced status from story → task for ${statusSynced} tasks. Board columns now match milestone.`)
+  const { synced } = await syncTaskStatusFromStories(db, PROJECT_ID)
+  console.log(`Synced status from story → task for ${synced} tasks. Board columns now match milestone.`)
 }
 
 main().catch((err) => {
