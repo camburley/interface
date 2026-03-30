@@ -112,30 +112,6 @@ export function PartnersTestimonials() {
         </h2>
       </div>
 
-      {/* Stats bar */}
-      <div className="flex flex-wrap items-center gap-8 md:gap-12 mb-16">
-        <div>
-          <span className="font-[var(--font-bebas)] text-4xl text-accent">5.0</span>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-            Client rating
-          </p>
-        </div>
-        <div className="hidden sm:block w-px h-10 bg-border/40" />
-        <div>
-          <span className="font-[var(--font-bebas)] text-4xl text-accent">14+</span>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-            Products shipped
-          </p>
-        </div>
-        <div className="hidden sm:block w-px h-10 bg-border/40" />
-        <div>
-          <span className="font-[var(--font-bebas)] text-4xl text-accent">100%</span>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
-            5-star reviews
-          </p>
-        </div>
-      </div>
-
       {/* Reviews */}
       <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mb-16">
         {reviews.map((review, i) => (
