@@ -97,22 +97,16 @@ export function ClientBoardClient({
   const [showWelcome, setShowWelcome] = useState(false)
 
   useEffect(() => {
-    if (adminPreview) {
-      setShowWelcome(true)
-      return
-    }
     if (readOnly) return
     const key = `burley_board_welcomed_${clientName}`
     if (!localStorage.getItem(key)) {
       setShowWelcome(true)
     }
-  }, [readOnly, adminPreview, clientName])
+  }, [readOnly, clientName])
 
   function dismissWelcome() {
-    if (!adminPreview) {
-      const key = `burley_board_welcomed_${clientName}`
-      localStorage.setItem(key, "1")
-    }
+    const key = `burley_board_welcomed_${clientName}`
+    localStorage.setItem(key, "1")
     setShowWelcome(false)
   }
 
