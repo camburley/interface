@@ -6,6 +6,12 @@ import { validateTransition } from "@/lib/workflow"
 import { taskStatusToStoryStatus } from "@/lib/sync-status"
 import { computeNextDue } from "@/lib/types/task"
 import type { Task, TaskStatus } from "@/lib/types/task"
+import {
+  getClientEmailPrefs,
+  sendTaskDoneEmail,
+  sendTaskReviewEmail,
+  sendTaskInProgressEmail,
+} from "@/lib/email"
 
 interface RouteContext {
   params: Promise<{ taskId: string }>
@@ -100,6 +106,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   })
 
+  // Send email notification to client (non-blocking)
+  if (task.projectId && (newStatus === "done" || newStatus === "review" || newStatus === "in_progress")) {
+    notifyClient(db, task, taskId, newStatus).catch((err) =>
+      console.error("[task-move-email] notification failed:", err)
+    )
+  }
+
   if (task.storyId) {
     try {
       const storyStatus = taskStatusToStoryStatus(newStatus)
@@ -120,4 +133,54 @@ export async function POST(request: NextRequest, context: RouteContext) {
     from: task.status,
     to: newStatus,
   })
+}
+
+async function notifyClient(
+  db: FirebaseFirestore.Firestore,
+  task: Task,
+  taskId: string,
+  newStatus: TaskStatus,
+) {
+  const clientsSnap = await db
+    .collection("clients")
+    .where("milestoneProjectId", "==", task.projectId)
+    .limit(1)
+    .get()
+
+  if (clientsSnap.empty) return
+
+  const clientDoc = clientsSnap.docs[0]
+  const client = clientDoc.data()
+  const prefs = await getClientEmailPrefs(clientDoc.id)
+
+  const email = client.email as string
+  const name = (client.name as string) ?? "there"
+
+  if (newStatus === "done" && prefs.taskDone) {
+    const artifacts = (task.artifacts ?? []).map((a) => ({
+      type: a.type,
+      url: a.url,
+      label: a.label,
+    }))
+
+    let nextTask: { title: string; status: string } | null = null
+    try {
+      const nextSnap = await db
+        .collection("tasks")
+        .where("projectId", "==", task.projectId)
+        .where("status", "==", "in_progress")
+        .limit(1)
+        .get()
+      if (!nextSnap.empty) {
+        const d = nextSnap.docs[0].data()
+        nextTask = { title: d.title, status: "in_progress" }
+      }
+    } catch {}
+
+    await sendTaskDoneEmail(email, name, task.title, taskId, artifacts, nextTask)
+  } else if (newStatus === "review" && prefs.taskReview) {
+    await sendTaskReviewEmail(email, name, task.title, taskId)
+  } else if (newStatus === "in_progress" && prefs.taskInProgress) {
+    await sendTaskInProgressEmail(email, name, task.title)
+  }
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
 import type { MilestoneProjectSummary } from "./page"
-import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye, ListChecks } from "lucide-react"
+import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye, ListChecks, LayoutGrid, Mail } from "lucide-react"
 
 const STATUS_LABELS: Record<RetainerItem["status"], string> = {
   pending_approval: "Pending",
@@ -182,6 +182,13 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
               Board
             </a>
             <a
+              href="/admin/emails"
+              className="font-mono text-xs text-muted-foreground hover:text-accent transition-colors flex items-center gap-1"
+            >
+              <Mail className="h-3 w-3" />
+              Emails
+            </a>
+            <a
               href="/client/dashboard"
               className="font-mono text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
             >
@@ -307,13 +314,22 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
                             View as client
                           </a>
                           {c.milestoneProjectId ? (
-                            <a
-                              href={`/admin/projects/${c.milestoneProjectId}/milestones`}
-                              className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
-                            >
-                              <ListChecks className="h-3 w-3" />
-                              Milestones
-                            </a>
+                            <>
+                              <a
+                                href={`/admin/projects/${c.milestoneProjectId}/milestones`}
+                                className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
+                              >
+                                <ListChecks className="h-3 w-3" />
+                                Milestones
+                              </a>
+                              <a
+                                href={`/admin/board/client/${c.id}`}
+                                className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/40 rounded-sm px-2.5 py-1 hover:border-border"
+                              >
+                                <LayoutGrid className="h-3 w-3" />
+                                Client board
+                              </a>
+                            </>
                           ) : (
                             <span className="font-mono text-[10px] text-muted-foreground border border-border/30 rounded-sm px-2.5 py-1">
                               No milestones linked

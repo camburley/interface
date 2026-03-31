@@ -16,6 +16,7 @@ import {
   CreditCard,
   RefreshCw,
   ListChecks,
+  LayoutGrid,
 } from "lucide-react"
 
 const STATUS_CONFIG: Record<
@@ -157,15 +158,24 @@ function DashboardInner({ client, items, payments, milestonesHref }: Props) {
         <div>
           <p className="font-mono text-xs text-muted-foreground uppercase tracking-widest mb-1">Active Project</p>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">{client.projectName}</h1>
-          {resolvedMilestonesHref && (
+          <div className="flex items-center gap-4 mt-2">
+            {resolvedMilestonesHref && (
+              <Link
+                href={resolvedMilestonesHref}
+                className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors"
+              >
+                <ListChecks className="h-3.5 w-3.5" />
+                View project milestones
+              </Link>
+            )}
             <Link
-              href={resolvedMilestonesHref}
-              className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors mt-2"
+              href="/client/board"
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors"
             >
-              <ListChecks className="h-3.5 w-3.5" />
-              View project milestones
+              <LayoutGrid className="h-3.5 w-3.5" />
+              View board
             </Link>
-          )}
+          </div>
         </div>
 
         {/* Balance card */}

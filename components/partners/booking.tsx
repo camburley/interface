@@ -43,14 +43,11 @@ export function PartnersBooking() {
         {/* Calendly embed placeholder — replace src with actual Calendly link */}
         <div className="max-w-2xl mx-auto border border-border/40 bg-card/50">
           <div className="p-12 text-center">
-            <p className="font-mono text-xs text-muted-foreground/50 uppercase tracking-widest mb-6">
-              Calendly embed goes here
-            </p>
             <a
               href="mailto:cam@burley.ai?subject=Burley%20Subscription%20Inquiry"
               className="inline-block border border-accent px-6 py-3 font-mono text-xs uppercase tracking-widest text-accent hover:bg-accent hover:text-background transition-all duration-200"
             >
-              Or email cam@burley.ai
+              Email cam@burley.ai
             </a>
           </div>
         </div>

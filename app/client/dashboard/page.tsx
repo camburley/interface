@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { getSessionUser } from "@/lib/session"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { DashboardClient } from "./dashboard-client"
+import { SubscriptionDashboardClient } from "./subscription-dashboard"
 
 export const dynamic = "force-dynamic"
 
@@ -11,12 +12,23 @@ export default async function DashboardPage() {
 
   const { db } = getFirebaseAdmin()
 
-  // Fetch client profile
   const clientDoc = await db.collection("clients").doc(user.uid).get()
   if (!clientDoc.exists) redirect("/client/login")
   const client = { id: clientDoc.id, ...clientDoc.data() } as ClientData
 
-  // Fetch retainer items (sort client-side to avoid composite index requirement)
+  const clientType = (client as ClientData & { clientType?: string }).clientType
+
+  if (clientType === "subscription") {
+    return (
+      <SubscriptionDashboardClient
+        clientName={client.name}
+        clientEmail={client.email}
+        projectName={client.projectName}
+        milestoneProjectId={client.milestoneProjectId}
+      />
+    )
+  }
+
   const itemsSnap = await db
     .collection("retainer_items")
     .where("clientId", "==", user.uid)
@@ -25,7 +37,6 @@ export default async function DashboardPage() {
     .map((d) => ({ id: d.id, ...d.data() } as RetainerItem))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
-  // Fetch payment history (sort client-side to avoid composite index requirement)
   const paymentsSnap = await db
     .collection("retainer_payments")
     .where("clientId", "==", user.uid)
