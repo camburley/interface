@@ -50,6 +50,7 @@ import type { Task, TaskStatus } from "@/lib/types/task"
 const CLIENT_COLUMNS: { id: TaskStatus; title: string }[] = [
   { id: "todo", title: "To Do" },
   { id: "in_progress", title: "In Progress" },
+  { id: "blocked", title: "Blocked" },
   { id: "review", title: "Review" },
   { id: "done", title: "Done" },
 ]
@@ -211,6 +212,7 @@ export function ClientBoardClient({
 
   const todoCount = columnTasks("todo").length
   const inProgressCount = columnTasks("in_progress").length
+  const blockedCount = columnTasks("blocked").length
   const reviewCount = columnTasks("review").length
   const doneCount = columnTasks("done").length
 
@@ -265,6 +267,11 @@ export function ClientBoardClient({
             <Clock className="h-3.5 w-3.5" />
             <span>{inProgressCount} in progress</span>
           </div>
+          {blockedCount > 0 && (
+            <div className="flex items-center gap-2 text-red-400">
+              <span>{blockedCount} blocked</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 text-purple-400">
             <span>{reviewCount} review</span>
           </div>
