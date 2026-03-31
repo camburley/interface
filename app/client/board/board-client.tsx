@@ -1404,13 +1404,13 @@ function TaskDetailModal({
           )}
 
           {/* Description */}
-          {task.description && (
+          {(task.clientDescription || task.description) && (
             <div>
               <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
                 Description
               </p>
               <p className="font-mono text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                {task.description}
+                {task.clientDescription || task.description}
               </p>
             </div>
           )}

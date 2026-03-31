@@ -91,6 +91,7 @@ export interface Task {
   taskId: string
   title: string
   description: string
+  clientDescription?: string
   status: TaskStatus
   priority: TaskPriority
   projectId: string
