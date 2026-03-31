@@ -84,6 +84,24 @@ A task is queue-ready when it has ALL of these:
 | **Size** | S, M, or L (see below) |
 | **Acceptance criteria** | How we verify this task is complete |
 | **Dependencies** | Which tasks must finish first (by number) |
+| **Client description** | Plain-English explanation for a non-technical business owner (see below) |
+
+### Client Description Rules
+
+Every task MUST include a `clientDescription` — a plain-English explanation written for the business owner who is paying for this work. This is what appears on their board by default (they can toggle to see the technical description if they want).
+
+Rules:
+- 3-6 short sentences max
+- NO jargon: no "API", "endpoint", "schema", "Firestore", "adapter", "pipeline", "webhook", "middleware"
+- Explain WHAT it does for the user, not HOW it works under the hood
+- Use "you/your" to address the end user directly
+- Start with a one-line summary of what this gives them
+- If the feature has a visible UI component, include a small ASCII art diagram (max 8 lines, max 40 chars wide, using `+`, `-`, `|`, and plain text)
+- Think: "How would I explain this to the person writing the check?"
+
+**Good:** "Connect your Kalshi account so EdgeStrike can see your live positions. You paste your API key in Settings, we store it securely, and the system can now pull your trades automatically."
+
+**Bad:** "Build secure Kalshi API key input flow. Users paste their Kalshi API key + secret → encrypted at rest in Firestore under user doc. Add a /settings panel for connect/disconnect. Validate keys against Kalshi GET /portfolio/balance before saving."
 
 ### Size Definitions
 
@@ -138,12 +156,14 @@ Present the full task list in this format:
 **Outcome:** [What exists when done]
 **Acceptance:** [How we know it's done]
 **Depends on:** none
+**Client description:** [Plain-English explanation for the business owner]
 
 ### 02 · [Title] — [S/M/L]
 **Category:** infrastructure
 **Outcome:** [What exists when done]
 **Acceptance:** [How we know it's done]
 **Depends on:** 01
+**Client description:** [Plain-English explanation for the business owner]
 
 ...
 ```
@@ -190,48 +210,56 @@ List anything that needs attention:
     Outcome: ERD and page list documented, data model created
     Acceptance: Schema exists, team agrees on MVP feature set
     Depends on: none
+    Client description: Map out exactly what your portal includes and how data is organized — this is the blueprint everything else is built on.
 
 02 · Create auth flow — M
     Category: feature
     Outcome: Login, register, password reset working
     Acceptance: User can register, log in, reset password, session persists
     Depends on: 01
+    Client description: Your clients can create accounts, log in securely, and reset their passwords. This is the front door to the portal.
 
 03 · Build dashboard shell and navigation — M
     Category: feature
     Outcome: Authenticated layout with sidebar nav, empty state pages
     Acceptance: Logged-in user sees dashboard frame, can navigate sections
     Depends on: 02
+    Client description: The main layout your clients see after logging in — a sidebar menu, a dashboard home, and navigation to every section of the portal.
 
 04 · Implement account settings — S
     Category: feature
     Outcome: User can update profile, change password
     Acceptance: Settings page saves changes, validation works
     Depends on: 02
+    Client description: Your clients can update their profile info and change their password from a settings page inside the portal.
 
 05 · Build project status view — L
     Category: feature
     Outcome: Client sees list of projects with status, can drill into details
     Acceptance: Projects load from DB, status badges display, detail page works
     Depends on: 03
+    Client description: Clients see all their projects listed with clear status labels (active, completed, etc.) and can click into any project for full details.
 
 06 · Add file upload — M
     Category: feature
     Outcome: Client can upload files to a project, see upload history
     Acceptance: Upload works, files stored, download link works
     Depends on: 05
+    Client description: Clients can upload files directly to a project and see a history of everything they've uploaded. Files are downloadable anytime.
 
 07 · Connect invoicing / billing — L
     Category: integration
     Outcome: Client sees invoices pulled from Stripe, payment status
     Acceptance: Stripe invoices display, status is accurate, links to Stripe portal
     Depends on: 03
+    Client description: Your clients see their invoices and payment history right inside the portal — no need to check email or log into a separate billing system.
 
 08 · QA pass and release checklist — S
     Category: fix
     Outcome: All flows tested, edge cases handled, ready for production
     Acceptance: Auth, uploads, billing, navigation all pass manual QA
     Depends on: 04, 05, 06, 07
+    Client description: Final quality check across every feature — login, uploads, billing, navigation — making sure everything works smoothly before launch.
 
 Parallel tracks:
   Track A: 01 → 02 → 03 → 05 → 06 → 08
@@ -279,5 +307,7 @@ Name these explicitly if they come up:
 - ❌ Producing more than 15 tasks without grouping into phases
 - ❌ Accepting "build me an app" as enough information to start
 - ❌ Converting S/M/L into hours or days — size is relative complexity, not a time commitment
+- ❌ Writing client descriptions with technical jargon — the client description is for the person paying, not the person building
+- ❌ Skipping client descriptions — every task needs one, no exceptions
 
 
