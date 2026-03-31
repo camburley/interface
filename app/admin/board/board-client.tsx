@@ -30,12 +30,14 @@ import { toast } from "sonner"
 import {
   DndContext,
   closestCenter,
+  pointerWithin,
   PointerSensor,
   useSensor,
   useSensors,
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  useDroppable,
 } from "@dnd-kit/core"
 import {
   SortableContext,
@@ -242,8 +244,32 @@ export function BoardClient({ initialTasks, projects }: Props) {
       return
     }
 
-    // Within-column reorder
+    // Cross-column: dropped on a card in a different column
     const overTaskObj = tasks.find((t) => t.id === over.id)
+    if (overTaskObj && activeTaskObj.status !== overTaskObj.status) {
+      const targetStatus = overTaskObj.status
+      if (
+        targetStatus === "done" &&
+        (activeTaskObj.cardType ?? "one_off") === "recurring" &&
+        activeTaskObj.recurrence
+      ) {
+        setCompletionModal({ taskId: activeTaskObj.id, taskTitle: activeTaskObj.title })
+        setCompletionComment("")
+        return
+      }
+      if (targetStatus === "blocked") {
+        setBlockedModal({ taskId: activeTaskObj.id, taskTitle: activeTaskObj.title })
+        setBlockedReason("")
+        return
+      }
+      const success = await moveTask(activeTaskObj.id, targetStatus)
+      if (!success) {
+        toast.error(`Cannot move to ${TASK_STATUS_CONFIG[targetStatus].label}`)
+      }
+      return
+    }
+
+    // Within-column reorder
     if (!overTaskObj || activeTaskObj.status !== overTaskObj.status) return
 
     const col = columnTasks(activeTaskObj.status)
@@ -723,7 +749,7 @@ export function BoardClient({ initialTasks, projects }: Props) {
         {/* Kanban board */}
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={pointerWithin}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
@@ -763,25 +789,27 @@ export function BoardClient({ initialTasks, projects }: Props) {
                     items={colTasks.map((t) => t.id)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2 min-h-[200px]">
-                      {colTasks.map((task) => (
-                        <SortableTaskCard
-                          key={task.id}
-                          task={task}
-                          projectColor={getProjectColor(task.projectId)}
-                          projectName={getProjectName(task.projectId)}
-                          onTaskClick={setSelectedTask}
-                        />
-                      ))}
+                    <DroppableColumn columnId={column.id}>
+                      <div className="space-y-2">
+                        {colTasks.map((task) => (
+                          <SortableTaskCard
+                            key={task.id}
+                            task={task}
+                            projectColor={getProjectColor(task.projectId)}
+                            projectName={getProjectName(task.projectId)}
+                            onTaskClick={setSelectedTask}
+                          />
+                        ))}
 
-                      {colTasks.length === 0 && (
-                        <div className="border border-dashed border-border/30 rounded-sm p-6 text-center">
-                          <p className="font-mono text-[10px] text-muted-foreground">
-                            Drop tasks here
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                        {colTasks.length === 0 && (
+                          <div className="border border-dashed border-border/30 rounded-sm p-6 text-center">
+                            <p className="font-mono text-[10px] text-muted-foreground">
+                              Drop tasks here
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </DroppableColumn>
                   </SortableContext>
                 </div>
               )
@@ -1218,6 +1246,30 @@ function formatCountdown(isoDate: string): string | null {
   if (hours < 24) return `${hours}h`
   const days = Math.floor(hours / 24)
   return `${days}d`
+}
+
+function DroppableColumn({
+  columnId,
+  children,
+}: {
+  columnId: string
+  children: React.ReactNode
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `column-${columnId}`,
+    data: { columnId },
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[200px] rounded-sm transition-colors ${
+        isOver ? "bg-primary/5 ring-1 ring-primary/20" : ""
+      }`}
+    >
+      {children}
+    </div>
+  )
 }
 
 function SortableTaskCard({
