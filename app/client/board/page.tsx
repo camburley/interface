@@ -33,12 +33,16 @@ export default async function ClientBoardPage() {
 
   const projectColor = PROJECT_COLORS[0]
 
+  const clientDoc = await db.collection("clients").doc(session.uid).get()
+  const hasRepo = !!(clientDoc.data()?.githubRepo && clientDoc.data()?.githubPat)
+
   return (
     <ClientBoardClient
       initialTasks={tasks}
       projectName={projectName}
       projectColor={projectColor}
       clientName={session.clientName}
+      repoConnected={hasRepo}
     />
   )
 }

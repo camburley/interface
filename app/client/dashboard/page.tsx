@@ -55,6 +55,7 @@ export interface ClientData {
   email: string
   projectName: string
   milestoneProjectId?: string
+  githubRepo?: string
   balance: number
   createdAt: string
 }

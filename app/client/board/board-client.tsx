@@ -20,6 +20,7 @@ import {
   Sparkles,
   Zap,
   HelpCircle,
+  Github,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -60,6 +61,7 @@ interface Props {
   clientName: string
   readOnly?: boolean
   adminPreview?: boolean
+  repoConnected?: boolean
 }
 
 export function ClientBoardClient({
@@ -69,6 +71,7 @@ export function ClientBoardClient({
   clientName,
   readOnly = false,
   adminPreview = false,
+  repoConnected = false,
 }: Props) {
   const {
     tasks,
@@ -416,6 +419,7 @@ export function ClientBoardClient({
 
       {showScoping && !readOnly && (
         <ScopingPanel
+          repoConnected={repoConnected}
           onClose={() => setShowScoping(false)}
           onAddTask={async (data) => {
             const result = await createTask(data)
@@ -790,9 +794,11 @@ const CATEGORY_ICONS: Record<string, string> = {
 }
 
 function ScopingPanel({
+  repoConnected,
   onClose,
   onAddTask,
 }: {
+  repoConnected?: boolean
   onClose: () => void
   onAddTask: (data: {
     title: string
@@ -883,6 +889,13 @@ function ScopingPanel({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+          {repoConnected && (
+            <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400/70">
+              <Github className="h-3 w-3" />
+              Repo connected — scoping uses your codebase for context
+            </div>
+          )}
+
           {/* Input */}
           <div className="border border-border/40 bg-card/30 rounded-sm overflow-hidden focus-within:border-primary/40 transition-colors">
             <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-border/20">

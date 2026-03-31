@@ -8,7 +8,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }
 
-  const { clientId, milestoneProjectId } = await request.json()
+  const body = await request.json()
+  const { clientId, milestoneProjectId, githubRepo, githubPat } = body as {
+    clientId?: string
+    milestoneProjectId?: string
+    githubRepo?: string | null
+    githubPat?: string | null
+  }
+
   if (!clientId) {
     return NextResponse.json({ error: "Missing clientId" }, { status: 400 })
   }
@@ -20,19 +27,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Client not found" }, { status: 404 })
   }
 
-  if (milestoneProjectId) {
-    const milestoneProjectDoc = await db.collection("milestone_projects").doc(milestoneProjectId).get()
-    if (!milestoneProjectDoc.exists) {
-      return NextResponse.json({ error: "Milestone project not found" }, { status: 404 })
+  const updates: Record<string, unknown> = {}
+
+  if (milestoneProjectId !== undefined) {
+    if (milestoneProjectId) {
+      const milestoneProjectDoc = await db.collection("milestone_projects").doc(milestoneProjectId).get()
+      if (!milestoneProjectDoc.exists) {
+        return NextResponse.json({ error: "Milestone project not found" }, { status: 404 })
+      }
     }
+    updates.milestoneProjectId = milestoneProjectId || null
   }
 
-  await clientRef.set(
-    {
-      milestoneProjectId: milestoneProjectId || null,
-    },
-    { merge: true },
-  )
+  if (githubRepo !== undefined) {
+    updates.githubRepo = githubRepo || null
+    updates.githubPat = githubPat || null
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 })
+  }
+
+  await clientRef.set(updates, { merge: true })
 
   return NextResponse.json({ ok: true })
 }

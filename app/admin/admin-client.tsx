@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { ClientData, RetainerItem } from "../client/dashboard/page"
 import type { MilestoneProjectSummary } from "./page"
-import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye, ListChecks, LayoutGrid, Mail } from "lucide-react"
+import { Users, Plus, RefreshCw, CheckCircle, Wrench, CircleDot, ExternalLink, ChevronDown, ChevronUp, Eye, ListChecks, LayoutGrid, Mail, Github } from "lucide-react"
 
 const STATUS_LABELS: Record<RetainerItem["status"], string> = {
   pending_approval: "Pending",
@@ -56,6 +56,13 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
   const [clientMilestoneLinks, setClientMilestoneLinks] = useState<Record<string, string>>(
     Object.fromEntries(clients.map((client) => [client.id, client.milestoneProjectId ?? ""])),
   )
+  const [clientGithubRepos, setClientGithubRepos] = useState<Record<string, string>>(
+    Object.fromEntries(clients.map((client) => [client.id, client.githubRepo ?? ""])),
+  )
+  const [clientGithubPats, setClientGithubPats] = useState<Record<string, string>>(
+    Object.fromEntries(clients.map(() => ["", ""])),
+  )
+  const [savingGithubId, setSavingGithubId] = useState<string | null>(null)
 
   function handleCreateClient(e: React.FormEvent) {
     e.preventDefault()
@@ -106,6 +113,28 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
       toast.error(err instanceof Error ? err.message : "Failed to update client")
     } finally {
       setLinkingClientId(null)
+    }
+  }
+
+  async function handleSaveGithub(clientId: string) {
+    setSavingGithubId(clientId)
+    try {
+      const repo = clientGithubRepos[clientId]?.trim() || null
+      const pat = clientGithubPats[clientId]?.trim() || null
+      const res = await fetch("/api/admin/update-client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, githubRepo: repo, githubPat: pat }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? "Failed to save")
+      toast.success(repo ? `Repo ${repo} connected.` : "Repo disconnected.")
+      setClientGithubPats((prev) => ({ ...prev, [clientId]: "" }))
+      router.refresh()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to save GitHub config")
+    } finally {
+      setSavingGithubId(null)
     }
   }
 
@@ -363,6 +392,41 @@ export function AdminClient({ clients, items, milestoneProjects }: Props) {
                           {linkingClientId === c.id ? "Saving..." : "Save Milestones Link"}
                         </button>
                       </div>
+                      {/* GitHub repo */}
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30">
+                        <Github className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <input
+                          value={clientGithubRepos[c.id] ?? ""}
+                          onChange={(e) =>
+                            setClientGithubRepos((prev) => ({ ...prev, [c.id]: e.target.value }))
+                          }
+                          placeholder="owner/repo"
+                          className="w-[180px] bg-muted/20 border border-border/50 rounded-sm px-2.5 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <input
+                          type="password"
+                          value={clientGithubPats[c.id] ?? ""}
+                          onChange={(e) =>
+                            setClientGithubPats((prev) => ({ ...prev, [c.id]: e.target.value }))
+                          }
+                          placeholder={c.githubRepo ? "PAT saved ·····" : "ghp_xxxxx"}
+                          className="w-[180px] bg-muted/20 border border-border/50 rounded-sm px-2.5 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <button
+                          onClick={() => handleSaveGithub(c.id)}
+                          disabled={savingGithubId === c.id}
+                          className="font-mono text-[10px] uppercase tracking-widest border border-border/40 rounded-sm px-2.5 py-1.5 text-muted-foreground hover:text-foreground hover:border-border transition-colors disabled:opacity-50"
+                        >
+                          {savingGithubId === c.id ? "Saving..." : c.githubRepo ? "Update" : "Connect"}
+                        </button>
+                        {c.githubRepo && (
+                          <span className="font-mono text-[10px] text-emerald-400 flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Connected
+                          </span>
+                        )}
+                      </div>
+
                       {ci.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/30">
                           {ci.slice(0, 5).map((item) => (
