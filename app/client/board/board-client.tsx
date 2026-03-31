@@ -116,21 +116,23 @@ export function ClientBoardClient({
   }, [initialTasks, initialized])
 
   useEffect(() => {
-    fetchTasks()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!readOnly) fetchTasks()
+  }, [readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (readOnly) return
     const onVisible = () => {
       if (document.visibilityState === "visible") fetchTasks()
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => document.removeEventListener("visibilitychange", onVisible)
-  }, [fetchTasks])
+  }, [readOnly, fetchTasks])
 
   useEffect(() => {
+    if (readOnly) return
     const interval = setInterval(() => fetchTasks(), 15_000)
     return () => clearInterval(interval)
-  }, [fetchTasks])
+  }, [readOnly, fetchTasks])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

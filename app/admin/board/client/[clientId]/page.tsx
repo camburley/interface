@@ -54,6 +54,7 @@ export default async function AdminClientPreviewPage({ params }: PageProps) {
       projectColor={projectColor}
       clientName={clientName}
       adminPreview
+      readOnly
     />
   )
 }
