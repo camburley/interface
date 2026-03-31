@@ -24,11 +24,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   const { taskId } = await context.params
   const body = await request.json()
-  const { status: newStatus, actor: bodyActor, evidence, comment } = body as {
+  const { status: newStatus, actor: bodyActor, evidence, comment, blockedReason } = body as {
     status: TaskStatus
     actor?: string
     evidence?: string[]
     comment?: string
+    blockedReason?: string
   }
   const actor = auth.actor || bodyActor || "admin"
 
@@ -69,6 +70,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   const updates: Record<string, unknown> = {
     status: newStatus,
     updatedAt: now,
+  }
+
+  if (newStatus === "blocked") {
+    updates.blockedReason = blockedReason?.trim() || null
+  } else if (task.status === "blocked") {
+    updates.blockedReason = null
   }
 
   if (newStatus === "done") {

@@ -113,6 +113,7 @@ export interface Task {
   cardType: CardType
   recurrence?: Recurrence
   position?: number
+  blockedReason?: string
   createdAt: string
   updatedAt: string
   completedAt?: string

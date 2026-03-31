@@ -138,6 +138,12 @@ export function BoardClient({ initialTasks, projects }: Props) {
   } | null>(null)
   const [completionComment, setCompletionComment] = useState("")
   const [completing, setCompleting] = useState(false)
+  const [blockedModal, setBlockedModal] = useState<{
+    taskId: string
+    taskTitle: string
+  } | null>(null)
+  const [blockedReason, setBlockedReason] = useState("")
+  const [submittingBlocked, setSubmittingBlocked] = useState(false)
   const [newTask, setNewTask] = useState({
     title: "",
     projectId: boardProjects[0]?.id ?? "",
@@ -224,6 +230,11 @@ export function BoardClient({ initialTasks, projects }: Props) {
         setCompletionComment("")
         return
       }
+      if (columnId === "blocked") {
+        setBlockedModal({ taskId: activeTaskObj.id, taskTitle: activeTaskObj.title })
+        setBlockedReason("")
+        return
+      }
       const success = await moveTask(activeTaskObj.id, columnId)
       if (!success) {
         toast.error(`Cannot move to ${TASK_STATUS_CONFIG[columnId].label}`)
@@ -269,6 +280,26 @@ export function BoardClient({ initialTasks, projects }: Props) {
       setCompletionComment("")
     } else {
       toast.error("Failed to complete task")
+    }
+  }
+
+  async function handleSubmitBlocked() {
+    if (!blockedModal) return
+    setSubmittingBlocked(true)
+    const success = await moveTask(
+      blockedModal.taskId,
+      "blocked",
+      "admin",
+      undefined,
+      blockedReason.trim() || undefined,
+    )
+    setSubmittingBlocked(false)
+    if (success) {
+      toast.success("Moved to blocked")
+      setBlockedModal(null)
+      setBlockedReason("")
+    } else {
+      toast.error("Failed to move task")
     }
   }
 
@@ -845,6 +876,65 @@ export function BoardClient({ initialTasks, projects }: Props) {
           </div>
         </div>
       )}
+
+      {/* Blocked reason modal */}
+      {blockedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-background border border-border/60 rounded-sm w-full max-w-md mx-4 shadow-2xl">
+            <div className="h-1 bg-red-500" />
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                  <p className="font-mono text-xs text-red-400 uppercase tracking-widest">
+                    Move to Blocked
+                  </p>
+                </div>
+                <button
+                  onClick={() => setBlockedModal(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <p className="font-mono text-xs text-foreground leading-relaxed">
+                {blockedModal.taskTitle}
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                  What&apos;s blocking this?
+                </label>
+                <input
+                  autoFocus
+                  value={blockedReason}
+                  onChange={(e) => setBlockedReason(e.target.value)}
+                  placeholder="e.g. Need Ali's Kalshi API creds"
+                  className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2.5 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-400/60 transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={handleSubmitBlocked}
+                  disabled={submittingBlocked}
+                  className="flex items-center gap-2 bg-red-500/20 text-red-400 border border-red-500/30 font-mono text-xs uppercase tracking-widest px-5 py-2.5 rounded-sm hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {submittingBlocked ? "Moving..." : "Block Task"}
+                </button>
+                <button
+                  onClick={() => setBlockedModal(null)}
+                  className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -920,6 +1010,21 @@ function TaskDetailModal({
               <X className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Blocked reason */}
+          {task.status === "blocked" && task.blockedReason && (
+            <div className="flex items-start gap-2 bg-red-400/10 border border-red-400/20 rounded-sm px-3 py-2.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-mono text-[10px] text-red-400 uppercase tracking-widest mb-0.5">
+                  Blocked
+                </p>
+                <p className="font-mono text-xs text-red-400 leading-relaxed">
+                  {task.blockedReason}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Meta grid */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-mono text-xs">
@@ -1172,15 +1277,16 @@ function TaskCard({
   const typeCfg = CARD_TYPE_CONFIG[cardType]
   const isStanding = cardType === "standing"
   const isRecurring = cardType === "recurring"
+  const isBlocked = task.status === "blocked"
 
   return (
     <div
       data-task-id={task.id}
       onClick={() => onTaskClick(task)}
-      className={`border border-border/40 rounded-sm bg-background transition-all cursor-grab active:cursor-grabbing ${
-        isStanding ? "ring-1 ring-amber-400/20" : ""
-      } ${isDragging ? "opacity-40 scale-95" : "hover:border-border"}`}
-      style={{ borderLeftWidth: "4px", borderLeftColor: projectColor }}
+      className={`border rounded-sm bg-background transition-all cursor-grab active:cursor-grabbing ${
+        isBlocked ? "border-red-400/30 bg-red-400/5" : "border-border/40"
+      } ${isStanding ? "ring-1 ring-amber-400/20" : ""} ${isDragging ? "opacity-40 scale-95" : "hover:border-border"}`}
+      style={{ borderLeftWidth: "4px", borderLeftColor: isBlocked ? "#f87171" : projectColor }}
     >
       <div className="p-3 space-y-2">
         {/* Top row: priority + card type badge + task ID */}
@@ -1267,6 +1373,16 @@ function TaskCard({
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Blocked reason */}
+        {task.status === "blocked" && task.blockedReason && (
+          <div className="flex items-start gap-1.5 bg-red-400/10 border border-red-400/20 rounded-sm px-2 py-1.5">
+            <AlertTriangle className="h-3 w-3 text-red-400 shrink-0 mt-0.5" />
+            <p className="font-mono text-[10px] text-red-400 leading-relaxed line-clamp-2">
+              {task.blockedReason}
+            </p>
           </div>
         )}
 

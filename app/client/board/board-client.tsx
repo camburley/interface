@@ -21,6 +21,7 @@ import {
   Zap,
   HelpCircle,
   Github,
+  AlertTriangle,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -1064,10 +1065,14 @@ function CardContent({
   const priorityCfg =
     TASK_PRIORITY_CONFIG[task.priority] ?? TASK_PRIORITY_CONFIG.medium
 
+  const isBlocked = task.status === "blocked"
+
   return (
     <div
-      className="border border-border/40 rounded-sm bg-background"
-      style={{ borderLeftWidth: "4px", borderLeftColor: projectColor }}
+      className={`border rounded-sm bg-background ${
+        isBlocked ? "border-red-400/30 bg-red-400/5" : "border-border/40"
+      }`}
+      style={{ borderLeftWidth: "4px", borderLeftColor: isBlocked ? "#f87171" : projectColor }}
     >
       <div className="p-3 space-y-2">
         <div className="flex items-center justify-between">
@@ -1083,7 +1088,15 @@ function CardContent({
         <p className="font-mono text-xs text-foreground leading-relaxed line-clamp-2">
           {task.title}
         </p>
-        {task.tags.length > 0 && (
+        {isBlocked && task.blockedReason && (
+          <div className="flex items-start gap-1.5 bg-red-400/10 border border-red-400/20 rounded-sm px-2 py-1.5">
+            <AlertTriangle className="h-3 w-3 text-red-400 shrink-0 mt-0.5" />
+            <p className="font-mono text-[11px] text-red-400 leading-relaxed">
+              {task.blockedReason}
+            </p>
+          </div>
+        )}
+        {!isBlocked && task.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {task.tags.slice(0, 3).map((tag) => (
               <span
@@ -1374,6 +1387,21 @@ function TaskDetailModal({
               <X className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Blocked reason */}
+          {task.status === "blocked" && task.blockedReason && (
+            <div className="flex items-start gap-2 bg-red-400/10 border border-red-400/20 rounded-sm px-3 py-2.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-mono text-[10px] text-red-400 uppercase tracking-widest mb-0.5">
+                  Blocked
+                </p>
+                <p className="font-mono text-xs text-red-400 leading-relaxed">
+                  {task.blockedReason}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Description */}
           {task.description && (

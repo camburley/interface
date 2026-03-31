@@ -56,6 +56,7 @@ interface TaskStore {
     newStatus: TaskStatus,
     actor?: string,
     comment?: string,
+    blockedReason?: string,
   ) => Promise<boolean>
 
   deleteTask: (id: string) => Promise<boolean>
@@ -167,7 +168,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  moveTask: async (id, newStatus, actor, comment) => {
+  moveTask: async (id, newStatus, actor, comment, blockedReason) => {
     const task = get().tasks.find((t) => t.id === id)
     if (!task) return false
 
@@ -181,6 +182,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           status: newStatus,
           updatedAt: now,
           completedAt: newStatus === "done" ? now : t.completedAt,
+          blockedReason: newStatus === "blocked" ? (blockedReason || undefined) : undefined,
         }
         if (
           newStatus === "done" &&
@@ -213,6 +215,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         actor: actor ?? "admin",
       }
       if (comment) payload.comment = comment
+      if (blockedReason) payload.blockedReason = blockedReason
 
       const res = await fetch(`/api/admin/tasks/${id}/move`, {
         method: "POST",
