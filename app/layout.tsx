@@ -25,9 +25,9 @@ const newsreader = Newsreader({
 })
 
 export const metadata: Metadata = {
-  title: "Burley — Build an Investable MVP in 5 Days",
+  title: "Burley — Ship Software on Subscription",
   description:
-    "I help founders ship a vertical slice of their product in 5 days—deployed, usable, and ready to show investors or users. Work directly with Cam.",
+    "Add tasks to your queue. Work moves through the board. Standard-sized items turn around fast. No hourly billing, no scoping calls. One monthly price, predictable delivery.",
   generator: "v0.app",
   icons: {
     icon: [
