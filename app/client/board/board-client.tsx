@@ -318,6 +318,7 @@ export function ClientBoardClient({
 
         {/* Kanban board */}
         <DndContext
+          id="client-board-dnd"
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
