@@ -12,13 +12,18 @@ export default async function ClientSettingsPage() {
 
   const { db } = getFirebaseAdmin()
   const clientDoc = await db.collection("clients").doc(session.uid).get()
-  const prefs = clientDoc.data()?.emailPreferences as Partial<EmailPreferences> | undefined
+  const clientData = clientDoc.data()
+  const prefs = clientData?.emailPreferences as Partial<EmailPreferences> | undefined
 
   return (
     <SettingsClient
       clientName={session.clientName}
       clientEmail={session.email ?? ""}
       initialPrefs={{ ...DEFAULT_EMAIL_PREFS, ...prefs }}
+      initialGithub={{
+        repo: (clientData?.githubRepo as string) ?? null,
+        connected: !!(clientData?.githubRepo && clientData?.githubPat),
+      }}
     />
   )
 }

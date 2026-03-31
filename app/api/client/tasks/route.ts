@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     status: "todo",
     priority: body.priority ?? "medium",
     tags: body.tags,
+    acceptanceCriteria: body.acceptanceCriteria,
   })
 
   const ref = await db.collection("tasks").add(taskData)

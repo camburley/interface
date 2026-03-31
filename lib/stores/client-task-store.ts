@@ -10,6 +10,9 @@ interface ClientTaskStore {
   createTask: (data: {
     title: string
     description?: string
+    tags?: string[]
+    priority?: "low" | "medium" | "high"
+    acceptanceCriteria?: string[]
   }) => Promise<{ id: string; taskId: string } | null>
 
   deleteTask: (id: string) => Promise<boolean>
@@ -42,7 +45,13 @@ export const useClientTaskStore = create<ClientTaskStore>((set, get) => ({
       const res = await fetch("/api/client/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          title: data.title,
+          description: data.description,
+          tags: data.tags,
+          priority: data.priority,
+          acceptanceCriteria: data.acceptanceCriteria,
+        }),
       })
       if (!res.ok) return null
       const result = await res.json()
@@ -54,11 +63,11 @@ export const useClientTaskStore = create<ClientTaskStore>((set, get) => ({
         title: data.title,
         description: data.description ?? "",
         status: "todo",
-        priority: "medium",
+        priority: data.priority ?? "medium",
         projectId: "",
         dependencies: [],
-        tags: [],
-        acceptanceCriteria: [],
+        tags: data.tags ?? [],
+        acceptanceCriteria: data.acceptanceCriteria ?? [],
         definitionOfDone: [],
         artifacts: [],
         context: {},

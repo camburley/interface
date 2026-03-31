@@ -12,6 +12,10 @@ import {
   Eye,
   BarChart3,
   Save,
+  Github,
+  Unplug,
+  Loader2,
+  AlertCircle,
 } from "lucide-react"
 
 interface EmailPreferences {
@@ -21,10 +25,16 @@ interface EmailPreferences {
   weeklySummary: boolean
 }
 
+interface GithubState {
+  repo: string | null
+  connected: boolean
+}
+
 interface Props {
   clientName: string
   clientEmail: string
   initialPrefs: EmailPreferences
+  initialGithub: GithubState
 }
 
 const PREF_ITEMS: {
@@ -68,11 +78,18 @@ const PREF_ITEMS: {
   },
 ]
 
-export function SettingsClient({ clientName, clientEmail, initialPrefs }: Props) {
+export function SettingsClient({ clientName, clientEmail, initialPrefs, initialGithub }: Props) {
   const router = useRouter()
   const [prefs, setPrefs] = useState<EmailPreferences>(initialPrefs)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const [github, setGithub] = useState<GithubState>(initialGithub)
+  const [ghRepo, setGhRepo] = useState("")
+  const [ghPat, setGhPat] = useState("")
+  const [ghSaving, setGhSaving] = useState(false)
+  const [ghError, setGhError] = useState<string | null>(null)
+  const [ghDisconnecting, setGhDisconnecting] = useState(false)
 
   async function handleLogout() {
     await fetch("/api/client/logout", { method: "POST" })
@@ -101,6 +118,44 @@ export function SettingsClient({ clientName, clientEmail, initialPrefs }: Props)
   function toggle(key: keyof EmailPreferences) {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }))
     setSaved(false)
+  }
+
+  async function connectGithub(e: React.FormEvent) {
+    e.preventDefault()
+    if (!ghRepo.trim() || !ghPat.trim()) return
+    setGhSaving(true)
+    setGhError(null)
+    try {
+      const res = await fetch("/api/client/github", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ githubRepo: ghRepo.trim(), githubPat: ghPat.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setGhError(data.error || "Failed to connect")
+        return
+      }
+      setGithub({ repo: ghRepo.trim(), connected: true })
+      setGhRepo("")
+      setGhPat("")
+    } catch {
+      setGhError("Network error. Please try again.")
+    } finally {
+      setGhSaving(false)
+    }
+  }
+
+  async function disconnectGithub() {
+    setGhDisconnecting(true)
+    try {
+      await fetch("/api/client/github", { method: "DELETE" })
+      setGithub({ repo: null, connected: false })
+    } catch {
+      console.error("Failed to disconnect GitHub")
+    } finally {
+      setGhDisconnecting(false)
+    }
   }
 
   return (
@@ -223,6 +278,104 @@ export function SettingsClient({ clientName, clientEmail, initialPrefs }: Props)
               Saved
             </span>
           )}
+        </div>
+
+        {/* GitHub connection */}
+        <div className="border border-border/40 rounded-sm overflow-hidden">
+          <div className="p-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Github className="h-4 w-4 text-foreground" />
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                Connected Repository
+              </p>
+            </div>
+            <p className="font-mono text-xs text-muted-foreground mt-1">
+              Link a GitHub repo so the feature scoping tool can reference your
+              codebase when breaking down tasks.
+            </p>
+          </div>
+
+          <div className="border-t border-border/40 p-6">
+            {github.connected ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-sm bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center">
+                    <Github className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-mono text-sm text-foreground font-medium">
+                      {github.repo}
+                    </p>
+                    <p className="font-mono text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                      <CheckCircle className="h-3 w-3" />
+                      Connected
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={disconnectGithub}
+                  disabled={ghDisconnecting}
+                  className="flex items-center gap-1.5 font-mono text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                >
+                  <Unplug className="h-3.5 w-3.5" />
+                  {ghDisconnecting ? "Disconnecting..." : "Disconnect"}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={connectGithub} className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                    Repository (owner/repo)
+                  </label>
+                  <input
+                    value={ghRepo}
+                    onChange={(e) => { setGhRepo(e.target.value); setGhError(null) }}
+                    placeholder="acme/my-app"
+                    className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                    Personal Access Token
+                  </label>
+                  <input
+                    type="password"
+                    value={ghPat}
+                    onChange={(e) => { setGhPat(e.target.value); setGhError(null) }}
+                    placeholder="ghp_xxxxxxxxxxxx"
+                    className="w-full bg-muted/20 border border-border/50 rounded-sm px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <p className="font-mono text-[9px] text-muted-foreground/50 leading-relaxed">
+                    Needs <span className="text-muted-foreground">repo</span> scope.
+                    Generate one at github.com/settings/tokens.
+                  </p>
+                </div>
+                {ghError && (
+                  <div className="flex items-center gap-1.5 font-mono text-xs text-red-400">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    {ghError}
+                  </div>
+                )}
+                <button
+                  type="submit"
+                  disabled={ghSaving || !ghRepo.trim() || !ghPat.trim()}
+                  className="flex items-center gap-2 bg-foreground text-background font-mono text-xs uppercase tracking-widest px-5 py-2.5 rounded-sm hover:bg-foreground/90 transition-colors disabled:opacity-50"
+                >
+                  {ghSaving ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Github className="h-3.5 w-3.5" />
+                      Connect Repository
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
         </div>
 
         <div className="border-t border-border/30 pt-6">
