@@ -54,6 +54,7 @@ export function buildNewTask(
     recurrenceFrequency?: RecurrenceFrequency
     targetCount?: number
     position?: number
+    clientDescription?: string
   },
 ): Omit<Task, "id"> {
   const now = new Date().toISOString()
@@ -113,6 +114,7 @@ export function buildNewTask(
     cardType,
     recurrence,
     position: fields.position ?? 99999,
+    ...(fields.clientDescription ? { clientDescription: fields.clientDescription } : {}),
     createdAt: now,
     updatedAt: now,
     completedAt: null,

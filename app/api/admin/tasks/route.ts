@@ -108,5 +108,55 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (taskData.description && !body.clientDescription) {
+    generateClientDescription(ref.id, taskData.title, taskData.description).catch((err) =>
+      console.error("[task-create] clientDescription generation failed:", err)
+    )
+  }
+
   return NextResponse.json({ ok: true, id: ref.id, taskId, storyId })
+}
+
+async function generateClientDescription(docId: string, title: string, description: string) {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return
+
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      temperature: 0.4,
+      max_tokens: 600,
+      messages: [
+        {
+          role: "system",
+          content: `You translate technical software task descriptions into plain English that a non-technical business owner can understand. Rules:
+- Write 3-6 short sentences max
+- No jargon: no "API", "endpoint", "schema", "Firestore", "Zod", "adapter", "pipeline"
+- Explain WHAT it does for the user, not HOW it works internally
+- If the feature has a visual component, include a simple ASCII art diagram (use +, -, |, and plain text)
+- Keep ASCII art small (max 8 lines, max 40 chars wide)
+- Start with a one-line plain English summary
+- Use "you/your" to address the end user directly`,
+        },
+        {
+          role: "user",
+          content: `Task: ${title}\n\nTechnical description:\n${description}`,
+        },
+      ],
+    }),
+  })
+
+  if (!res.ok) return
+
+  const data = await res.json()
+  const clientDescription = data.choices?.[0]?.message?.content?.trim()
+  if (!clientDescription) return
+
+  const { db } = getFirebaseAdmin()
+  await db.collection("tasks").doc(docId).update({ clientDescription })
 }

@@ -22,6 +22,7 @@ import {
   HelpCircle,
   Github,
   AlertTriangle,
+  Code,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -1300,6 +1301,7 @@ function TaskDetailModal({
   const [sending, setSending] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [showTechnical, setShowTechnical] = useState(false)
   const [history, setHistory] = useState<
     { id: string; event: string; actor: string; timestamp: string; details?: Record<string, unknown> }[]
   >([])
@@ -1406,11 +1408,22 @@ function TaskDetailModal({
           {/* Description */}
           {(task.clientDescription || task.description) && (
             <div>
-              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1">
-                Description
-              </p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                  {showTechnical ? "Technical Details" : "Description"}
+                </p>
+                {task.clientDescription && task.description && (
+                  <button
+                    onClick={() => setShowTechnical(!showTechnical)}
+                    className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  >
+                    <Code className="h-3 w-3" />
+                    {showTechnical ? "Simple view" : "Technical"}
+                  </button>
+                )}
+              </div>
               <p className="font-mono text-xs text-foreground leading-relaxed whitespace-pre-wrap">
-                {task.clientDescription || task.description}
+                {showTechnical ? task.description : (task.clientDescription || task.description)}
               </p>
             </div>
           )}
