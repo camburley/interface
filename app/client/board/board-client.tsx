@@ -100,12 +100,12 @@ export function ClientBoardClient({
   const [showWelcome, setShowWelcome] = useState(false)
 
   useEffect(() => {
-    if (readOnly) return
+    if (readOnly || adminPreview) return
     const key = `burley_board_welcomed_${clientName}`
     if (!localStorage.getItem(key)) {
       setShowWelcome(true)
     }
-  }, [readOnly, clientName])
+  }, [readOnly, adminPreview, clientName])
 
   function dismissWelcome() {
     const key = `burley_board_welcomed_${clientName}`
@@ -119,23 +119,23 @@ export function ClientBoardClient({
   }, [initialTasks, initialized])
 
   useEffect(() => {
-    if (!readOnly) fetchTasks()
-  }, [readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!readOnly && !adminPreview) fetchTasks()
+  }, [readOnly, adminPreview]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (readOnly) return
+    if (readOnly || adminPreview) return
     const onVisible = () => {
       if (document.visibilityState === "visible") fetchTasks()
     }
     document.addEventListener("visibilitychange", onVisible)
     return () => document.removeEventListener("visibilitychange", onVisible)
-  }, [readOnly, fetchTasks])
+  }, [readOnly, adminPreview, fetchTasks])
 
   useEffect(() => {
-    if (readOnly) return
+    if (readOnly || adminPreview) return
     const interval = setInterval(() => fetchTasks(), 15_000)
     return () => clearInterval(interval)
-  }, [readOnly, fetchTasks])
+  }, [readOnly, adminPreview, fetchTasks])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
