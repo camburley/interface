@@ -284,7 +284,7 @@ export function ClientBoardClient({
                 className="flex items-center gap-1.5 border border-primary/40 text-primary font-mono text-xs uppercase tracking-widest px-4 py-2 rounded-sm hover:bg-primary/10 transition-colors"
               >
                 <Zap className="h-3.5 w-3.5" />
-                Scope Feature
+                Size It
               </button>
               <button
                 onClick={() => setShowCreate(!showCreate)}
@@ -879,7 +879,7 @@ function ScopingPanel({
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
             <p className="font-mono text-xs text-primary uppercase tracking-widest">
-              Scope a Feature
+              Size Your Idea
             </p>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
