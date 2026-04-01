@@ -307,6 +307,8 @@ function emailLink(text: string, href: string): string {
 // ---------------------------------------------------------------------------
 // Send email (internal)
 // ---------------------------------------------------------------------------
+const ADMIN_BCC = "cam@burley.ai"
+
 async function send(to: string, subject: string, html: string): Promise<boolean> {
   const r = getResend()
   if (!r) {
@@ -314,7 +316,7 @@ async function send(to: string, subject: string, html: string): Promise<boolean>
     return false
   }
   try {
-    await r.emails.send({ from: FROM, to, subject, html })
+    await r.emails.send({ from: FROM, to, subject, html, bcc: ADMIN_BCC })
     console.log(`[email sent] to=${to} subject="${subject}"`)
     return true
   } catch (err) {
