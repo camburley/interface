@@ -31,6 +31,14 @@ Burley.ai is a single Next.js 16 application (Turbopack) serving a marketing sit
 - **E2E tests:** `pnpm test:e2e` (Playwright, requires dev server running, tests in `e2e/`)
 - **Lint:** `pnpm lint` (ESLint 9 with eslint-config-next flat config)
 
+### Auth architecture
+
+- Auth uses Firebase Auth with session cookies (`__session`). Login at `/api/client/login` accepts email/password or an `idToken`.
+- Admin routes (`/admin/*`) and client routes (`/client/dashboard/*`) are protected by `proxy.ts` which checks for the session cookie and redirects to `/client/login`.
+- Admin API routes use `validateBearerOrAdmin()` from `lib/api-auth.ts` (accepts bearer token or admin session).
+- Client API routes use `validateClientSession()` from `lib/client-auth.ts` (requires a client doc in Firestore for the session user).
+- The `/api/client/scope-feature` route also accepts admin sessions with an optional `clientId` param for the admin board preview.
+
 ### Gotchas
 
 - No eslint config shipped with the repo originally; one was added at `eslint.config.mjs` using `eslint-config-next` flat config format.
@@ -38,3 +46,4 @@ Burley.ai is a single Next.js 16 application (Turbopack) serving a marketing sit
 - The codebase has ~16 pre-existing lint errors (mostly React hooks setState-in-effect warnings). These are not regressions.
 - `next.config.mjs` sets `typescript.ignoreBuildErrors: true`, so `pnpm build` will not fail on TS errors.
 - No Docker, no local databases. All data services are external SaaS (Firebase, Stripe, Resend, OpenAI).
+- To test admin or client features locally, you need a Firebase Auth account and its UID must be in `ADMIN_UID` (for admin) or have a matching doc in the `clients` Firestore collection (for client).
