@@ -65,6 +65,7 @@ interface Props {
   readOnly?: boolean
   adminPreview?: boolean
   repoConnected?: boolean
+  clientId?: string
 }
 
 export function ClientBoardClient({
@@ -75,6 +76,7 @@ export function ClientBoardClient({
   readOnly = false,
   adminPreview = false,
   repoConnected = false,
+  clientId,
 }: Props) {
   const {
     tasks,
@@ -426,6 +428,7 @@ export function ClientBoardClient({
       {showScoping && !readOnly && (
         <ScopingPanel
           repoConnected={repoConnected}
+          clientId={clientId}
           onClose={() => setShowScoping(false)}
           onAddTask={async (data) => {
             const result = await createTask(data)
@@ -801,10 +804,12 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 function ScopingPanel({
   repoConnected,
+  clientId,
   onClose,
   onAddTask,
 }: {
   repoConnected?: boolean
+  clientId?: string
   onClose: () => void
   onAddTask: (data: {
     title: string
@@ -832,7 +837,7 @@ function ScopingPanel({
       const res = await fetch("/api/client/scope-feature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: description.trim() }),
+        body: JSON.stringify({ description: description.trim(), ...(clientId ? { clientId } : {}) }),
       })
       const data = await res.json()
       if (!res.ok) {
