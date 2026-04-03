@@ -113,11 +113,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
     },
   })
 
-  // Send email notification to client (non-blocking)
+  // Send email notification to client
+  // MUST await — fire-and-forget gets killed on Vercel serverless before Resend call completes
   if (task.projectId && (newStatus === "done" || newStatus === "review" || newStatus === "in_progress")) {
-    notifyClient(db, task, taskId, newStatus).catch((err) =>
+    try {
+      await notifyClient(db, task, taskId, newStatus)
+    } catch (err) {
       console.error("[task-move-email] notification failed:", err)
-    )
+    }
   }
 
   if (task.storyId) {
