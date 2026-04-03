@@ -33,9 +33,17 @@ Skip this if:
 
 **Quick pick:** 8 GB RAM = `e4b`. 16 GB+ = `26b` (recommended). 32 GB+ = `31b`.
 
-## Setup with Ollama
+## Setup
 
-### Install
+First, check if you already have a local model runner installed:
+
+```bash
+ollama --version    # check for Ollama
+```
+
+If you get a version number, skip to "Pull the Model" below. If not, pick one of these options.
+
+### Option A: Ollama (Recommended, CLI)
 
 **Mac or Windows:** Download from https://ollama.com/download
 
@@ -44,12 +52,31 @@ Skip this if:
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-Verify:
+### Option B: LM Studio (GUI, no terminal needed)
+
+1. Download from https://lmstudio.ai (free)
+2. Search "Gemma 4" in the model browser
+3. Click Download, then Start
+4. API available at `http://localhost:1234/v1`
+
+If you use LM Studio, skip the Ollama steps below. Everything else (connecting your agent, image input) works the same way.
+
+### Option C: Hugging Face (Python, advanced)
+
 ```bash
-ollama --version
+pip install transformers torch
 ```
 
-### Pull the Model
+Then in Python:
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+model = AutoModelForCausalLM.from_pretrained("google/gemma-4-27b-it")
+tokenizer = AutoTokenizer.from_pretrained("google/gemma-4-27b-it")
+```
+
+This is heavier to set up but gives full control. Only use if you have a specific reason to avoid Ollama/LM Studio.
+
+## Pull the Model (Ollama)
 
 ```bash
 ollama pull gemma4        # default (e4b)
@@ -57,7 +84,7 @@ ollama pull gemma4:26b    # recommended for 16GB+
 ollama pull gemma4:31b    # max capability
 ```
 
-### Run It
+## Run It
 
 Terminal chat:
 ```bash
@@ -73,24 +100,15 @@ curl http://localhost:11434/api/chat -d '{
 }'
 ```
 
-### Connect Your Agent
+## Connect Your Agent
 
 Point any OpenAI-compatible agent at:
 ```
-Base URL: http://localhost:11434/v1
+Base URL: http://localhost:11434/v1  (Ollama)
+         http://localhost:1234/v1   (LM Studio)
 Model: gemma4
 API Key: (leave blank or use any placeholder)
 ```
-
-## Alternative: LM Studio
-
-If you prefer a visual app:
-
-1. Download from https://lmstudio.ai (free)
-2. Search "Gemma 4" in the model browser
-3. Click Download
-4. Click Start
-5. API available at `http://localhost:1234/v1`
 
 ## Image Input
 

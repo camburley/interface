@@ -35,9 +35,17 @@ Skip this if:
 
 **Hardware note:** 27b is dense, so inference is slower than the 35b MoE model. If you have an M4 Pro Mac Mini with 64 GB RAM, both run comfortably.
 
-## Setup with Ollama
+## Setup
 
-### Install
+First, check if you already have a local model runner installed:
+
+```bash
+ollama --version    # check for Ollama
+```
+
+If you get a version number, skip to "Pull the Model" below. If not, pick one of these options.
+
+### Option A: Ollama (Recommended, CLI)
 
 **Mac or Windows:** Download from https://ollama.com/download
 
@@ -46,12 +54,31 @@ Skip this if:
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-Verify:
+### Option B: LM Studio (GUI, no terminal needed)
+
+1. Download from https://lmstudio.ai (free)
+2. Search "Qwen 3.5" in the model browser
+3. Click Download, then Start
+4. API available at `http://localhost:1234/v1`
+
+LM Studio supports MLX backend on Mac, which can be faster than Ollama for some models. If you use LM Studio, skip the Ollama steps below.
+
+### Option C: Hugging Face (Python, advanced)
+
 ```bash
-ollama --version
+pip install transformers torch
 ```
 
-### Pull the Model
+Then in Python:
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-27B")
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3.5-27B")
+```
+
+Only use if you have a specific reason to avoid Ollama/LM Studio.
+
+## Pull the Model (Ollama)
 
 ```bash
 ollama pull qwen3.5:27b   # near-Opus reasoning
@@ -59,7 +86,7 @@ ollama pull qwen3.5:35b   # fast coding model
 ollama pull qwen3.5:9b    # smaller machines
 ```
 
-### Run It
+## Run It
 
 Terminal chat:
 ```bash
@@ -75,24 +102,15 @@ curl http://localhost:11434/api/chat -d '{
 }'
 ```
 
-### Connect Your Agent
+## Connect Your Agent
 
 Point any OpenAI-compatible agent at:
 ```
-Base URL: http://localhost:11434/v1
+Base URL: http://localhost:11434/v1  (Ollama)
+         http://localhost:1234/v1   (LM Studio)
 Model: qwen3.5:27b
 API Key: (leave blank or use any placeholder)
 ```
-
-## Alternative: LM Studio
-
-1. Download from https://lmstudio.ai (free)
-2. Search "Qwen 3.5" in the model browser
-3. Download your preferred size
-4. Click Start
-5. API at `http://localhost:1234/v1`
-
-LM Studio supports MLX backend on Mac, which can be faster than Ollama for some models.
 
 ## Vision Input
 
