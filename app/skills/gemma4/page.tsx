@@ -13,7 +13,7 @@ export default function Gemma4SkillPage() {
       name="Run Gemma 4 Locally"
       description="Google's most capable open model. Multimodal (text + image + audio). 256K context. Runs on your hardware for free."
       skillFile="gemma4-local.md"
-      rawUrl="/skills/gemma4/raw"
+      rawUrl="/skills/gemma4.md"
       githubUrl="https://github.com/camburley/skills/blob/main/gemma4-local/SKILL.md"
       agentPrompt="Set up Gemma 4 on my machine."
     />

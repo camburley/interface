@@ -13,7 +13,7 @@ export default function Qwen35SkillPage() {
       name="Run Qwen 3.5 Locally"
       description="Near-Opus reasoning on consumer hardware. Open source. No API costs. Runs on a Mac Mini."
       skillFile="qwen35-local.md"
-      rawUrl="/skills/qwen35/raw"
+      rawUrl="/skills/qwen35.md"
       githubUrl="https://github.com/camburley/skills/blob/main/qwen35-local/SKILL.md"
       agentPrompt="Set up Qwen 3.5 on my machine."
     />

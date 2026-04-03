@@ -7,7 +7,7 @@ interface SkillPageProps {
   name: string
   description: string
   skillFile: string
-  rawUrl: string
+  rawUrl: string // e.g. /skills/gemma4.md
   githubUrl: string
   agentPrompt: string
 }
