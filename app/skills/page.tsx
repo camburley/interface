@@ -9,6 +9,13 @@ export const metadata: Metadata = {
 
 const skills = [
   {
+    slug: "apfel",
+    name: "Apple's Hidden On-Device LLM",
+    description:
+      "Every Apple Silicon Mac has a built-in AI model. Apfel wraps it in a CLI and OpenAI-compatible server. No downloads, no API keys, no cost.",
+    tags: ["local-ai", "apple", "on-device"],
+  },
+  {
     slug: "gemma4",
     name: "Run Gemma 4 Locally",
     description:
