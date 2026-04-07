@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -66,6 +67,7 @@ export function PartnersPricing() {
   const sectionRef = useRef<HTMLElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   useEffect(() => {
     if (!sectionRef.current || !headerRef.current) return
@@ -86,6 +88,7 @@ export function PartnersPricing() {
   }, [])
 
   async function handleCheckout(priceId: string) {
+    if (!agreedToTerms) return
     setLoadingPlan(priceId)
     try {
       const res = await fetch("/api/partners/checkout", {
@@ -155,13 +158,13 @@ export function PartnersPricing() {
 
             <button
               onClick={() => handleCheckout(plan.priceId)}
-              disabled={loadingPlan === plan.priceId}
+              disabled={loadingPlan === plan.priceId || !agreedToTerms}
               className={cn(
                 "mt-8 block w-full text-center py-3 font-mono text-xs uppercase tracking-widest transition-all duration-200",
                 plan.highlighted
                   ? "bg-accent text-background hover:bg-accent/90"
                   : "border border-foreground/20 text-foreground hover:border-accent hover:text-accent",
-                loadingPlan === plan.priceId && "opacity-50 cursor-wait"
+                (loadingPlan === plan.priceId || !agreedToTerms) && "opacity-50 cursor-not-allowed"
               )}
             >
               {loadingPlan === plan.priceId ? "Loading..." : "Get started"}
@@ -170,7 +173,28 @@ export function PartnersPricing() {
         ))}
       </div>
 
-      <p className="mt-8 text-center font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/50">
+      <div className="mt-10 flex justify-center">
+        <label className="flex items-start gap-3 cursor-pointer max-w-md">
+          <input
+            type="checkbox"
+            checked={agreedToTerms}
+            onChange={(e) => setAgreedToTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded-sm border border-border/60 bg-transparent accent-accent cursor-pointer shrink-0"
+          />
+          <span className="font-mono text-xs text-muted-foreground leading-relaxed">
+            I agree to the{" "}
+            <Link
+              href="/terms"
+              target="_blank"
+              className="text-accent hover:text-accent/80 underline underline-offset-2 transition-colors"
+            >
+              Terms of Service
+            </Link>
+          </span>
+        </label>
+      </div>
+
+      <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/50">
         Pause or cancel anytime · No contracts · Async by default
       </p>
     </section>

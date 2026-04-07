@@ -13,6 +13,12 @@ export function PartnersFooter() {
             burley.ai
           </a>
           <a
+            href="/terms"
+            className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Terms
+          </a>
+          <a
             href="mailto:cam@burley.ai"
             className="font-mono text-xs text-muted-foreground hover:text-accent transition-colors"
           >
