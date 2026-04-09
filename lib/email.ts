@@ -60,9 +60,9 @@ const DEFAULT_COPY: Record<TemplateKey, EmailCopy> = {
     body: "Hi {{clientName}} — this task has been completed and is ready for you to check out.",
   },
   task_review: {
-    subject: "Review: {{taskTitle}}",
-    heading: "Ready for Review",
-    body: "Hi {{clientName}} — this task is ready for your review. Check it out and leave any feedback or comments directly on the board.",
+    subject: "Update: {{taskTitle}} — In Review",
+    heading: "In Team Review",
+    body: "Hi {{clientName}} — Cam is kicking the tires on this one, testing with the team to make sure it's ready for production. Nothing needed from you. We'll let you know when it ships.",
   },
   task_in_progress: {
     subject: "In Progress: {{taskTitle}}",
@@ -78,7 +78,7 @@ export function getDefaultCopy(): Record<TemplateKey, EmailCopy> {
 export const TEMPLATE_LABELS: Record<TemplateKey, string> = {
   welcome: "Welcome Email",
   task_done: "Task Complete",
-  task_review: "Ready for Review",
+  task_review: "In Team Review",
   task_in_progress: "Work Started",
 }
 
@@ -360,7 +360,7 @@ export function renderWelcomeHtml(
   ${emailSectionLabel("How it works")}
   ${emailStep("1", "Add tasks to your queue", "Drop requests into your To Do column. Reorder anytime to set priority.")}
   ${emailStep("2", "Work moves through", "Tasks move from To Do → In Progress → Review → Done. You'll get notified at each step.")}
-  ${emailStep("3", "Review and ship", "When work lands in Review, check it out, leave feedback, and it ships.")}
+  ${emailStep("3", "We kick the tires", "When work moves to Review, Cam and the team test it to make sure it's production-ready. Once it passes, it ships.")}
 
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0">
   <tr><td>
@@ -429,13 +429,13 @@ export function renderTaskReviewHtml(
 ): string {
   return brandedHtml(`
   ${emailHeading(interpolate(copy.heading, vars))}
-  ${emailCard("Needs your review", vars.taskTitle)}
-  ${emailStatusBadge("Review", PURPLE)}
+  ${emailCard("Being tested", vars.taskTitle)}
+  ${emailStatusBadge("In Review", PURPLE)}
   ${emailParagraph(interpolate(copy.body, vars))}
 
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:20px 0">
   <tr><td>
-    ${emailButton("Review on Board", `${BASE_URL}/client/board`)}
+    ${emailButton("View Board", `${BASE_URL}/client/board`, false)}
   </td></tr>
   </table>
   `)
