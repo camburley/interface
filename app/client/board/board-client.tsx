@@ -1428,6 +1428,46 @@ function TaskDetailModal({
             </div>
           )}
 
+          {/* Acceptance Criteria */}
+          {task.acceptanceCriteria && task.acceptanceCriteria.length > 0 && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5">
+                Acceptance Criteria
+              </p>
+              <div className="space-y-1.5">
+                {task.acceptanceCriteria.map((criterion, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="font-mono text-[10px] text-primary/60 shrink-0 mt-0.5 w-4 text-right">
+                      {i + 1}.
+                    </span>
+                    <p className="font-mono text-[11px] text-foreground/80 leading-relaxed">
+                      {criterion}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Definition of Done */}
+          {task.definitionOfDone && task.definitionOfDone.length > 0 && (
+            <div>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mb-1.5">
+                Definition of Done
+              </p>
+              <div className="space-y-1.5">
+                {task.definitionOfDone.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <CheckCircle className="h-3 w-3 text-emerald-400/40 shrink-0 mt-0.5" />
+                    <p className="font-mono text-[11px] text-foreground/80 leading-relaxed">
+                      {item}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tags */}
           {task.tags.length > 0 && (
             <div>
