@@ -79,12 +79,114 @@ A task is queue-ready when it has ALL of these:
 | Field | Description |
 |-------|-------------|
 | **Title** | Short, specific. "Create auth flow" not "Handle users" |
+| **Description** | Technical implementation spec for the person building it (see Technical Description Rules below) |
 | **Outcome** | What exists when this task is done, in 1-2 sentences |
 | **Category** | `feature` · `integration` · `design` · `infrastructure` · `fix` · `automation` · `api` · `internal-tool` · `refactor` |
 | **Size** | S, M, or L (see below) |
-| **Acceptance criteria** | How we verify this task is complete |
+| **Acceptance criteria** | 4-8 specific, independently testable conditions (see Acceptance Criteria Rules below) |
+| **Definition of done** | 3-5 concrete verification steps — devices tested, edge cases exercised, scenarios covered (see Definition of Done Rules below) |
 | **Dependencies** | Which tasks must finish first (by number) |
-| **Client description** | Plain-English explanation for a non-technical business owner (see below) |
+| **Client description** | Plain-English explanation for a non-technical business owner with ASCII art (see Client Description Rules below) |
+
+**Every field is required. No exceptions. No empty fields. No single-sentence placeholders.**
+
+---
+
+### Technical Description Rules
+
+The `description` is a mini implementation spec. It is written for the developer who will build it. It should be detailed enough that a senior dev who has never seen the codebase could build the feature without asking questions.
+
+**Include all that apply:**
+
+- **Data model**: exact collections/tables, fields, types, relationships, indexes
+- **Files**: which files to create, which to modify (by path if known)
+- **Sub-screens / steps**: if the feature has multiple views, list each one with its inputs, layout, and behavior
+- **Conditional logic**: what triggers what, skip conditions, edge cases, feature flags
+- **UI specifics**: measurements (px), colors (hex), breakpoints, layout rules (grid vs flex), responsive behavior
+- **Animation / interaction**: durations (ms), easing, transitions, reduced-motion behavior
+- **API surface**: endpoint paths, request/response shapes, error codes, auth requirements
+- **State management**: what gets stored where, persistence strategy, cache behavior
+- **Validation rules**: required fields, formats, constraints, error messages, real-time vs submit-time
+- **Triggered side effects**: what other parts of the system update when this task completes (e.g., document fill states, progress meters, notification triggers)
+
+**Bad description (too vague):**
+"Build the auth flow. Users log in with Google, Apple, or email. Session persists."
+
+**Good description:**
+```
+Firebase Auth integration with three sign-in methods in priority order:
+  1. Continue with Google (one-tap on mobile)
+  2. Continue with Apple (required for iOS)
+  3. Email + password (fallback)
+
+Sign-in UI: social buttons displayed above email/password fields
+with a divider line between them.
+
+Account creation: embedded in the onboarding flow's final step —
+not a separate registration page. User completes free assessment,
+sees results, then signs up inline.
+
+Session: Firebase Auth session persists via auth state listener.
+On app load, check currentUser. If authenticated, fetch user doc
+from Firestore and hydrate state. If not, show the free flow
+(no auth required for the initial assessment).
+
+Auth gates: paid features require auth. If unauthenticated user
+tries to access a gated screen, redirect to sign-up prompt.
+
+Key files:
+  New: app/login/page.tsx — returning user login
+  Modify: components/screens/results.tsx — embed sign-in form
+  New: lib/auth.ts — Firebase Auth helpers, state listener
+  New: components/auth-form.tsx — reusable Google/Apple/email component
+```
+
+---
+
+### Acceptance Criteria Rules
+
+Acceptance criteria are **specific, independently testable conditions**. Each one is a sentence you could hand to a QA person who would know exactly what to check. Not "it works" — each criterion isolates one verifiable behavior.
+
+**Minimum 4 criteria per task. Aim for 5-8.**
+
+**Bad (too vague, too few):**
+"Auth works, session persists"
+
+**Good:**
+- Google sign-in works on desktop and mobile (one-tap)
+- Apple sign-in works on Safari/iOS
+- Email/password registration and login work
+- Session persists across browser restarts
+- Unauthenticated users blocked from paid features with redirect to sign-up
+- Sign-in form embedded inline in the onboarding flow — not a separate page
+
+Each criterion should pass or fail independently. If you can't test it without testing something else, it's not a criterion — it's part of a larger one. Split it.
+
+---
+
+### Definition of Done Rules
+
+Definition of done is **how we verify the task is shippable** — not what makes it correct (that's acceptance criteria), but what scenarios and environments we've confirmed it in.
+
+**Minimum 3 items per task. Aim for 4-5.**
+
+Include:
+- **Devices / browsers tested**: "Mobile tested on iPhone SE and Pixel 7"
+- **Edge cases exercised**: "Tested with 0, 1, and 10 items in the list"
+- **Specific scenarios verified**: "Duplicate detection tested with matching and non-matching names"
+- **Performance thresholds**: "Page loads in <2s on 3G" (if applicable)
+- **Regression checks**: "Existing screens still work with new step numbering"
+
+**Bad:**
+"Tested and working"
+
+**Good:**
+- All three auth methods tested on Chrome, Safari, Firefox
+- Mobile tested on iOS Safari and Android Chrome
+- Auth state listener hydrates user data on app load
+- Paid feature gate redirects correctly for unauthenticated users
+
+---
 
 ### Client Description Rules
 
@@ -96,12 +198,34 @@ Rules:
 - Explain WHAT it does for the user, not HOW it works under the hood
 - Use "you/your" to address the end user directly
 - Start with a one-line summary of what this gives them
-- If the feature has a visible UI component, include a small ASCII art diagram (max 8 lines, max 40 chars wide, using `+`, `-`, `|`, and plain text)
+- **ALWAYS include an ASCII art diagram if the feature has any visible UI or user-facing flow.** This is not optional. Most tasks have a UI component — draw it.
+- ASCII art: max 12 lines, max 40 chars wide, using `+`, `-`, `|`, and plain text
 - Think: "How would I explain this to the person writing the check?"
 
-**Good:** "Connect your Kalshi account so EdgeStrike can see your live positions. You paste your API key in Settings, we store it securely, and the system can now pull your trades automatically."
+**Bad (jargon, no diagram):**
+"Build secure third-party API key input flow. Users paste their API key + secret → encrypted at rest in Firestore under user doc. Add a /settings panel for connect/disconnect. Validate keys against GET /account/balance before saving."
 
-**Bad:** "Build secure Kalshi API key input flow. Users paste their Kalshi API key + secret → encrypted at rest in Firestore under user doc. Add a /settings panel for connect/disconnect. Validate keys against Kalshi GET /portfolio/balance before saving."
+**Good (plain English, with diagram):**
+```
+Connect your trading account so the system can see
+your live positions.
+
+  +-----------------------------------+
+  | Settings                          |
+  |                                   |
+  | Trading Account API Key           |
+  | [________________________] [Save] |
+  |                                   |
+  | Status: Connected (green dot)     |
+  | Last synced: 2 minutes ago        |
+  +-----------------------------------+
+
+You paste your key in Settings, we store it securely,
+and the system pulls your trades automatically.
+You can disconnect anytime with one click.
+```
+
+---
 
 ### Size Definitions
 
@@ -123,7 +247,7 @@ A task is too large if:
 - It would normally require a **full spec** before execution
 - It spans **multiple systems** with unclear dependencies
 - It sounds like a **whole project** instead of a deliverable
-- You can't describe the acceptance criteria in 1-2 sentences
+- You can't describe the acceptance criteria in 4+ sentences
 
 **When a task is too large, do not reject it. Break it down.**
 
@@ -153,18 +277,31 @@ Present the full task list in this format:
 
 ### 01 · [Title] — [S/M/L]
 **Category:** feature
-**Outcome:** [What exists when done]
-**Acceptance:** [How we know it's done]
+**Description:**
+[Multi-paragraph technical implementation spec]
+
+**Outcome:** [What exists when done — 1-2 sentences]
+
+**Acceptance criteria:**
+- [Specific testable condition 1]
+- [Specific testable condition 2]
+- [Specific testable condition 3]
+- [Specific testable condition 4]
+- [Specific testable condition 5+]
+
+**Definition of done:**
+- [Verification step 1]
+- [Verification step 2]
+- [Verification step 3]
+
 **Depends on:** none
-**Client description:** [Plain-English explanation for the business owner]
+
+**Client description:**
+[Plain-English explanation with ASCII art diagram]
+
+---
 
 ### 02 · [Title] — [S/M/L]
-**Category:** infrastructure
-**Outcome:** [What exists when done]
-**Acceptance:** [How we know it's done]
-**Depends on:** 01
-**Client description:** [Plain-English explanation for the business owner]
-
 ...
 ```
 
@@ -194,7 +331,82 @@ List anything that needs attention:
 
 ---
 
-## Examples
+## Gold Standard Example
+
+This is what a SINGLE well-written task looks like at full quality. Every task you produce must match this level of detail.
+
+### 07 · Real-Time Data Freshness System — M
+**Category:** feature
+**Description:**
+Live data updates for all active items with different refresh cadences per timeframe:
+  Fast: every 5-10s (stale > 30s, aging > 20s)
+  Medium: every 20-30s (stale > 60s, aging > 45s)
+  Slow: every 30-60s (stale > 120s, aging > 90s)
+
+Data freshness output per item: { lastUpdated, isStale, staleReason }.
+When stale: suppress actionable signals, degrade recommendation to "watch", UI shows staleness indicator.
+Hard rule for fast items: if data age > 30s AND phase = late, force recommendation = no_action immediately.
+
+"watch" is ONLY used for stale data. Never as a live signal state.
+
+Topbar freshness indicator: three states with color coding:
+  fresh: green dot + "Data fresh — Xs ago"
+  aging: amber dot + "Data aging — Xs ago"
+  stale: red dot + "Data stale — Xs ago"
+
+Scan countdown timer in topbar + table footer. "Refresh Now" button forces immediate fetch.
+
+Desktop layout: indicator in topbar right-aligned, 200px wide.
+Mobile layout: indicator below topbar as full-width strip, 32px tall.
+
+Key files:
+  New: lib/data-freshness.ts — freshness calculation + stale detection
+  New: components/freshness-indicator.tsx — topbar indicator component
+  Modify: lib/data-store.ts — add refresh loop with cadence tiers
+  Modify: components/topbar.tsx — embed freshness indicator + countdown
+
+**Outcome:** Users always know whether they are looking at live data, and the system automatically suppresses recommendations when data is stale.
+
+**Acceptance criteria:**
+- Three refresh cadences run at correct intervals
+- Freshness indicator transitions through fresh → aging → stale states
+- Stale data suppresses actionable signals automatically
+- "Refresh Now" button forces immediate fetch and resets indicator
+- Countdown timer shows seconds until next scan
+- Hard rule fires for fast items when data age > 30s in late phase
+- Indicator renders correctly in topbar (desktop) and strip (mobile)
+
+**Definition of done:**
+- Simulated stale data tested at 25s, 35s, 60s, 120s thresholds
+- Refresh Now button tested during each freshness state
+- Mobile strip tested on iPhone SE and Pixel 7
+- No performance degradation from refresh loops (CPU < 5% idle)
+- Stale suppression verified: no actionable signals shown when stale
+
+**Depends on:** 03
+
+**Client description:**
+Data updates automatically so you always see live info.
+
+Different items refresh at different speeds — fast-moving
+ones update every few seconds, slower ones less often.
+
+If data gets stale, the system tells you immediately:
+
+  +--------------------------------------+
+  | [*] Data fresh - 3s ago      (green) |
+  | [!] Data aging - 25s ago     (amber) |
+  | [X] Data stale - 45s ago     (red)   |
+  +--------------------------------------+
+
+When data is stale, the system suppresses recommendations
+so you never act on outdated information. A countdown
+shows when the next refresh happens, and you can force
+a refresh anytime.
+
+---
+
+## Abbreviated Example (Full Project)
 
 ### Input: "Build me a client portal"
 
@@ -207,80 +419,181 @@ List anything that needs attention:
 ```
 01 · Define MVP scope and data model — M
     Category: infrastructure
-    Outcome: ERD and page list documented, data model created
-    Acceptance: Schema exists, team agrees on MVP feature set
+    Description:
+      Firestore collections:
+        clients/{uid}: company name, email, plan tier, created date
+        clients/{uid}/projects/{pid}: name, status (active|paused|completed),
+          created date, description
+        clients/{uid}/files/{fid}: filename, storageUrl, uploadedAt, projectId
+      Indexes: clients by plan tier, projects by status, files by projectId + uploadedAt
+
+      Key files:
+        New: lib/types/client.ts — TypeScript interfaces for all collections
+        New: lib/firebase-client.ts — Firestore helpers (CRUD for each collection)
+        New: docs/MVP_SCOPE.md — page list and feature matrix
+
+    Outcome: Data model created, schema documented, MVP feature set agreed.
+
+    Acceptance criteria:
+      - All Firestore collections created with correct field types
+      - TypeScript interfaces match Firestore schema exactly
+      - MVP_SCOPE.md lists all pages and which features each includes
+      - Indexes deployed and queryable
+      - Schema supports file uploads linked to projects
+
+    Definition of done:
+      - Test data seeded for 3 clients, 5 projects, 10 files
+      - All CRUD helpers tested with real Firestore reads/writes
+      - MVP_SCOPE.md reviewed and agreed upon
+
     Depends on: none
-    Client description: Map out exactly what your portal includes and how data is organized — this is the blueprint everything else is built on.
+
+    Client description:
+      Map out exactly what your portal includes and how
+      the data is organized.
+
+        +-----------------------------------+
+        |  CLIENT PORTAL — MVP              |
+        |                                   |
+        |  Pages:                           |
+        |  [x] Dashboard                    |
+        |  [x] Projects                     |
+        |  [x] File uploads                 |
+        |  [x] Invoices                     |
+        |  [x] Settings                     |
+        +-----------------------------------+
+
+      This is the blueprint everything else is built on.
+      No code gets written until the data structure is
+      solid.
 
 02 · Create auth flow — M
     Category: feature
-    Outcome: Login, register, password reset working
-    Acceptance: User can register, log in, reset password, session persists
+    Description:
+      Firebase Auth with two sign-in methods:
+        1. Email + password (primary)
+        2. Google sign-in (convenience)
+
+      Sign-in page: /login route. Social button above email/password
+      form with "or" divider.
+
+      Registration: /register route. Fields: company name, full name,
+      email, password. On submit: create Firebase Auth user, then create
+      Firestore client doc with uid.
+
+      Password reset: /forgot-password route. Sends Firebase Auth reset
+      email.
+
+      Session: auth state listener on app load. If authenticated, fetch
+      client doc, hydrate context. If not, redirect to /login.
+
+      Auth guard: middleware or layout-level check. All routes except
+      /login, /register, /forgot-password require auth.
+
+      Key files:
+        New: app/login/page.tsx
+        New: app/register/page.tsx
+        New: app/forgot-password/page.tsx
+        New: lib/auth.ts — Firebase Auth helpers + state listener
+        New: components/auth-guard.tsx — layout-level redirect
+
+    Outcome: Users can register, log in, reset password, session persists.
+
+    Acceptance criteria:
+      - Email/password registration creates user + Firestore doc
+      - Google sign-in works and creates Firestore doc if first login
+      - Password reset email sends and link works
+      - Session persists across browser restarts
+      - Unauthenticated access redirects to /login
+      - Auth guard protects all authenticated routes
+
+    Definition of done:
+      - Tested on Chrome, Safari, Firefox
+      - Mobile tested on iOS Safari
+      - Registration with duplicate email shows clear error
+      - Password reset tested with valid and expired links
+
     Depends on: 01
-    Client description: Your clients can create accounts, log in securely, and reset their passwords. This is the front door to the portal.
+
+    Client description:
+      Your clients can create accounts and log in securely.
+
+        +-----------------------------------+
+        | [G] Continue with Google          |
+        |  ─────── or ───────              |
+        |  Email [____________]            |
+        |  Password [_________]            |
+        |  [Log in]                        |
+        |                                  |
+        |  Forgot password? | Register     |
+        +-----------------------------------+
+
+      Google sign-in is one-tap — no passwords to remember.
+      Password reset sends an email link automatically.
+      Once signed in, they stay signed in across visits.
 
 03 · Build dashboard shell and navigation — M
     Category: feature
-    Outcome: Authenticated layout with sidebar nav, empty state pages
-    Acceptance: Logged-in user sees dashboard frame, can navigate sections
+    Description:
+      Authenticated layout with sidebar navigation. All portal pages
+      render inside this shell.
+
+      Sidebar (desktop): 240px fixed left sidebar. Navigation items:
+        Dashboard (home icon), Projects (folder), Files (upload),
+        Invoices (receipt), Settings (gear)
+      Active item: primary color highlight + bold text.
+      Collapsed state: icon-only, 64px wide. Toggle button at bottom.
+
+      Mobile: hamburger menu → Sheet drawer from left.
+      Drawer contains same nav items. Closes on item click or outside tap.
+
+      Dashboard home: summary cards row —
+        Active projects count, Files uploaded count, Next invoice date,
+        Subscription status badge
+      Empty states: each card shows "No data yet" with subtle illustration.
+
+      Key files:
+        New: components/sidebar.tsx — desktop sidebar with collapse
+        New: components/mobile-nav.tsx — hamburger + Sheet drawer
+        New: app/dashboard/page.tsx — summary cards
+        New: app/dashboard/layout.tsx — shell layout wrapping all pages
+
+    Outcome: Logged-in user sees dashboard frame with sidebar nav.
+
+    Acceptance criteria:
+      - Sidebar shows all 5 nav items with correct icons
+      - Active item highlighted on current route
+      - Collapse toggle works (240px → 64px)
+      - Mobile hamburger visible below md breakpoint
+      - Sheet drawer opens/closes correctly on mobile
+      - Dashboard summary cards render with correct counts
+      - Empty states display when no data exists
+
+    Definition of done:
+      - Desktop tested at 1024px and 1440px widths
+      - Mobile hamburger tested on iPhone SE (375px)
+      - Sidebar collapse state persists across page navigation
+      - All 5 nav links route to correct pages
+
     Depends on: 02
-    Client description: The main layout your clients see after logging in — a sidebar menu, a dashboard home, and navigation to every section of the portal.
 
-04 · Implement account settings — S
-    Category: feature
-    Outcome: User can update profile, change password
-    Acceptance: Settings page saves changes, validation works
-    Depends on: 02
-    Client description: Your clients can update their profile info and change their password from a settings page inside the portal.
+    Client description:
+      The main layout your clients see after logging in.
 
-05 · Build project status view — L
-    Category: feature
-    Outcome: Client sees list of projects with status, can drill into details
-    Acceptance: Projects load from DB, status badges display, detail page works
-    Depends on: 03
-    Client description: Clients see all their projects listed with clear status labels (active, completed, etc.) and can click into any project for full details.
+        +------+----------------------------+
+        | [D]  |  Dashboard                 |
+        | [P]  |                            |
+        | [F]  |  +------+ +------+ +----+  |
+        | [I]  |  |Active| |Files | |Next|  |
+        | [S]  |  |proj: | |  12  | |inv |  |
+        |      |  |  3   | |      | |2/15|  |
+        |      |  +------+ +------+ +----+  |
+        +------+----------------------------+
 
-06 · Add file upload — M
-    Category: feature
-    Outcome: Client can upload files to a project, see upload history
-    Acceptance: Upload works, files stored, download link works
-    Depends on: 05
-    Client description: Clients can upload files directly to a project and see a history of everything they've uploaded. Files are downloadable anytime.
-
-07 · Connect invoicing / billing — L
-    Category: integration
-    Outcome: Client sees invoices pulled from Stripe, payment status
-    Acceptance: Stripe invoices display, status is accurate, links to Stripe portal
-    Depends on: 03
-    Client description: Your clients see their invoices and payment history right inside the portal — no need to check email or log into a separate billing system.
-
-08 · QA pass and release checklist — S
-    Category: fix
-    Outcome: All flows tested, edge cases handled, ready for production
-    Acceptance: Auth, uploads, billing, navigation all pass manual QA
-    Depends on: 04, 05, 06, 07
-    Client description: Final quality check across every feature — login, uploads, billing, navigation — making sure everything works smoothly before launch.
-
-Parallel tracks:
-  Track A: 01 → 02 → 03 → 05 → 06 → 08
-  Track B (after 03): 04, 07 can run alongside Track A
-  Convergence: 08 requires all tracks complete
+      A sidebar menu on desktop, a hamburger menu on phone.
+      The dashboard home shows a quick summary of their
+      projects, files, and billing at a glance.
 ```
-
----
-
-### Input: "Make our app faster"
-
-**Response before breakdown:**
-
-> Before I break this down, I want to flag something. "Make it faster" isn't a concrete deliverable — it's a goal. I need to ask a few questions to turn this into sized tasks:
->
-> 1. What feels slow right now? Specific pages, actions, or load times?
-> 2. Do you have any performance data — Lighthouse scores, Core Web Vitals, user complaints?
-> 3. What's the tech stack?
-> 4. What would "fast enough" look like? A number? A feeling?
-
-This is the correct behavior. Do not fabricate tasks for vague requests.
 
 ---
 
@@ -309,5 +622,7 @@ Name these explicitly if they come up:
 - ❌ Converting S/M/L into hours or days — size is relative complexity, not a time commitment
 - ❌ Writing client descriptions with technical jargon — the client description is for the person paying, not the person building
 - ❌ Skipping client descriptions — every task needs one, no exceptions
-
-
+- ❌ **Skipping ASCII art in client descriptions** — if the feature touches UI or has a user-visible flow, draw it. Most features do. Default to including a diagram.
+- ❌ **One-liner acceptance criteria** — "it works" is not a criterion. Each task needs 4-8 specific, testable conditions.
+- ❌ **Empty definition of done** — every task must specify how it was verified: which devices, which edge cases, which scenarios.
+- ❌ **Vague technical descriptions** — "build the auth flow" is not a description. Include data model, file paths, conditional logic, UI specs, validation rules.
