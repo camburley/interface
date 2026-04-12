@@ -11,6 +11,7 @@ export interface ArticleFrontmatter {
   author: string
   authorBio?: string
   coverImage?: string
+  audioUrl?: string
   tags?: string[]
   published: boolean
 }

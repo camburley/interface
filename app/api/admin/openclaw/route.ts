@@ -5,7 +5,7 @@ import { exec } from "child_process"
 import { promisify } from "util"
 
 const execAsync = promisify(exec)
-const CONFIG_PATH = `${process.env.HOME}/.openclaw/openclaw.json`
+const CONFIG_PATH = process.env.OPENCLAW_CONFIG ?? "/Users/burleystudio/.openclaw/openclaw.json"
 
 async function requireAdmin() {
   const user = await getSessionUser()

@@ -71,6 +71,7 @@ export function ArticleHeader({
             articleTitle={frontmatter.title}
             articleContent={articleContent}
             readingTime={readingTime}
+            audioUrl={frontmatter.audioUrl}
           />
         </div>
 

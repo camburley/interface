@@ -21,6 +21,7 @@ interface AudioPlayerState {
 
 interface AudioPlayerContextType extends AudioPlayerState {
   play: (title: string, text: string) => void
+  playAudioFile: (title: string, audioUrl: string) => void
   pause: () => void
   resume: () => void
   close: () => void
@@ -48,6 +49,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const sentencesRef = useRef<string[]>([])
   const currentIndexRef = useRef(0)
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const usingAudioFileRef = useRef(false)
   const speedRef = useRef(1)
   const isPlayingRef = useRef(false)
 
@@ -128,8 +131,53 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     [stopSpeaking, speakSentence]
   )
 
+  const playAudioFile = useCallback(
+    (title: string, audioUrl: string) => {
+      stopSpeaking()
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+      usingAudioFileRef.current = true
+      isPlayingRef.current = true
+
+      audio.playbackRate = speedRef.current
+
+      audio.ontimeupdate = () => {
+        if (audio.duration) {
+          const progress = Math.round((audio.currentTime / audio.duration) * 100)
+          setState((s) => ({ ...s, progress }))
+        }
+      }
+
+      audio.onended = () => {
+        isPlayingRef.current = false
+        setState((s) => ({ ...s, isPlaying: false, progress: 100 }))
+      }
+
+      setState({
+        isPlaying: true,
+        isVisible: true,
+        articleTitle: title,
+        progress: 0,
+        speed: speedRef.current,
+        currentSentence: "",
+      })
+
+      audio.play()
+    },
+    [stopSpeaking]
+  )
+
   const pause = useCallback(() => {
-    window.speechSynthesis.cancel()
+    if (usingAudioFileRef.current && audioRef.current) {
+      audioRef.current.pause()
+    } else {
+      window.speechSynthesis.cancel()
+    }
     isPlayingRef.current = false
     setState((s) => ({ ...s, isPlaying: false }))
   }, [])
@@ -137,11 +185,20 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const resume = useCallback(() => {
     isPlayingRef.current = true
     setState((s) => ({ ...s, isPlaying: true }))
-    speakSentence(currentIndexRef.current)
+    if (usingAudioFileRef.current && audioRef.current) {
+      audioRef.current.play()
+    } else {
+      speakSentence(currentIndexRef.current)
+    }
   }, [speakSentence])
 
   const close = useCallback(() => {
     stopSpeaking()
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    usingAudioFileRef.current = false
     isPlayingRef.current = false
     setState({
       isPlaying: false,
@@ -158,8 +215,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       speedRef.current = speed
       setState((s) => ({ ...s, speed }))
       if (isPlayingRef.current) {
-        window.speechSynthesis.cancel()
-        speakSentence(currentIndexRef.current)
+        if (usingAudioFileRef.current && audioRef.current) {
+          audioRef.current.playbackRate = speed
+        } else {
+          window.speechSynthesis.cancel()
+          speakSentence(currentIndexRef.current)
+        }
       }
     },
     [speakSentence]
@@ -168,12 +229,16 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel()
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
     }
   }, [])
 
   return (
     <AudioPlayerContext.Provider
-      value={{ ...state, play, pause, resume, close, setSpeed }}
+      value={{ ...state, play, playAudioFile, pause, resume, close, setSpeed }}
     >
       {children}
     </AudioPlayerContext.Provider>

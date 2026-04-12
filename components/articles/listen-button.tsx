@@ -6,15 +6,18 @@ interface ListenButtonProps {
   articleTitle: string
   articleContent: string
   readingTime: number
+  audioUrl?: string
 }
 
-export function ListenButton({ articleTitle, articleContent, readingTime }: ListenButtonProps) {
-  const { play, isVisible, isPlaying, pause, resume } = useAudioPlayer()
+export function ListenButton({ articleTitle, articleContent, readingTime, audioUrl }: ListenButtonProps) {
+  const { play, playAudioFile, isVisible, isPlaying, pause, resume } = useAudioPlayer()
 
   const handleClick = () => {
     if (isVisible) {
       if (isPlaying) pause()
       else resume()
+    } else if (audioUrl) {
+      playAudioFile(articleTitle, audioUrl)
     } else {
       play(articleTitle, articleContent)
     }
