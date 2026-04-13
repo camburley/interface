@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateClientSession } from "@/lib/client-auth"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
+import { getSessionUser, isAdmin } from "@/lib/session"
 
 const SYSTEM_PROMPT = `You are a senior software project planner for Burley, an async software delivery service. Your job is to take a client's project description and break it into standard-sized queue tasks.
 
@@ -53,11 +54,14 @@ Do NOT list every file — only reference files that are directly relevant to a 
 
 export async function POST(request: NextRequest) {
   const session = await validateClientSession()
-  if (!session)
+  const user = !session ? await getSessionUser() : null
+  const adminUser = user && isAdmin(user.uid) ? user : null
+
+  if (!session && !adminUser)
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
 
   try {
-    const { description } = await request.json()
+    const { description, clientId } = await request.json()
 
     if (!description || typeof description !== "string" || description.trim().length < 10) {
       return NextResponse.json(
@@ -77,14 +81,17 @@ export async function POST(request: NextRequest) {
     let repoContext = ""
     try {
       const { db } = getFirebaseAdmin()
-      const clientSnap = await db
-        .collection("clients")
-        .where("uid", "==", session.uid)
-        .limit(1)
-        .get()
 
-      if (!clientSnap.empty) {
-        const clientData = clientSnap.docs[0].data()
+      let clientData: FirebaseFirestore.DocumentData | undefined
+      if (adminUser && clientId) {
+        const doc = await db.collection("clients").doc(clientId).get()
+        if (doc.exists) clientData = doc.data()
+      } else if (session) {
+        const snap = await db.collection("clients").where("uid", "==", session.uid).limit(1).get()
+        if (!snap.empty) clientData = snap.docs[0].data()
+      }
+
+      if (clientData) {
         const githubRepo = clientData.githubRepo as string | undefined
         const githubPat = clientData.githubPat as string | undefined
 
