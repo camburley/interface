@@ -307,7 +307,7 @@ function emailLink(text: string, href: string): string {
 // ---------------------------------------------------------------------------
 // Send email (internal)
 // ---------------------------------------------------------------------------
-const ADMIN_BCC = "cam@burley.ai"
+const ADMIN_BCC = "bob@burley.ai"
 
 async function send(to: string, subject: string, html: string): Promise<boolean> {
   const r = getResend()
