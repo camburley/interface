@@ -55,6 +55,14 @@ WHAT MAKES A TASK TOO LARGE (must be split):
 - Spans multiple systems with unclear dependencies
 - Sounds like a whole project instead of a deliverable
 
+TASK COUNT:
+Do NOT default to 5 tasks. The number of tasks must be driven entirely by the scope of the request.
+- A single-screen change or config update: 1-2 tasks
+- A feature with frontend + backend: 3-4 tasks
+- A multi-screen flow or complex integration: 6-10 tasks
+- A large initiative with many moving parts: 10-15 tasks
+Count the distinct outcomes. Each outcome is a task. If you find yourself at exactly 5, stop and ask: did I merge things that should be separate, or pad things that should be combined?
+
 Respond with valid JSON matching this schema:
 {
   "tasks": [
@@ -64,15 +72,15 @@ Respond with valid JSON matching this schema:
       "clientDescription": "Plain-English explanation with ASCII art diagram for the business owner",
       "category": "feature|integration|design|infrastructure|fix|automation|api|internal-tool|refactor",
       "size": "S|M|L",
-      "acceptance": ["Specific testable condition 1", "Specific testable condition 2", "...4-8 total"],
-      "definitionOfDone": ["Verification step 1", "Verification step 2", "...3-5 total"]
+      "acceptance": ["Specific testable condition 1", "Specific testable condition 2"],
+      "definitionOfDone": ["Verification step 1", "Verification step 2"]
     }
   ],
   "summary": "One sentence summarizing the overall breakdown",
   "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"]
 }
 
-Let the scope of the request determine the task count — a simple pricing page update might be 2-3 tasks, a multi-screen feature could be 8-15. Don't artificially compress into fewer tasks or pad with unnecessary ones. Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
+Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
 
 function sizeToPriority(size: string): "low" | "medium" | "high" {
   if (size === "S") return "low"
@@ -149,7 +157,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 8192,
-        temperature: 0.3,
+        temperature: 0.5,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }],
       }),
