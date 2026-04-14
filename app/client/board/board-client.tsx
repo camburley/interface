@@ -1129,14 +1129,6 @@ function ScopingPanel({
             )}
           </div>
 
-          {/* Integration reminder */}
-          <div className="flex items-start gap-2 px-1">
-            <HelpCircle className="h-3 w-3 text-violet-400/60 shrink-0 mt-0.5" />
-            <p className="font-mono text-[10px] text-muted-foreground/70 leading-relaxed">
-              If your request involves connecting to another service, include the credentials or access info in your description so work isn&apos;t blocked.
-            </p>
-          </div>
-
           {error && (
             <div className="border border-rose-500/40 bg-rose-500/5 px-3 py-2.5 rounded-sm">
               <p className="font-mono text-xs text-rose-400">{error}</p>
