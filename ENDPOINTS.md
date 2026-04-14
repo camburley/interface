@@ -328,6 +328,108 @@ Update a story.
 
 ---
 
+## AI Scoping
+
+### POST /scope
+
+Break a feature description into sized queue tasks using Claude Sonnet 4.6. Optionally auto-creates the tasks on a project board.
+
+**Body:**
+```json
+{
+  "description": "We need tracking pixels installed for TikTok and Meta so we can track signups and conversions. Our marketing team needs to verify they're firing.",
+  "projectId": "dme-engine",
+  "addToBoard": true,
+  "images": [
+    {
+      "data": "<base64-encoded-image>",
+      "mediaType": "image/png"
+    }
+  ]
+}
+```
+
+**Required:** `description` (min 10 characters)
+**Optional:**
+- `projectId` — target project (required if `addToBoard` is true)
+- `addToBoard` — if `true`, creates tasks on the board automatically
+- `images` — array of base64 images (screenshots, mockups) for Claude vision context (max 5, max 5MB each)
+
+**Response (scope only):**
+```json
+{
+  "tasks": [
+    {
+      "title": "Install TikTok pixel SDK",
+      "description": "Technical implementation spec...",
+      "clientDescription": "Plain-English explanation with ASCII art...",
+      "category": "integration",
+      "size": "M",
+      "acceptance": ["Pixel fires on page load", "..."],
+      "definitionOfDone": ["Verified in TikTok Events Manager", "..."]
+    }
+  ],
+  "summary": "Break tracking pixel setup into 3 tasks...",
+  "warnings": ["Need TikTok and Meta ad account credentials before work can start"]
+}
+```
+
+**Response (with `addToBoard: true`):**
+```json
+{
+  "tasks": [...],
+  "summary": "...",
+  "warnings": [...],
+  "addedToBoard": true,
+  "projectId": "dme-engine",
+  "created": [
+    { "id": "firestore-doc-id", "taskId": "TASK-463", "title": "Install TikTok pixel SDK" }
+  ]
+}
+```
+
+### Agent pipeline example
+
+```bash
+# 1. Scope a feature request from an email
+curl -X POST https://www.burley.ai/api/admin/scope \
+  -H "Authorization: Bearer $MILESTONES_API_TOKEN" \
+  -H "X-Agent-Id: inbox-agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "We updated our pricing to 3 tiers. Need the pricing page rebuilt with monthly/annual toggle.",
+    "projectId": "dme-engine",
+    "addToBoard": true
+  }'
+
+# Tasks are now on the board. Done.
+
+# 2. Scope only (don't add to board yet — review first)
+curl -X POST https://www.burley.ai/api/admin/scope \
+  -H "Authorization: Bearer $MILESTONES_API_TOKEN" \
+  -H "X-Agent-Id: inbox-agent" \
+  -H "Content-Type: application/json" \
+  -d '{"description": "Add dark mode toggle to settings page"}'
+
+# 3. Then selectively create tasks using POST /tasks
+curl -X POST https://www.burley.ai/api/admin/tasks \
+  -H "Authorization: Bearer $MILESTONES_API_TOKEN" \
+  -H "X-Agent-Id: inbox-agent" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Add dark mode toggle",
+    "projectId": "dme-engine",
+    "description": "...",
+    "priority": "medium",
+    "tags": ["feature"],
+    "acceptanceCriteria": ["Toggle persists across sessions", "..."],
+    "definitionOfDone": ["Tested on Chrome, Safari, Firefox", "..."],
+    "actor": "inbox-agent"
+  }'
+```
+
+---
+
 ## Utility Endpoints
 
 ### POST /ensure-tasks-for-stories
