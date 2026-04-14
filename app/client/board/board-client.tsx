@@ -973,7 +973,7 @@ function ScopingPanel({
               className="w-full bg-transparent px-3 py-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/30 resize-none focus:outline-none leading-relaxed"
             />
             <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/20">
-              <span className="font-mono text-[9px] text-muted-foreground/40">
+              <span className="font-mono text-[9px] text-muted-foreground/60">
                 {description.length > 0 ? `${description.length} chars` : "min 10 characters"}
               </span>
               <button
@@ -1001,7 +1001,7 @@ function ScopingPanel({
 
           {!result && !loading && description.length === 0 && (
             <div className="space-y-2">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/40">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60">
                 Try an example
               </p>
               {[
@@ -1015,7 +1015,7 @@ function ScopingPanel({
                   onClick={() => setDescription(example)}
                   className="w-full text-left border border-border/30 hover:border-primary/30 rounded-sm px-3 py-2.5 transition-colors group"
                 >
-                  <p className="font-mono text-[11px] text-muted-foreground/60 group-hover:text-foreground/70 leading-relaxed line-clamp-2">
+                  <p className="font-mono text-[11px] text-muted-foreground/80 group-hover:text-foreground/90 leading-relaxed line-clamp-2">
                     {example}
                   </p>
                 </button>
@@ -1030,15 +1030,15 @@ function ScopingPanel({
               className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card/30 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <KeyRound className="h-3 w-3 text-amber-400/70" />
-                <span className="font-mono text-[10px] text-muted-foreground/70">
+                <KeyRound className="h-3 w-3 text-violet-400/80" />
+                <span className="font-mono text-[10px] text-muted-foreground/80">
                   Integrating a service? Check what credentials you&apos;ll need
                 </span>
               </div>
               {credOpen ? (
-                <ChevronUp className="h-3 w-3 text-muted-foreground/40" />
+                <ChevronUp className="h-3 w-3 text-muted-foreground/60" />
               ) : (
-                <ChevronDown className="h-3 w-3 text-muted-foreground/40" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground/60" />
               )}
             </button>
 
@@ -1080,17 +1080,17 @@ function ScopingPanel({
                         <p className="font-mono text-[11px] text-foreground/90 font-medium">
                           {cred.name}
                         </p>
-                        <p className="font-mono text-[10px] text-muted-foreground/60 leading-relaxed">
+                        <p className="font-mono text-[10px] text-muted-foreground/80 leading-relaxed">
                           Where to find it: {cred.where}
                         </p>
                         {cred.note && (
-                          <p className="font-mono text-[10px] text-amber-400/60 leading-relaxed">
+                          <p className="font-mono text-[10px] text-violet-400/70 leading-relaxed">
                             {cred.note}
                           </p>
                         )}
                       </div>
                     ))}
-                    <p className="font-mono text-[10px] text-primary/50 leading-relaxed italic">
+                    <p className="font-mono text-[10px] text-primary/70 leading-relaxed italic">
                       {credResult.tip}
                     </p>
                   </div>
@@ -1101,8 +1101,8 @@ function ScopingPanel({
 
           {/* Integration reminder */}
           <div className="flex items-start gap-2 px-1">
-            <AlertTriangle className="h-3 w-3 text-amber-400/50 shrink-0 mt-0.5" />
-            <p className="font-mono text-[10px] text-muted-foreground/50 leading-relaxed">
+            <HelpCircle className="h-3 w-3 text-violet-400/60 shrink-0 mt-0.5" />
+            <p className="font-mono text-[10px] text-muted-foreground/70 leading-relaxed">
               If your request involves connecting to another service, include the credentials or access info in your description so work isn&apos;t blocked.
             </p>
           </div>
@@ -1161,7 +1161,7 @@ function ScopingPanel({
                           <span className={`border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest ${sc.text} ${sc.border}`}>
                             {task.size}
                           </span>
-                          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/50">
+                          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/70">
                             {CATEGORY_ICONS[task.category] || "◈"} {task.category}
                           </span>
                         </div>
@@ -1199,7 +1199,7 @@ function ScopingPanel({
                             Acceptance Criteria
                           </p>
                           {(Array.isArray(task.acceptance) ? task.acceptance : [task.acceptance]).map((a, j) => (
-                            <p key={j} className="font-mono text-[10px] text-muted-foreground/60 leading-relaxed pl-2">
+                            <p key={j} className="font-mono text-[10px] text-muted-foreground/80 leading-relaxed pl-2">
                               {j + 1}. {a}
                             </p>
                           ))}
@@ -1212,12 +1212,12 @@ function ScopingPanel({
 
               {/* Warnings */}
               {result.warnings?.length > 0 && (
-                <div className="border border-amber-500/30 bg-amber-500/5 px-4 py-3 rounded-sm">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-amber-400 mb-1.5">
+                <div className="border border-sky-500/30 bg-sky-500/5 px-4 py-3 rounded-sm">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-sky-400 mb-1.5">
                     Heads up
                   </p>
                   {result.warnings.map((w, i) => (
-                    <p key={i} className="font-mono text-[11px] text-amber-400/80 leading-relaxed">
+                    <p key={i} className="font-mono text-[11px] text-sky-300/80 leading-relaxed">
                       → {w}
                     </p>
                   ))}
