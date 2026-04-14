@@ -99,7 +99,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
 
   try {
-    const { description } = await request.json()
+    const { description, images } = await request.json() as {
+      description: string
+      images?: { data: string; mediaType: string }[]
+    }
 
     if (!description || typeof description !== "string" || description.trim().length < 10) {
       return NextResponse.json(
@@ -187,9 +190,36 @@ export async function POST(request: NextRequest) {
       ? SYSTEM_PROMPT + REPO_CONTEXT_ADDON
       : SYSTEM_PROMPT
 
-    const userMessage = repoContext
+    const textPart = repoContext
       ? `Break this feature into standard-sized queue tasks:\n\n${description.trim()}${repoContext}`
       : `Break this feature into standard-sized queue tasks:\n\n${description.trim()}`
+
+    const hasImages = images && Array.isArray(images) && images.length > 0
+
+    // Build multimodal content array for Claude
+    const userContent: Array<
+      | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+      | { type: "text"; text: string }
+    > = []
+
+    if (hasImages) {
+      for (const img of images.slice(0, 5)) {
+        userContent.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: img.mediaType,
+            data: img.data,
+          },
+        })
+      }
+      userContent.push({
+        type: "text",
+        text: `The client attached ${images.length} image(s) above — these are screenshots, mockups, or references for what they want built. Use them to inform the task breakdown.\n\n${textPart}`,
+      })
+    } else {
+      userContent.push({ type: "text", text: textPart })
+    }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -204,7 +234,7 @@ export async function POST(request: NextRequest) {
         temperature: 0.3,
         system: systemPrompt,
         messages: [
-          { role: "user", content: userMessage },
+          { role: "user", content: userContent },
         ],
       }),
     })

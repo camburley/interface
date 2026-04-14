@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import {
   Plus,
@@ -27,6 +27,7 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  ImagePlus,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -841,6 +842,47 @@ function ScopingPanel({
     tip: string
   } | null>(null)
   const [credError, setCredError] = useState<string | null>(null)
+  const [attachedImages, setAttachedImages] = useState<{ data: string; mediaType: string; preview: string }[]>([])
+  const [dragging, setDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function processFiles(files: FileList | File[]) {
+    const allowed = ["image/png", "image/jpeg", "image/gif", "image/webp"]
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    const fileArray = Array.from(files).filter(
+      (f) => allowed.includes(f.type) && f.size <= maxSize,
+    )
+    if (fileArray.length === 0) return
+
+    for (const file of fileArray.slice(0, 5 - attachedImages.length)) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        const base64 = result.split(",")[1]
+        setAttachedImages((prev) => [
+          ...prev.slice(0, 4),
+          { data: base64, mediaType: file.type, preview: result },
+        ])
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = Array.from(e.clipboardData.items)
+    const imageFiles = items
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter(Boolean) as File[]
+    if (imageFiles.length > 0) {
+      e.preventDefault()
+      processFiles(imageFiles)
+    }
+  }
+
+  function removeImage(index: number) {
+    setAttachedImages((prev) => prev.filter((_, i) => i !== index))
+  }
 
   async function handleCredLookup() {
     if (credLoading || credService.trim().length < 2) return
@@ -874,10 +916,16 @@ function ScopingPanel({
     setAddedIndices(new Set())
 
     try {
+      const payload: { description: string; images?: { data: string; mediaType: string }[] } = {
+        description: description.trim(),
+      }
+      if (attachedImages.length > 0) {
+        payload.images = attachedImages.map(({ data, mediaType }) => ({ data, mediaType }))
+      }
       const res = await fetch("/api/client/scope-feature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: description.trim() }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -961,7 +1009,18 @@ function ScopingPanel({
           )}
 
           {/* Input */}
-          <div className="border border-border/40 bg-card/30 rounded-sm overflow-hidden focus-within:border-primary/40 transition-colors">
+          <div
+            className={`border bg-card/30 rounded-sm overflow-hidden focus-within:border-primary/40 transition-colors ${
+              dragging ? "border-primary/60 bg-primary/5" : "border-border/40"
+            }`}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault()
+              setDragging(false)
+              if (e.dataTransfer.files.length > 0) processFiles(e.dataTransfer.files)
+            }}
+          >
             <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-border/20">
               <div className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
               <div className="w-1.5 h-1.5 rounded-full bg-yellow-500/60" />
@@ -973,14 +1032,67 @@ function ScopingPanel({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what you want built..."
+              onPaste={handlePaste}
+              placeholder="Describe what you want built... (paste screenshots here too)"
               rows={6}
               className="w-full bg-transparent px-3 py-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/30 resize-none focus:outline-none leading-relaxed"
             />
+
+            {/* Attached images */}
+            {attachedImages.length > 0 && (
+              <div className="px-3 pb-2 flex gap-2 flex-wrap">
+                {attachedImages.map((img, i) => (
+                  <div key={i} className="relative group">
+                    <img
+                      src={img.preview}
+                      alt={`Attachment ${i + 1}`}
+                      className="h-16 w-16 object-cover rounded-sm border border-border/30"
+                    />
+                    <button
+                      onClick={() => removeImage(i)}
+                      className="absolute -top-1.5 -right-1.5 bg-background border border-border/40 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-2.5 w-2.5 text-muted-foreground" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Drag overlay */}
+            {dragging && (
+              <div className="px-3 pb-3">
+                <div className="border-2 border-dashed border-primary/40 rounded-sm py-4 flex items-center justify-center">
+                  <p className="font-mono text-[11px] text-primary/70">Drop images here</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/20">
-              <span className="font-mono text-[9px] text-muted-foreground/60">
-                {description.length > 0 ? `${description.length} chars` : "min 10 characters"}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[9px] text-muted-foreground/60">
+                  {description.length > 0 ? `${description.length} chars` : "min 10 characters"}
+                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) processFiles(e.target.files)
+                    e.target.value = ""
+                  }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1 font-mono text-[9px] text-muted-foreground/60 hover:text-foreground/70 transition-colors"
+                  title="Attach screenshots or mockups"
+                >
+                  <ImagePlus className="h-3 w-3" />
+                  {attachedImages.length > 0 ? `${attachedImages.length}/5` : "Add image"}
+                </button>
+              </div>
               <button
                 onClick={handleScope}
                 disabled={loading || description.trim().length < 10}
