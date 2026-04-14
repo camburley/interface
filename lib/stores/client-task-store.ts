@@ -10,9 +10,12 @@ interface ClientTaskStore {
   createTask: (data: {
     title: string
     description?: string
+    clientDescription?: string
     tags?: string[]
     priority?: "low" | "medium" | "high"
     acceptanceCriteria?: string[]
+    definitionOfDone?: string[]
+    projectId?: string
   }) => Promise<{ id: string; taskId: string } | null>
 
   deleteTask: (id: string) => Promise<boolean>
@@ -48,9 +51,12 @@ export const useClientTaskStore = create<ClientTaskStore>((set, get) => ({
         body: JSON.stringify({
           title: data.title,
           description: data.description,
+          clientDescription: data.clientDescription,
           tags: data.tags,
           priority: data.priority,
           acceptanceCriteria: data.acceptanceCriteria,
+          definitionOfDone: data.definitionOfDone,
+          projectId: data.projectId,
         }),
       })
       if (!res.ok) return null
@@ -62,13 +68,14 @@ export const useClientTaskStore = create<ClientTaskStore>((set, get) => ({
         taskId: result.taskId,
         title: data.title,
         description: data.description ?? "",
+        clientDescription: data.clientDescription,
         status: "todo",
         priority: data.priority ?? "medium",
         projectId: "",
         dependencies: [],
         tags: data.tags ?? [],
         acceptanceCriteria: data.acceptanceCriteria ?? [],
-        definitionOfDone: [],
+        definitionOfDone: data.definitionOfDone ?? [],
         artifacts: [],
         context: {},
         cardType: "one_off",

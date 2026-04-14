@@ -53,6 +53,7 @@ export default async function AdminClientPreviewPage({ params }: PageProps) {
       projectName={projectName}
       projectColor={projectColor}
       clientName={clientName}
+      projectId={projectId}
       adminPreview
     />
   )

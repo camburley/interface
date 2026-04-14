@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateClientSession } from "@/lib/client-auth"
+import { getSessionUser, isAdmin } from "@/lib/session"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 
 const SYSTEM_PROMPT = `You are a senior software project planner for Burley, an async software delivery service. Your job is to take a client's project description and break it into standard-sized queue tasks.
@@ -19,6 +20,35 @@ CATEGORIES: feature, integration, design, infrastructure, fix, automation, api, 
 
 TASK ORDERING: Tasks should be ordered by logical dependency and delivery sequence. Earlier tasks should unblock later ones.
 
+DESCRIPTION RULES:
+The description for each task is a mini implementation spec written for the developer building it. Include all that apply:
+- Data model: collections/tables, fields, types, relationships
+- Files to create or modify (by path if known)
+- Sub-screens or steps with inputs, layout, and behavior
+- Conditional logic, skip conditions, edge cases
+- UI specifics: measurements, colors, breakpoints, responsive behavior
+- API surface: endpoint paths, request/response shapes
+- Validation rules: required fields, formats, constraints
+- Triggered side effects: what other parts of the system update when this completes
+Write enough detail that a senior dev unfamiliar with the codebase could build it without asking questions.
+
+ACCEPTANCE CRITERIA RULES:
+Acceptance criteria are specific, independently testable conditions. Minimum 4 per task, aim for 5-8.
+Each criterion should pass or fail independently. Not "it works" — each isolates one verifiable behavior.
+
+CLIENT DESCRIPTION RULES:
+Every task MUST include a clientDescription — a plain-English explanation for a non-technical business owner.
+Rules:
+- 3-6 short sentences max
+- NO jargon: no API, endpoint, schema, Firestore, adapter, pipeline, webhook, middleware
+- Explain WHAT it does for the user, not HOW it works
+- Use "you/your" to address the end user directly
+- ALWAYS include an ASCII art diagram if the feature has any visible UI (max 12 lines, max 40 chars wide, using +, -, |, and plain text)
+
+DEFINITION OF DONE RULES:
+Every task MUST include a definitionOfDone — concrete verification steps. Minimum 3 per task.
+Include: devices/browsers tested, edge cases exercised, specific scenarios verified, performance thresholds.
+
 WHAT MAKES A TASK TOO LARGE (must be split):
 - Contains multiple unrelated outcomes
 - Would normally require a full spec before execution
@@ -30,10 +60,12 @@ Respond with valid JSON matching this schema:
   "tasks": [
     {
       "title": "Short descriptive title",
-      "description": "What this task delivers in 1-2 sentences",
+      "description": "Multi-paragraph technical implementation spec",
+      "clientDescription": "Plain-English explanation with ASCII art diagram for the business owner",
       "category": "feature|integration|design|infrastructure|fix|automation|api|internal-tool|refactor",
       "size": "S|M|L",
-      "acceptance": "How we know this task is done"
+      "acceptance": ["Specific testable condition 1", "Specific testable condition 2", "...4-8 total"],
+      "definitionOfDone": ["Verification step 1", "Verification step 2", "...3-5 total"]
     }
   ],
   "summary": "One sentence summarizing the overall breakdown",
@@ -51,8 +83,18 @@ IMPORTANT: You have been given the repository's file tree (and possibly key file
 - Avoid duplicating functionality that already exists
 Do NOT list every file — only reference files that are directly relevant to a task.`
 
+async function getAuthorizedSession(): Promise<{ uid: string; projectId?: string } | null> {
+  const clientSession = await validateClientSession()
+  if (clientSession) return { uid: clientSession.uid, projectId: clientSession.projectId }
+
+  const user = await getSessionUser()
+  if (user && isAdmin(user.uid)) return { uid: user.uid }
+
+  return null
+}
+
 export async function POST(request: NextRequest) {
-  const session = await validateClientSession()
+  const session = await getAuthorizedSession()
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
 
@@ -66,7 +108,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
       return NextResponse.json(
         { error: "AI service not configured." },
@@ -77,9 +119,11 @@ export async function POST(request: NextRequest) {
     let repoContext = ""
     try {
       const { db } = getFirebaseAdmin()
+
+      const lookupUid = session.uid
       const clientSnap = await db
         .collection("clients")
-        .where("uid", "==", session.uid)
+        .where("uid", "==", lookupUid)
         .limit(1)
         .get()
 
@@ -147,25 +191,26 @@ export async function POST(request: NextRequest) {
       ? `Break this feature into standard-sized queue tasks:\n\n${description.trim()}${repoContext}`
       : `Break this feature into standard-sized queue tasks:\n\n${description.trim()}`
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 8192,
         temperature: 0.3,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
-        response_format: { type: "json_object" },
       }),
     })
 
     if (!response.ok) {
-      console.error("[scope-feature] OpenAI error:", await response.text())
+      console.error("[scope-feature] Anthropic error:", await response.text())
       return NextResponse.json(
         { error: "Failed to analyze feature. Please try again." },
         { status: 502 },
@@ -173,7 +218,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
+    const content = data.content?.[0]?.text
 
     if (!content) {
       return NextResponse.json(
@@ -182,7 +227,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const parsed = JSON.parse(content)
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      return NextResponse.json(
+        { error: "Could not parse AI response. Please try again." },
+        { status: 502 },
+      )
+    }
+
+    const parsed = JSON.parse(jsonMatch[0])
 
     if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
       return NextResponse.json(

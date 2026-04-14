@@ -65,6 +65,7 @@ interface Props {
   readOnly?: boolean
   adminPreview?: boolean
   repoConnected?: boolean
+  projectId?: string
 }
 
 export function ClientBoardClient({
@@ -75,6 +76,7 @@ export function ClientBoardClient({
   readOnly = false,
   adminPreview = false,
   repoConnected = false,
+  projectId,
 }: Props) {
   const {
     tasks,
@@ -200,6 +202,7 @@ export function ClientBoardClient({
       tags: [newType],
       priority: newPriority,
       acceptanceCriteria: filteredCriteria.length > 0 ? filteredCriteria : undefined,
+      projectId,
     })
     setCreating(false)
 
@@ -428,7 +431,8 @@ export function ClientBoardClient({
           repoConnected={repoConnected}
           onClose={() => setShowScoping(false)}
           onAddTask={async (data) => {
-            const result = await createTask(data)
+            const payload = projectId ? { ...data, projectId } : data
+            const result = await createTask(payload)
             if (result) toast.success(`${result.taskId} created`)
             else toast.error("Failed to add task")
             return !!result
@@ -770,9 +774,11 @@ function CreateTaskModal({
 interface SizedTask {
   title: string
   description: string
+  clientDescription?: string
   category: string
   size: "S" | "M" | "L"
-  acceptance: string
+  acceptance: string | string[]
+  definitionOfDone?: string[]
 }
 
 interface SizeResult {
@@ -809,9 +815,11 @@ function ScopingPanel({
   onAddTask: (data: {
     title: string
     description?: string
+    clientDescription?: string
     tags?: string[]
     priority?: "low" | "medium" | "high"
     acceptanceCriteria?: string[]
+    definitionOfDone?: string[]
   }) => Promise<boolean>
 }) {
   const [description, setDescription] = useState("")
@@ -854,12 +862,20 @@ function ScopingPanel({
   }
 
   async function addTask(task: SizedTask, index: number) {
+    const acceptance = Array.isArray(task.acceptance)
+      ? task.acceptance
+      : task.acceptance
+        ? [task.acceptance]
+        : undefined
+
     const ok = await onAddTask({
       title: task.title,
       description: task.description,
+      clientDescription: task.clientDescription,
       tags: [task.category],
       priority: sizeToPriority(task.size),
-      acceptanceCriteria: task.acceptance ? [task.acceptance] : undefined,
+      acceptanceCriteria: acceptance,
+      definitionOfDone: task.definitionOfDone,
     })
     if (ok) {
       setAddedIndices((prev) => new Set(prev).add(index))
@@ -1022,13 +1038,27 @@ function ScopingPanel({
                       <p className="font-mono text-xs text-foreground leading-relaxed">
                         {task.title}
                       </p>
-                      <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">
-                        {task.description}
-                      </p>
-                      {task.acceptance && (
-                        <p className="font-mono text-[10px] text-muted-foreground/60 leading-relaxed">
-                          <span className="text-primary/60">Done when:</span> {task.acceptance}
+                      {task.clientDescription && (
+                        <pre className="font-mono text-[11px] text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                          {task.clientDescription}
+                        </pre>
+                      )}
+                      {!task.clientDescription && (
+                        <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">
+                          {task.description}
                         </p>
+                      )}
+                      {task.acceptance && (
+                        <div className="space-y-1">
+                          <p className="font-mono text-[9px] uppercase tracking-widest text-primary/60">
+                            Acceptance Criteria
+                          </p>
+                          {(Array.isArray(task.acceptance) ? task.acceptance : [task.acceptance]).map((a, j) => (
+                            <p key={j} className="font-mono text-[10px] text-muted-foreground/60 leading-relaxed pl-2">
+                              {j + 1}. {a}
+                            </p>
+                          ))}
+                        </div>
                       )}
                     </div>
                   </div>
