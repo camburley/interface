@@ -962,6 +962,30 @@ function ScopingPanel({
             </div>
           </div>
 
+          {!result && !loading && description.length === 0 && (
+            <div className="space-y-2">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/40">
+                Try an example
+              </p>
+              {[
+                "We updated our pricing. There are now 3 tiers and we need the pricing page rebuilt with the new prices, a monthly/annual toggle, and a comparison table showing what's included in each tier.",
+                "We need tracking pixels installed for our marketing campaigns — TikTok and Meta — so we can see when someone visits the site, starts the flow, and completes it. Our marketing team needs to verify they're firing.",
+                "We want a settings page where users can update their profile, change their password, and manage notification preferences. It should match the look and feel of the rest of the app.",
+                "Add a way for users to export their data as a PDF or CSV. They should be able to pick a date range and choose which sections to include in the export.",
+              ].map((example, i) => (
+                <button
+                  key={i}
+                  onClick={() => setDescription(example)}
+                  className="w-full text-left border border-border/30 hover:border-primary/30 rounded-sm px-3 py-2.5 transition-colors group"
+                >
+                  <p className="font-mono text-[11px] text-muted-foreground/60 group-hover:text-foreground/70 leading-relaxed line-clamp-2">
+                    {example}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+
           {error && (
             <div className="border border-rose-500/40 bg-rose-500/5 px-3 py-2.5 rounded-sm">
               <p className="font-mono text-xs text-rose-400">{error}</p>
