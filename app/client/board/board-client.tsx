@@ -23,6 +23,10 @@ import {
   Github,
   AlertTriangle,
   Code,
+  KeyRound,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -828,6 +832,39 @@ function ScopingPanel({
   const [result, setResult] = useState<SizeResult | null>(null)
   const [addedIndices, setAddedIndices] = useState<Set<number>>(new Set())
   const [addingAll, setAddingAll] = useState(false)
+  const [credOpen, setCredOpen] = useState(false)
+  const [credService, setCredService] = useState("")
+  const [credLoading, setCredLoading] = useState(false)
+  const [credResult, setCredResult] = useState<{
+    service: string
+    credentials: { name: string; where: string; note?: string }[]
+    tip: string
+  } | null>(null)
+  const [credError, setCredError] = useState<string | null>(null)
+
+  async function handleCredLookup() {
+    if (credLoading || credService.trim().length < 2) return
+    setCredLoading(true)
+    setCredError(null)
+    setCredResult(null)
+    try {
+      const res = await fetch("/api/client/credential-helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ service: credService.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCredError(data.error || "Something went wrong.")
+        return
+      }
+      setCredResult(data)
+    } catch {
+      setCredError("Network error. Please try again.")
+    } finally {
+      setCredLoading(false)
+    }
+  }
 
   async function handleScope() {
     if (loading || description.trim().length < 10) return
@@ -985,6 +1022,90 @@ function ScopingPanel({
               ))}
             </div>
           )}
+
+          {/* Integration credential helper */}
+          <div className="border border-border/30 rounded-sm overflow-hidden">
+            <button
+              onClick={() => setCredOpen(!credOpen)}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-card/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <KeyRound className="h-3 w-3 text-amber-400/70" />
+                <span className="font-mono text-[10px] text-muted-foreground/70">
+                  Integrating a service? Check what credentials you&apos;ll need
+                </span>
+              </div>
+              {credOpen ? (
+                <ChevronUp className="h-3 w-3 text-muted-foreground/40" />
+              ) : (
+                <ChevronDown className="h-3 w-3 text-muted-foreground/40" />
+              )}
+            </button>
+
+            {credOpen && (
+              <div className="border-t border-border/20 px-3 py-3 space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={credService}
+                    onChange={(e) => setCredService(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCredLookup()}
+                    placeholder="e.g. Stripe, TikTok, Mailchimp..."
+                    className="flex-1 bg-transparent border border-border/40 rounded-sm px-2.5 py-1.5 font-mono text-xs text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/40"
+                  />
+                  <button
+                    onClick={handleCredLookup}
+                    disabled={credLoading || credService.trim().length < 2}
+                    className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all rounded-sm disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                  >
+                    {credLoading ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      "Look up"
+                    )}
+                  </button>
+                </div>
+
+                {credError && (
+                  <p className="font-mono text-[11px] text-rose-400">{credError}</p>
+                )}
+
+                {credResult && (
+                  <div className="space-y-2.5">
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-primary/70">
+                      {credResult.service} — what to share
+                    </p>
+                    {credResult.credentials.map((cred, i) => (
+                      <div key={i} className="border border-border/20 rounded-sm px-3 py-2 space-y-1">
+                        <p className="font-mono text-[11px] text-foreground/90 font-medium">
+                          {cred.name}
+                        </p>
+                        <p className="font-mono text-[10px] text-muted-foreground/60 leading-relaxed">
+                          Where to find it: {cred.where}
+                        </p>
+                        {cred.note && (
+                          <p className="font-mono text-[10px] text-amber-400/60 leading-relaxed">
+                            {cred.note}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    <p className="font-mono text-[10px] text-primary/50 leading-relaxed italic">
+                      {credResult.tip}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Integration reminder */}
+          <div className="flex items-start gap-2 px-1">
+            <AlertTriangle className="h-3 w-3 text-amber-400/50 shrink-0 mt-0.5" />
+            <p className="font-mono text-[10px] text-muted-foreground/50 leading-relaxed">
+              If your request involves connecting to another service, include the credentials or access info in your description so work isn&apos;t blocked.
+            </p>
+          </div>
 
           {error && (
             <div className="border border-rose-500/40 bg-rose-500/5 px-3 py-2.5 rounded-sm">
