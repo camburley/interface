@@ -9,7 +9,8 @@ Given a service or platform name, respond with valid JSON:
   "service": "The service name",
   "credentials": [
     {
-      "name": "What to provide (e.g. API Key)",
+      "name": "What to provide (e.g. Secret Key)",
+      "example": "A realistic-looking FAKE example so the user knows the format (e.g. sk_live_51T4a3wB7P... or FLWSECK-abc123def456-X)",
       "where": "Where to find it (e.g. Settings → API Keys in your Stripe dashboard)",
       "note": "Optional extra context (e.g. use the test key first, switch to live when ready)"
     }
@@ -23,7 +24,7 @@ Rules:
 - Include 2-6 credentials depending on the service.
 - If the service requires OAuth or app creation, explain that simply.
 - If you don't recognize the service, still give a reasonable best guess and note uncertainty.
-- Never include actual credentials or example keys.`
+- The "example" field MUST contain a realistic-looking but completely FAKE credential so the user can visually recognize what they're looking for. Truncate long examples with "..." to keep them short. Use the real prefix/format of the service (e.g. Stripe keys start with sk_live_ or pk_live_, TikTok pixels are numeric IDs like C5N8H...). Never use a real credential.`
 
 export async function POST(request: NextRequest) {
   const clientSession = await validateClientSession()

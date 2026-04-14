@@ -837,7 +837,7 @@ function ScopingPanel({
   const [credLoading, setCredLoading] = useState(false)
   const [credResult, setCredResult] = useState<{
     service: string
-    credentials: { name: string; where: string; note?: string }[]
+    credentials: { name: string; example?: string; where: string; note?: string }[]
     tip: string
   } | null>(null)
   const [credError, setCredError] = useState<string | null>(null)
@@ -1071,9 +1071,39 @@ function ScopingPanel({
                 )}
 
                 {credResult && (
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     <p className="font-mono text-[10px] uppercase tracking-widest text-primary/70">
                       {credResult.service} — what to share
+                    </p>
+
+                    {/* Quick-reference table */}
+                    <div className="border border-border/30 rounded-sm overflow-hidden">
+                      <div className="grid grid-cols-2 border-b border-border/20 bg-card/40">
+                        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 px-3 py-1.5">
+                          Credential
+                        </p>
+                        <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60 px-3 py-1.5">
+                          Looks like
+                        </p>
+                      </div>
+                      {credResult.credentials.map((cred, i) => (
+                        <div
+                          key={i}
+                          className={`grid grid-cols-2 ${i < credResult.credentials.length - 1 ? "border-b border-border/10" : ""}`}
+                        >
+                          <p className="font-mono text-[11px] text-foreground/90 px-3 py-2">
+                            {cred.name}
+                          </p>
+                          <p className="font-mono text-[10px] text-violet-400/80 px-3 py-2 break-all">
+                            {cred.example || "—"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Detail cards */}
+                    <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground/60">
+                      Where to find each one
                     </p>
                     {credResult.credentials.map((cred, i) => (
                       <div key={i} className="border border-border/20 rounded-sm px-3 py-2 space-y-1">
@@ -1081,7 +1111,7 @@ function ScopingPanel({
                           {cred.name}
                         </p>
                         <p className="font-mono text-[10px] text-muted-foreground/80 leading-relaxed">
-                          Where to find it: {cred.where}
+                          {cred.where}
                         </p>
                         {cred.note && (
                           <p className="font-mono text-[10px] text-violet-400/70 leading-relaxed">
