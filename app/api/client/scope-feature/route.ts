@@ -72,7 +72,7 @@ Respond with valid JSON matching this schema:
   "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"]
 }
 
-Keep task count realistic. Most projects break into 4-12 tasks. Don't pad with unnecessary items. Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
+Let the scope of the request determine the task count — a simple pricing page update might be 2-3 tasks, a multi-screen feature could be 8-15. Don't artificially compress into fewer tasks or pad with unnecessary ones. Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
 
 const REPO_CONTEXT_ADDON = `
 
