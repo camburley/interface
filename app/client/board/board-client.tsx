@@ -929,8 +929,13 @@ function ScopingPanel({
     setAddingAll(false)
   }
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = "" }
+  }, [])
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex justify-end" onWheel={(e) => e.stopPropagation()}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md bg-background border-l border-border/60 shadow-2xl flex flex-col h-full overflow-hidden animate-in slide-in-from-right duration-200">
         {/* Header */}
@@ -947,7 +952,7 @@ function ScopingPanel({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-5">
           {repoConnected && (
             <div className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400/70">
               <Github className="h-3 w-3" />
