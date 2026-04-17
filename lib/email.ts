@@ -361,6 +361,20 @@ export function renderWeeklySummaryHtml(
   copy: EmailCopy,
   vars: WeeklySummaryEmailData,
 ): string {
+  const shippedCount = vars.completed.length
+  const shippedTitles = vars.completed.slice(0, 2).map((task) => task.title)
+  const paceLabel = vars.progress.total === 0
+    ? "Pace is neutral while the queue is being shaped."
+    : vars.progress.percentage >= 65
+      ? "Pace is ahead of plan."
+      : vars.progress.percentage >= 35
+        ? "Pace is on plan."
+        : "Pace is behind plan and needs focus."
+
+  const summary = shippedCount === 0
+    ? `No tasks moved to done this week for ${vars.projectName}, and focus stayed on in-flight work and queue setup. ${paceLabel}`
+    : `${shippedCount} task${shippedCount === 1 ? "" : "s"} shipped this week for ${vars.projectName}. Key product movement included ${shippedTitles.join(" and ")}. ${paceLabel}`
+
   const completedRows = vars.completed.length > 0
     ? vars.completed
       .map((task) => {
@@ -377,8 +391,9 @@ export function renderWeeklySummaryHtml(
 
         return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
         <tr><td style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px">
-          <div style="font-family:${F};font-size:12px;color:${FG};font-weight:600;line-height:1.5">${escapeHtml(task.title)}</div>
-          <div style="font-family:${F};font-size:11px;color:${FG2};line-height:1.6;margin-top:4px">${escapeHtml(task.oneLineSummary)}</div>
+          <div style="font-family:${F};font-size:9px;color:${FG3};text-transform:uppercase;letter-spacing:2px;line-height:1.5">Shipped this week</div>
+          <div style="font-family:${F};font-size:13px;color:${FG};font-weight:600;line-height:1.5;margin-top:4px">${escapeHtml(task.title)}</div>
+          <div style="font-family:${F};font-size:12px;color:${FG2};line-height:1.7;margin-top:6px">${escapeHtml(task.oneLineSummary)}</div>
           ${links ? `<div style="margin-top:8px">${links}</div>` : ""}
         </td></tr>
       </table>`
@@ -406,12 +421,14 @@ export function renderWeeklySummaryHtml(
   ${emailHeading(interpolate(copy.heading, { clientName: vars.clientName }))}
   ${emailTag(`${vars.projectName} · ${vars.weekRangeLabel}`)}
   ${emailParagraph(interpolate(copy.body, { clientName: vars.clientName, projectName: vars.projectName, week: vars.week }))}
+  ${emailParagraph(summary)}
 
   ${emailSectionLabel("Completed this week")}
   ${completedRows}
 
   ${emailSectionLabel("Progress")}
-  ${emailCard("Milestone progress", `${vars.progress.done} / ${vars.progress.total} done (${vars.progress.percentage}%)`)}
+  ${emailCard("Pace", `${vars.progress.done} of ${vars.progress.total} tasks complete (${vars.progress.percentage}%)`)}
+  ${emailParagraph(`Progress is measured across active milestones and current queue scope. ${paceLabel}`)}
   ${emailProgressBar(vars.progress.percentage)}
 
   ${emailSectionLabel("Up next")}
@@ -422,11 +439,7 @@ export function renderWeeklySummaryHtml(
   ${emailSectionLabel("Timeline note")}
   ${emailParagraph(vars.timelineNote)}
 
-  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0">
-  <tr><td>
-    ${emailButton("View full report", vars.reportUrl)}
-  </td></tr>
-  </table>
+  ${emailParagraph(`Optional reference link: <a href="${vars.reportUrl}" style="color:${ACCENT};text-decoration:none">Weekly report archive</a>`)}
   `)
 }
 
