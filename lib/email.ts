@@ -46,7 +46,12 @@ export interface EmailCopy {
   body: string
 }
 
-export type TemplateKey = "welcome" | "task_done" | "task_review" | "task_in_progress"
+export type TemplateKey =
+  | "welcome"
+  | "task_done"
+  | "task_review"
+  | "task_in_progress"
+  | "weekly_summary"
 
 const DEFAULT_COPY: Record<TemplateKey, EmailCopy> = {
   welcome: {
@@ -69,6 +74,11 @@ const DEFAULT_COPY: Record<TemplateKey, EmailCopy> = {
     heading: "Work Started",
     body: "Hi {{clientName}} — work has started on this task. You'll be notified when it moves to review.",
   },
+  weekly_summary: {
+    subject: "Weekly Summary: {{projectName}} ({{week}})",
+    heading: "Weekly Summary",
+    body: "Here is your weekly delivery summary with completed work, current progress, and what is up next.",
+  },
 }
 
 export function getDefaultCopy(): Record<TemplateKey, EmailCopy> {
@@ -80,6 +90,7 @@ export const TEMPLATE_LABELS: Record<TemplateKey, string> = {
   task_done: "Task Complete",
   task_review: "In Team Review",
   task_in_progress: "Work Started",
+  weekly_summary: "Weekly Summary",
 }
 
 let copyCache: Record<TemplateKey, EmailCopy> | null = null
@@ -304,6 +315,121 @@ function emailLink(text: string, href: string): string {
   return `<a href="${href}" style="font-family:${F};font-size:12px;color:${ACCENT};text-decoration:none;display:block;padding:4px 0">→ ${text}</a>`
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+export interface WeeklySummaryTaskEntry {
+  title: string
+  oneLineSummary: string
+  videoUrl?: string | null
+  prUrl?: string | null
+}
+
+export interface WeeklySummaryEmailData {
+  clientName: string
+  projectName: string
+  week: string
+  weekRangeLabel: string
+  completed: WeeklySummaryTaskEntry[]
+  progress: { done: number; total: number; percentage: number }
+  upNext: string[]
+  timelineNote: string
+  reportUrl: string
+}
+
+function emailProgressBar(percentage: number): string {
+  const clamped = Math.max(0, Math.min(100, percentage))
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px">
+  <tr><td style="border:1px solid ${BORDER};padding:2px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="height:8px;background-color:${ACCENT};width:${clamped}%"></td>
+        <td style="height:8px;background-color:${BG3};width:${100 - clamped}%"></td>
+      </tr>
+    </table>
+  </td></tr>
+  </table>`
+}
+
+export function renderWeeklySummaryHtml(
+  copy: EmailCopy,
+  vars: WeeklySummaryEmailData,
+): string {
+  const completedRows = vars.completed.length > 0
+    ? vars.completed
+      .map((task) => {
+        const links = [
+          task.videoUrl
+            ? `<a href="${task.videoUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">Video</a>`
+            : "",
+          task.prUrl
+            ? `<a href="${task.prUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">PR</a>`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(`<span style="color:${BORDER};padding:0 6px">·</span>`)
+
+        return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+        <tr><td style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px">
+          <div style="font-family:${F};font-size:12px;color:${FG};font-weight:600;line-height:1.5">${escapeHtml(task.title)}</div>
+          <div style="font-family:${F};font-size:11px;color:${FG2};line-height:1.6;margin-top:4px">${escapeHtml(task.oneLineSummary)}</div>
+          ${links ? `<div style="margin-top:8px">${links}</div>` : ""}
+        </td></tr>
+      </table>`
+      })
+      .join("")
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+      <tr><td style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px;font-family:${F};font-size:11px;color:${FG3}">
+        No tasks were completed this week.
+      </td></tr>
+    </table>`
+
+  const upNextRows = vars.upNext.length > 0
+    ? vars.upNext
+      .map(
+        (title, index) =>
+          `<tr>
+          <td width="18" valign="top" style="font-family:${F};font-size:11px;color:${FG3};padding-bottom:6px">${index + 1}.</td>
+          <td valign="top" style="font-family:${F};font-size:11px;color:${FG};padding-bottom:6px">${escapeHtml(title)}</td>
+        </tr>`,
+      )
+      .join("")
+    : `<tr><td style="font-family:${F};font-size:11px;color:${FG3}">No queued tasks right now.</td></tr>`
+
+  return brandedHtml(`
+  ${emailHeading(interpolate(copy.heading, { clientName: vars.clientName }))}
+  ${emailTag(`${vars.projectName} · ${vars.weekRangeLabel}`)}
+  ${emailParagraph(interpolate(copy.body, { clientName: vars.clientName, projectName: vars.projectName, week: vars.week }))}
+
+  ${emailSectionLabel("Completed this week")}
+  ${completedRows}
+
+  ${emailSectionLabel("Progress")}
+  ${emailCard("Milestone progress", `${vars.progress.done} / ${vars.progress.total} done (${vars.progress.percentage}%)`)}
+  ${emailProgressBar(vars.progress.percentage)}
+
+  ${emailSectionLabel("Up next")}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px">
+    ${upNextRows}
+  </table>
+
+  ${emailSectionLabel("Timeline note")}
+  ${emailParagraph(vars.timelineNote)}
+
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0">
+  <tr><td>
+    ${emailButton("View full report", vars.reportUrl)}
+  </td></tr>
+  </table>
+  `)
+}
+
 // ---------------------------------------------------------------------------
 // Send email (internal)
 // ---------------------------------------------------------------------------
@@ -516,5 +642,20 @@ export async function sendTaskInProgressEmail(
   const vars = { clientName, taskTitle }
   const html = renderTaskInProgressHtml(copy, vars)
   const subject = interpolate(copy.subject, vars)
+  return send(to, subject, html)
+}
+
+export async function sendWeeklySummaryEmail(
+  to: string,
+  vars: WeeklySummaryEmailData,
+): Promise<boolean> {
+  const allCopy = await loadCopy()
+  const copy = allCopy.weekly_summary
+  const html = renderWeeklySummaryHtml(copy, vars)
+  const subject = interpolate(copy.subject, {
+    clientName: vars.clientName,
+    projectName: vars.projectName,
+    week: vars.week,
+  })
   return send(to, subject, html)
 }

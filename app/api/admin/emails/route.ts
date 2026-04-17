@@ -8,6 +8,7 @@ import {
   renderTaskDoneHtml,
   renderTaskReviewHtml,
   renderTaskInProgressHtml,
+  renderWeeklySummaryHtml,
   type EmailCopy,
   type TemplateKey,
 } from "@/lib/email"
@@ -17,6 +18,9 @@ const SAMPLE_VARS = {
   tierLabel: "Core",
   price: "$4,995",
   taskTitle: "Build scanner page layout",
+  projectName: "Scanner Platform",
+  week: "2026-W16",
+  weekRangeLabel: "Apr 13, 2026 - Apr 17, 2026",
 }
 
 function renderPreview(key: TemplateKey, copy: EmailCopy): string {
@@ -46,6 +50,39 @@ function renderPreview(key: TemplateKey, copy: EmailCopy): string {
       return renderTaskInProgressHtml(copy, {
         clientName: SAMPLE_VARS.clientName,
         taskTitle: SAMPLE_VARS.taskTitle,
+      })
+    case "weekly_summary":
+      return renderWeeklySummaryHtml(copy, {
+        clientName: SAMPLE_VARS.clientName,
+        projectName: SAMPLE_VARS.projectName,
+        week: SAMPLE_VARS.week,
+        weekRangeLabel: SAMPLE_VARS.weekRangeLabel,
+        completed: [
+          {
+            title: "Build scanner page layout",
+            oneLineSummary: "Shipped responsive dashboard layout and validated key flows.",
+            videoUrl: "#",
+            prUrl: "#",
+          },
+          {
+            title: "Stripe payment integration",
+            oneLineSummary: "Completed checkout lane and webhook handling for subscriptions.",
+            videoUrl: "#",
+            prUrl: "#",
+          },
+        ],
+        progress: {
+          done: 13,
+          total: 37,
+          percentage: 35,
+        },
+        upNext: [
+          "Add invoice filters for date range exports",
+          "Finalize client role permissions",
+          "Add analytics summary widget",
+        ],
+        timelineNote: "Task-based cadence. Up to 48hrs per task. Fluid based on priorities.",
+        reportUrl: "https://burley.ai/client/reports/weekly?week=2026-W16",
       })
   }
 }
@@ -86,7 +123,13 @@ export async function PUT(request: NextRequest) {
     copy: Partial<EmailCopy>
   }
 
-  const validKeys: TemplateKey[] = ["welcome", "task_done", "task_review", "task_in_progress"]
+  const validKeys: TemplateKey[] = [
+    "welcome",
+    "task_done",
+    "task_review",
+    "task_in_progress",
+    "weekly_summary",
+  ]
   if (!validKeys.includes(key)) {
     return NextResponse.json({ error: "Invalid template key" }, { status: 400 })
   }
@@ -122,7 +165,13 @@ export async function POST(request: NextRequest) {
     to?: string
   }
 
-  const validKeys: TemplateKey[] = ["welcome", "task_done", "task_review", "task_in_progress"]
+  const validKeys: TemplateKey[] = [
+    "welcome",
+    "task_done",
+    "task_review",
+    "task_in_progress",
+    "weekly_summary",
+  ]
   if (!validKeys.includes(key)) {
     return NextResponse.json({ error: "Invalid template key" }, { status: 400 })
   }

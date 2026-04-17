@@ -5,6 +5,7 @@ import {
   renderTaskDoneHtml,
   renderTaskReviewHtml,
   renderTaskInProgressHtml,
+  renderWeeklySummaryHtml,
   type EmailCopy,
   type TemplateKey,
 } from "@/lib/email"
@@ -44,6 +45,35 @@ function renderPreview(key: TemplateKey, copy: EmailCopy): string {
         clientName: SAMPLE_VARS.clientName,
         taskTitle: SAMPLE_VARS.taskTitle,
       })
+    case "weekly_summary":
+      return renderWeeklySummaryHtml(copy, {
+        clientName: SAMPLE_VARS.clientName,
+        projectName: "DME Engine",
+        week: "2026-W16",
+        weekRangeLabel: "Apr 13, 2026 - Apr 17, 2026",
+        completed: [
+          {
+            title: "Payment Gate + Plan Selection",
+            oneLineSummary: "Built checkout entry and plan selection flow with validated guard rails.",
+            videoUrl: "#",
+            prUrl: "#",
+          },
+          {
+            title: "Phase 1 Flow Restructure",
+            oneLineSummary: "Refined handoff screens and state transitions across the onboarding flow.",
+            videoUrl: "#",
+            prUrl: "#",
+          },
+        ],
+        progress: { done: 13, total: 37, percentage: 35 },
+        upNext: [
+          "Endowed Progress Entry Screen",
+          "Core Lock: Decision Makers updates",
+          "Core Lock: Guardianship section",
+        ],
+        timelineNote: "Task-based cadence. Up to 48hrs per task. Fluid based on priorities.",
+        reportUrl: `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://burley.ai"}/client/reports/weekly?week=2026-W16`,
+      })
   }
 }
 
@@ -57,7 +87,13 @@ export async function POST(request: NextRequest) {
     copy: EmailCopy
   }
 
-  const validKeys: TemplateKey[] = ["welcome", "task_done", "task_review", "task_in_progress"]
+  const validKeys: TemplateKey[] = [
+    "welcome",
+    "task_done",
+    "task_review",
+    "task_in_progress",
+    "weekly_summary",
+  ]
   if (!validKeys.includes(key) || !copy) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }

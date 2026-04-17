@@ -18,7 +18,12 @@ interface EmailCopy {
   body: string
 }
 
-type TemplateKey = "welcome" | "task_done" | "task_review" | "task_in_progress"
+type TemplateKey =
+  | "welcome"
+  | "task_done"
+  | "task_review"
+  | "task_in_progress"
+  | "weekly_summary"
 
 interface TemplateData {
   copy: EmailCopy
@@ -30,6 +35,7 @@ const TEMPLATE_ORDER: TemplateKey[] = [
   "task_done",
   "task_review",
   "task_in_progress",
+  "weekly_summary",
 ]
 
 const TEMPLATE_LABELS: Record<TemplateKey, string> = {
@@ -37,6 +43,7 @@ const TEMPLATE_LABELS: Record<TemplateKey, string> = {
   task_done: "Task Complete",
   task_review: "Ready for Review",
   task_in_progress: "Work Started",
+  weekly_summary: "Weekly Summary",
 }
 
 const TEMPLATE_DESCRIPTIONS: Record<TemplateKey, string> = {
@@ -44,6 +51,7 @@ const TEMPLATE_DESCRIPTIONS: Record<TemplateKey, string> = {
   task_done: "Sent when a task is marked done. Includes deliverable links and what's next.",
   task_review: "Sent when a task moves to review. Prompts the client to check and give feedback.",
   task_in_progress: "Sent when work begins on a task. Optional — off by default for clients.",
+  weekly_summary: "Sent weekly to clients with summary preference enabled.",
 }
 
 const VARIABLE_HINTS: Record<TemplateKey, string> = {
@@ -51,6 +59,7 @@ const VARIABLE_HINTS: Record<TemplateKey, string> = {
   task_done: "{{clientName}}, {{taskTitle}}",
   task_review: "{{clientName}}, {{taskTitle}}",
   task_in_progress: "{{clientName}}, {{taskTitle}}",
+  weekly_summary: "{{clientName}}, {{projectName}}, {{week}}",
 }
 
 export function EmailsClient() {
@@ -181,6 +190,8 @@ export function EmailsClient() {
     tierLabel: "Core",
     price: "$4,995",
     taskTitle: "Build scanner page layout",
+    projectName: "DME Engine",
+    week: "2026-W16",
   }
 
   const resolvedSubject = editCopy
