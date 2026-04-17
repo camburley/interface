@@ -351,21 +351,25 @@ export async function buildWeeklyReportForClient(input: {
       .map((milestone) => milestone.id),
   )
 
-  const progressScopeTasks = activeMilestoneIds.size > 0
-    ? tasks.filter((task) => !!task.milestoneId && activeMilestoneIds.has(task.milestoneId))
-    : tasks
-
-  const progressTotal = progressScopeTasks.length
-  const progressDone = progressScopeTasks.filter((task) => task.status === "done").length
-  const progressPercentage =
-    progressTotal > 0 ? Math.round((progressDone / progressTotal) * 100) : 0
-
   const completedThisWeek = tasks.filter((task) => {
     if (!task.completedAt || task.status !== "done") return false
     const completedAt = Date.parse(task.completedAt)
     if (Number.isNaN(completedAt)) return false
     return completedAt >= range.startDate.getTime() && completedAt <= range.endDate.getTime()
   })
+
+  // Scope progress to CURRENT work: exclude tasks completed before this week.
+  // "Remaining" = todo + in_progress + review + qa + blocked.
+  // "Done this period" = tasks completed within the week range.
+  // This prevents old completed tasks from inflating the progress bar.
+  const remaining = tasks.filter((task) =>
+    ["todo", "in_progress", "review", "qa", "blocked"].includes(task.status)
+  )
+  const doneThisWeek = completedThisWeek.length
+  const progressTotal = doneThisWeek + remaining.length
+  const progressDone = doneThisWeek
+  const progressPercentage =
+    progressTotal > 0 ? Math.round((progressDone / progressTotal) * 100) : 0
 
   const completed = await Promise.all(
     completedThisWeek.map(async (task) => {
