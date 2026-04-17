@@ -160,6 +160,7 @@ function normalizeWhitespace(value: string): string {
 
 function stripMarkdown(value: string): string {
   return value
+    .replace(/<!--[\s\S]*?-->/g, "") // strip HTML comments (e.g. CURSOR_AGENT_PR_BODY markers)
     .replace(/```[\s\S]*?```/g, "")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/!\[[^\]]*]\([^)]*\)/g, "")
@@ -170,6 +171,8 @@ function stripMarkdown(value: string): string {
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/^\s*[-*+]\s+/gm, "")
     .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/\|[^|\n]*\|/g, "") // strip markdown table rows
+    .replace(/^\s*[-|:]+\s*$/gm, "") // strip table separator lines
 }
 
 function firstSentence(value: string): string {
