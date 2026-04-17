@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
-  const configured = process.env.WEEKLY_REPORTS_SECRET
-  const provided = request.headers.get("x-weekly-reports-secret")
-  
   return NextResponse.json({
-    hasConfigured: !!configured,
-    configuredLength: configured?.length ?? 0,
-    providedLength: provided?.length ?? 0,
-    match: configured === provided,
-    configuredPrefix: configured?.substring(0, 5),
-    providedPrefix: provided?.substring(0, 5),
+    WEEKLY: process.env.WEEKLY_REPORTS_SECRET?.substring(0, 10) ?? "NOT_SET",
+    RESEND: process.env.RESEND_API_KEY?.substring(0, 10) ?? "NOT_SET",
+    GITHUB: process.env.GITHUB_TOKEN?.substring(0, 10) ?? "NOT_SET",
+    FIREBASE: process.env.FIREBASE_PROJECT_ID?.substring(0, 10) ?? "NOT_SET",
+    ADMIN: process.env.ADMIN_UID?.substring(0, 10) ?? "NOT_SET",
+    NODE_ENV: process.env.NODE_ENV,
   })
 }
