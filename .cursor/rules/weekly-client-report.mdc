@@ -1,0 +1,12 @@
+---
+description: Weekly client report implementation guardrails
+alwaysApply: false
+---
+
+# Weekly Client Report Rules
+
+- Use `lib/weekly-report.ts` as the single source of truth for weekly payload generation across both web (`/client/reports/weekly`) and email (`weekly_summary`) outputs. Do not duplicate aggregation logic elsewhere.
+- For GitHub PR data, use helpers in `lib/github.ts` (`parseGitHubPrUrl`, `getPRDetails`) and preserve the Firestore cache behavior/TTL contract.
+- Keep auth boundaries strict on the client weekly report route/API: require validated client session and restrict access to the signed-in client's project scope only.
+- Keep the timeline note copy exact: `Task-based cadence. Up to 48hrs per task. Fluid based on priorities.`
+- Keep weekly email copy on the `weekly_summary` template path in `lib/email.ts` (render/send helpers); avoid creating alternate weekly email copy flows.

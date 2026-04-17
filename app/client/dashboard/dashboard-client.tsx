@@ -175,6 +175,13 @@ function DashboardInner({ client, items, payments, milestonesHref }: Props) {
               <LayoutGrid className="h-3.5 w-3.5" />
               View board
             </Link>
+            <Link
+              href="/client/reports/weekly"
+              className="inline-flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors"
+            >
+              <ListChecks className="h-3.5 w-3.5" />
+              Weekly report
+            </Link>
           </div>
         </div>
 

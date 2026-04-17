@@ -302,6 +302,13 @@ function DashboardInner({ clientName, clientEmail, projectName, milestoneProject
             </Link>
           )}
           <Link
+            href="/client/reports/weekly"
+            className="flex items-center gap-1.5 font-mono text-xs text-primary hover:text-foreground transition-colors"
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            Weekly report
+          </Link>
+          <Link
             href="/client/settings"
             className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
