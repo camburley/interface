@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Burley.ai — DME Engine Weekly Report</title>
+<style>
+  /* ── Reset & Base ───────────────────────────── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #0C0C0E;
+    --surface:   #141416;
+    --surface-2: #1A1A1E;
+    --border:    #2A2A2E;
+    --border-lt: #222226;
+    --text:      #E8E6E3;
+    --text-dim:  #8A8A8E;
+    --text-faint:#5A5A5E;
+    --accent:    #C4A265;
+    --accent-dim:#8B7344;
+    --green:     #4ADE80;
+    --green-dim: #16613A;
+    --amber:     #FBBF24;
+    --red:       #F87171;
+    --font:      'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono:      'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+  a:hover { color: #D4B275; }
+
+  /* ── Layout Shell ───────────────────────────── */
+  .report {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── Top Bar ────────────────────────────────── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-lt);
+  }
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .topbar-logo {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--bg);
+    letter-spacing: -0.5px;
+  }
+  .topbar-name {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  .topbar-tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+
+  /* ── Header ─────────────────────────────────── */
+  .header {
+    padding: 56px 0 48px;
+    border-bottom: 1px solid var(--border-lt);
+  }
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .header-chip {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+  .header-dot {
+    width: 3px;
+    height: 3px;
+    background: var(--text-faint);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .header h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .header h1 span {
+    color: var(--accent);
+  }
+  .header-sub {
+    font-size: 17px;
+    color: var(--text-dim);
+    font-weight: 400;
+    letter-spacing: -0.2px;
+  }
+
+  /* ── Section ────────────────────────────────── */
+  .section {
+    padding: 48px 0;
+    border-bottom: 1px solid var(--border-lt);
+  }
+  .section:last-of-type {
+    border-bottom: none;
+  }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .section-label-num {
+    color: var(--accent-dim);
+    margin-right: 6px;
+  }
+
+  /* ── Task Cards ─────────────────────────────── */
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .task-card:hover {
+    border-color: var(--accent-dim);
+    background: var(--surface-2);
+  }
+  .task-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .task-id {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .task-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    flex: 1;
+  }
+  .task-date-badge {
+    font-size: 11px;
+    color: var(--green);
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .task-bottom {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 10px;
+  }
+  .task-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .task-link svg {
+    width: 13px;
+    height: 13px;
+    opacity: 0.6;
+  }
+
+  /* ── Progress ───────────────────────────────── */
+  .progress-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 26px;
+  }
+  .progress-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .progress-big {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .progress-big span {
+    font-size: 20px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .progress-pct {
+    font-size: 15px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  .progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 24px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15));
+    border-radius: 0 4px 4px 0;
+  }
+  .progress-stats {
+    display: flex;
+    gap: 32px;
+    margin-top: 20px;
+  }
+  .progress-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-faint);
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+  .progress-stat-val {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  .stat-done { color: var(--green); }
+  .stat-remaining { color: var(--text-dim); }
+  .stat-this-week { color: var(--accent); }
+
+  /* ── Status Banner ──────────────────────────── */
+  .status-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .status-clear {
+    background: rgba(74, 222, 128, 0.06);
+    border: 1px solid rgba(74, 222, 128, 0.12);
+    color: var(--green);
+  }
+  .status-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ── Up Next List ───────────────────────────── */
+  .next-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .next-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-lt);
+  }
+  .next-item:last-child { border-bottom: none; }
+  .next-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    width: 20px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .next-id {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-dim);
+    flex-shrink: 0;
+    width: 72px;
+  }
+  .next-title {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+    letter-spacing: -0.2px;
+  }
+
+  /* ── Timeline Note ──────────────────────────── */
+  .timeline-note {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 22px 24px;
+    border-radius: 0 10px 10px 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-dim);
+  }
+  .timeline-note strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ── Video Section ──────────────────────────── */
+  .video-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  .video-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .video-info {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .video-title {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .video-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .video-link svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* ── Footer ─────────────────────────────────── */
+  .footer {
+    padding: 40px 0 56px;
+    border-top: 1px solid var(--border-lt);
+    margin-top: 0;
+  }
+  .footer-grid {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .footer-text {
+    font-size: 12px;
+    color: var(--text-faint);
+    line-height: 1.6;
+  }
+  .footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+  .footer-link {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .footer-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border-lt);
+    margin: 24px 0 16px;
+  }
+  .footer-copy {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Responsive ─────────────────────────────── */
+  @media (max-width: 600px) {
+    .report { padding: 0 16px; }
+    .header { padding: 40px 0 36px; }
+    .section { padding: 36px 0; }
+    .progress-big { font-size: 36px; }
+    .progress-stats { gap: 20px; flex-wrap: wrap; }
+    .task-top { flex-wrap: wrap; }
+    .task-date-badge { order: -1; }
+    .footer-links { align-items: flex-start; }
+    .next-item { gap: 10px; }
+    .next-id { width: auto; }
+  }
+
+  /* ── Entrance Animations ────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in {
+    animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+  .delay-5 { animation-delay: 0.25s; }
+  .delay-6 { animation-delay: 0.3s; }
+  .delay-7 { animation-delay: 0.35s; }
+
+  /* ── Progress bar animation ─────────────────── */
+  @keyframes fillBar {
+    from { width: 0; }
+  }
+  .progress-bar-fill {
+    animation: fillBar 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+  }
+</style>
+</head>
+<body>
+
+<div class="report">
+
+  <!-- Top Bar -->
+  <div class="topbar animate-in">
+    <div class="topbar-brand">
+      <div class="topbar-logo">B</div>
+      <span class="topbar-name">Burley.ai</span>
+    </div>
+    <span class="topbar-tag">Weekly Report</span>
+  </div>
+
+  <!-- Header -->
+  <div class="header animate-in delay-1">
+    <div class="header-meta">
+      <span class="header-chip">DME Engine</span>
+      <span class="header-dot"></span>
+      <span class="header-chip">Week 16</span>
+      <span class="header-dot"></span>
+      <span class="header-chip">Apr 14 - 17, 2026</span>
+    </div>
+    <h1>Weekly Progress<br><span>Report</span></h1>
+    <p class="header-sub">Prepared for Emiah Gardner &amp; Team</p>
+  </div>
+
+  <!-- ── 01 This Week ──────────────────────────── -->
+  <div class="section animate-in delay-2">
+    <div class="section-label"><span class="section-label-num">01</span> Completed This Week</div>
+    <div class="task-list">
+
+      <div class="task-card">
+        <div class="task-top">
+          <span class="task-id">dme-03</span>
+          <span class="task-title">Stripe Payment Integration (One-Time + Annual)</span>
+          <span class="task-date-badge">Apr 16</span>
+        </div>
+        <div class="task-bottom">
+          <a href="https://github.com/camburley/dme-engine/pull/9" target="_blank" class="task-link">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
+            PR #9
+          </a>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-top">
+          <span class="task-id">dme-06</span>
+          <span class="task-title">Payment Gate + Plan Selection</span>
+          <span class="task-date-badge">Apr 16</span>
+        </div>
+        <div class="task-bottom">
+          <a href="https://github.com/camburley/dme-engine/pull/9" target="_blank" class="task-link">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
+            PR #9
+          </a>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-top">
+          <span class="task-id">dme-04</span>
+          <span class="task-title">Phase 1 Flow Restructure</span>
+          <span class="task-date-badge">Apr 15</span>
+        </div>
+        <div class="task-bottom">
+          <a href="https://github.com/camburley/dme-engine/pull/7" target="_blank" class="task-link">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
+            PR #7
+          </a>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-top">
+          <span class="task-id">dme-02</span>
+          <span class="task-title">Authentication (Google, Apple, Email)</span>
+          <span class="task-date-badge">Apr 13</span>
+        </div>
+        <div class="task-bottom">
+          <a href="https://github.com/camburley/dme-engine/pull/6" target="_blank" class="task-link">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/></svg>
+            PR #6
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Video Demo -->
+    <div class="video-block">
+      <div class="video-container">
+        <video controls preload="metadata" poster="">
+          <source src="https://cursor.com/agents/bc-1a0d239e-94c0-44aa-8aca-edb60984f451/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Fdme_wizard_full_flow_demo.mp4" type="video/mp4">
+          Your browser does not support video playback.
+        </video>
+      </div>
+      <div class="video-info">
+        <span class="video-title">Full Wizard Flow Demo</span>
+        <a href="https://cursor.com/agents/bc-1a0d239e-94c0-44aa-8aca-edb60984f451/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Fdme_wizard_full_flow_demo.mp4" target="_blank" class="video-link">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M3.75 2h3.5a.75.75 0 010 1.5h-3.5a.25.25 0 00-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25v-3.5a.75.75 0 011.5 0v3.5A1.75 1.75 0 0112.25 14h-8.5A1.75 1.75 0 012 12.25v-8.5C2 2.784 2.784 2 3.75 2zm6.854-1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.751.751 0 01-1.042-.018.751.751 0 01-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1z"/></svg>
+          Open
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 02 Cumulative Progress ────────────────── -->
+  <div class="section animate-in delay-3">
+    <div class="section-label"><span class="section-label-num">02</span> Cumulative Progress</div>
+    <div class="progress-block">
+      <div class="progress-header">
+        <div class="progress-big">13 <span>/ 37</span></div>
+        <span class="progress-pct">35%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width: 35.13%"></div>
+      </div>
+      <div class="progress-stats">
+        <div>
+          <div class="progress-stat-label">Completed</div>
+          <div class="progress-stat-val stat-done">13</div>
+        </div>
+        <div>
+          <div class="progress-stat-label">Remaining</div>
+          <div class="progress-stat-val stat-remaining">24</div>
+        </div>
+        <div>
+          <div class="progress-stat-label">This Week</div>
+          <div class="progress-stat-val stat-this-week">+4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 03 Blocked / At Risk ──────────────────── -->
+  <div class="section animate-in delay-4">
+    <div class="section-label"><span class="section-label-num">03</span> Blocked / At Risk</div>
+    <div class="status-banner status-clear">
+      <svg class="status-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+      </svg>
+      No blockers. All systems clear.
+    </div>
+  </div>
+
+  <!-- ── 04 Up Next ────────────────────────────── -->
+  <div class="section animate-in delay-5">
+    <div class="section-label"><span class="section-label-num">04</span> Up Next</div>
+    <div class="next-list">
+      <div class="next-item">
+        <span class="next-num">1</span>
+        <span class="next-id">dme-07</span>
+        <span class="next-title">Endowed Progress Entry Screen</span>
+      </div>
+      <div class="next-item">
+        <span class="next-num">2</span>
+        <span class="next-id">dme-08</span>
+        <span class="next-title">Core Lock: Decision Makers (Updates)</span>
+      </div>
+      <div class="next-item">
+        <span class="next-num">3</span>
+        <span class="next-id">dme-09</span>
+        <span class="next-title">Core Lock: Guardianship Section</span>
+      </div>
+      <div class="next-item">
+        <span class="next-num">4</span>
+        <span class="next-id">T-466</span>
+        <span class="next-title">Updated Pricing Structure</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 05 Timeline ───────────────────────────── -->
+  <div class="section animate-in delay-6">
+    <div class="section-label"><span class="section-label-num">05</span> Timeline</div>
+    <div class="timeline-note">
+      <strong>Task-based cadence.</strong> Each task takes up to 48 hours once started. Timeline is fluid and adapts as requirements evolve. We prioritize shipping quality work at a sustainable pace over rigid deadlines.
+    </div>
+  </div>
+
+  <!-- ── Footer ────────────────────────────────── -->
+  <div class="footer animate-in delay-7">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <div class="topbar-logo" style="width:24px;height:24px;font-size:11px;border-radius:5px;">B</div>
+          <span style="font-size:13px;font-weight:600;letter-spacing:-0.3px;">Burley.ai</span>
+        </div>
+        <div class="footer-text">
+          Software development consultancy.<br>
+          cam@burley.ai
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="https://burley.ai/admin" target="_blank" class="footer-link">Live Project Board &rarr;</a>
+        <a href="https://burley.ai" target="_blank" class="footer-link">burley.ai</a>
+      </div>
+    </div>
+    <div class="footer-divider"></div>
+    <p class="footer-copy">&copy; 2026 Burley.ai. This report is confidential.</p>
+  </div>
+
+</div>
+
+</body>
+</html>
