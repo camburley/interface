@@ -234,7 +234,7 @@ export function WeeklyReportClient({ report }: Props) {
 
         <section className="border border-border/70 bg-card px-4 py-5 sm:px-6">
           <h2 className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            Executive summary
+            High level takeaway
           </h2>
           <p className="mt-3 font-[var(--font-newsreader)] text-lg leading-relaxed text-foreground/90">
             {executiveSummary}
