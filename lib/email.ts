@@ -427,8 +427,7 @@ export function renderWeeklySummaryHtml(
   ${completedRows}
 
   ${emailSectionLabel("Progress")}
-  ${emailCard("Pace", `${vars.progress.done} of ${vars.progress.total} tasks complete (${vars.progress.percentage}%)`)}
-  ${emailParagraph(`Progress is measured across active milestones and current queue scope. ${paceLabel}`)}
+  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} remaining in the queue.`)}
   ${emailProgressBar(vars.progress.percentage)}
 
   ${emailSectionLabel("Up next")}

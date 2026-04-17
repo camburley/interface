@@ -265,12 +265,11 @@ export function WeeklyReportClient({ report }: Props) {
           </h2>
           <div className="border border-border/70 bg-card px-4 py-4 sm:px-6">
             <p className="font-mono text-sm text-foreground">
-              {report.progress.done} of {report.progress.total} tasks complete across{" "}
-              {report.progress.activeMilestoneCount} active milestone
-              {report.progress.activeMilestoneCount === 1 ? "" : "s"}.
+              {report.progress.done} task{report.progress.done === 1 ? "" : "s"} shipped this week.{" "}
+              {report.progress.total - report.progress.done} remaining in the queue.
             </p>
             <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-              {report.progress.percentage}% complete · {paceLabel}
+              {report.progress.percentage}% of active scope complete.
             </p>
             <div className="mt-4 h-2 w-full border border-border/70 bg-secondary">
               <div
