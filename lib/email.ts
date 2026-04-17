@@ -1,18 +1,12 @@
-import { google } from "googleapis"
+import { Resend } from "resend"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 
-function getGmailClient() {
-  const clientEmail = process.env.GMAIL_CLIENT_EMAIL
-  const privateKey = process.env.GMAIL_PRIVATE_KEY?.replace(/\\n/g, "\n")
-  if (!clientEmail || !privateKey) return null
+let resend: Resend | null = null
 
-  const auth = new google.auth.JWT({
-    email: clientEmail,
-    key: privateKey,
-    scopes: ["https://www.googleapis.com/auth/gmail.send"],
-    subject: "cam@burley.ai", // domain-wide delegation impersonation
-  })
-  return google.gmail({ version: "v1", auth })
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY)
+  return resend
 }
 
 const FROM = "Burley <cam@burley.ai>"
@@ -441,45 +435,14 @@ export function renderWeeklySummaryHtml(
 // ---------------------------------------------------------------------------
 const ADMIN_BCC = "bob@burley.ai"
 
-function buildRawEmail(to: string, subject: string, html: string): string {
-  const boundary = `boundary_${Date.now()}`
-  const lines = [
-    `From: ${FROM}`,
-    `To: ${to}`,
-    `Bcc: ${ADMIN_BCC}`,
-    `Subject: ${subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/plain; charset="UTF-8"`,
-    ``,
-    subject,
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    Buffer.from(html).toString("base64"),
-    ``,
-    `--${boundary}--`,
-  ]
-  return lines.join("\r\n")
-}
-
 async function send(to: string, subject: string, html: string): Promise<boolean> {
-  const gmail = getGmailClient()
-  if (!gmail) {
-    console.log(`[email skip] Gmail credentials not set. Would have sent to ${to}: ${subject}`)
+  const r = getResend()
+  if (!r) {
+    console.log(`[email skip] RESEND_API_KEY not set. Would have sent to ${to}: ${subject}`)
     return false
   }
   try {
-    const raw = buildRawEmail(to, subject, html)
-    const encodedMessage = Buffer.from(raw).toString("base64url")
-    await gmail.users.messages.send({
-      userId: "me",
-      requestBody: { raw: encodedMessage },
-    })
+    await r.emails.send({ from: FROM, to, subject, html, bcc: ADMIN_BCC })
     console.log(`[email sent] to=${to} subject="${subject}"`)
     return true
   } catch (err) {
@@ -492,18 +455,13 @@ async function send(to: string, subject: string, html: string): Promise<boolean>
 // Plain text fallback (keep backward compat)
 // ---------------------------------------------------------------------------
 export async function sendClientEmail(to: string, subject: string, body: string): Promise<boolean> {
-  const gmail = getGmailClient()
-  if (!gmail) {
-    console.log(`[email skip] Gmail credentials not set. Would have sent to ${to}: ${subject}`)
+  const r = getResend()
+  if (!r) {
+    console.log(`[email skip] RESEND_API_KEY not set. Would have sent to ${to}: ${subject}`)
     return false
   }
   try {
-    const raw = buildRawEmail(to, subject, `<pre style="font-family:monospace;white-space:pre-wrap">${body}</pre>`)
-    const encodedMessage = Buffer.from(raw).toString("base64url")
-    await gmail.users.messages.send({
-      userId: "me",
-      requestBody: { raw: encodedMessage },
-    })
+    await r.emails.send({ from: FROM, to, subject, text: body })
     console.log(`[email sent] to=${to} subject="${subject}"`)
     return true
   } catch (err) {
