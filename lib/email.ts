@@ -363,17 +363,9 @@ export function renderWeeklySummaryHtml(
 ): string {
   const shippedCount = vars.completed.length
   const shippedTitles = vars.completed.slice(0, 2).map((task) => task.title)
-  const paceLabel = vars.progress.total === 0
-    ? "Pace is neutral while the queue is being shaped."
-    : vars.progress.percentage >= 65
-      ? "Pace is ahead of plan."
-      : vars.progress.percentage >= 35
-        ? "Pace is on plan."
-        : "Pace is behind plan and needs focus."
-
   const summary = shippedCount === 0
-    ? `No tasks moved to done this week for ${vars.projectName}, and focus stayed on in-flight work and queue setup. ${paceLabel}`
-    : `${shippedCount} task${shippedCount === 1 ? "" : "s"} shipped this week for ${vars.projectName}. Key product movement included ${shippedTitles.join(" and ")}. ${paceLabel}`
+    ? `No tasks moved to done this week for ${vars.projectName}. Focus stayed on in-flight work and queue setup.`
+    : `${shippedCount} task${shippedCount === 1 ? "" : "s"} shipped this week for ${vars.projectName}. Key product movement included ${shippedTitles.join(" and ")}.`
 
   const completedRows = vars.completed.length > 0
     ? vars.completed

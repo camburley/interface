@@ -17,12 +17,7 @@ interface Props {
   report: WeeklyReportPayload
 }
 
-function getPaceLabel(progress: WeeklyReportPayload["progress"]): string {
-  if (progress.total === 0) return "Pace is neutral while the queue is being shaped."
-  if (progress.percentage >= 65) return "Pace is ahead of plan."
-  if (progress.percentage >= 35) return "Pace is on plan."
-  return "Pace is behind plan and needs focus."
-}
+
 
 function buildExecutiveSummary(report: WeeklyReportPayload): string {
   const shippedCount = report.completed.length
@@ -42,7 +37,7 @@ function buildExecutiveSummary(report: WeeklyReportPayload): string {
       ? `${report.blocked.length} blocker${report.blocked.length === 1 ? "" : "s"} still need attention to keep delivery speed high.`
       : "There are no active blockers right now, so execution can continue without external dependencies."
 
-  return `${shippedLine} ${changedLine} ${getPaceLabel(report.progress)} ${blockerLine}`
+  return `${shippedLine} ${changedLine} ${blockerLine}`
 }
 
 function toNarrativeBlocks(whatWasDone: string): string[] {
@@ -190,10 +185,6 @@ export function WeeklyReportClient({ report }: Props) {
   const executiveSummary = useMemo(
     () => buildExecutiveSummary(report),
     [report],
-  )
-  const paceLabel = useMemo(
-    () => getPaceLabel(report.progress),
-    [report.progress],
   )
 
   return (
