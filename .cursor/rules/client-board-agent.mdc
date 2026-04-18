@@ -1,0 +1,17 @@
+---
+description: Client board chat agent implementation guardrails
+alwaysApply: false
+---
+
+# Client Board Agent Rules
+
+- Keep `app/api/client/agent/chat/route.ts` as the single API surface for board chat behavior and `components/board-agent/board-agent-chat.tsx` as the chat UI implementation mounted on `/client/board`.
+- Keep auth source strict on the chat route: use `getSessionUser()` from `lib/session.ts`, require a matching `clients/{uid}` document, and return `403` for missing/invalid auth or missing client doc.
+- Keep project scoping strict: resolve `milestoneProjectId` from `clients/{uid}`, return `400` when missing, and query tasks only with `.where("projectId", "==", projectId)`.
+- Keep context composition fields intact in board context: `taskId`, `title`, `status`, `description` (prefer `clientDescription`, fallback `description`), `acceptanceCriteria`, `completedAt`, `dependencies`, plus project metadata including project name and timeline note `Task-based cadence. Up to 48hrs per task. Fluid based on priorities.`.
+- Keep model/config contract unchanged unless explicitly requested: Anthropic SDK via `@anthropic-ai/sdk`, model `claude-sonnet-4-20250514`, `max_tokens: 8192`, streaming enabled, and `ANTHROPIC_API_KEY` guard returning `503` with `{ "error": "Agent not configured" }` when missing.
+- Keep SSE contract stable (`text/event-stream; charset=utf-8`) with JSON payload events only: `{"type":"chunk","content":"..."}`, `{"type":"done"}`, and `{"type":"error","error":"..."}`.
+- Keep in-memory rate limiting keyed by `uid` at 20 requests per 60 seconds; on limit breach return `429` with the existing rate-limit error response.
+- Timeline/business redirects are mandatory and must return immediate SSE responses with exact copy:
+  - Timeline: `Timeline and launch decisions are business decisions on your end. Each task follows a 48-hour SLA. You can count the remaining tasks and calculate based on that pace.`
+  - Business: `That is a business decision for your team. I can help you understand what the board shows and what has been built.`
