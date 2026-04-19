@@ -433,9 +433,8 @@ export function renderWeeklySummaryHtml(
   ${completedRows}
 
   ${emailSectionLabel("Progress")}
-  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} remaining in the queue.${vars.progress.newTasksThisWeek ? ` ${vars.progress.newTasksThisWeek} new task${vars.progress.newTasksThisWeek === 1 ? "" : "s"} added this week.` : ""}`)}
-  ${vars.progress.allTimeTotal ? emailCard("Since Start", `${vars.progress.allTimeDone} of ${vars.progress.allTimeTotal} tasks completed (${vars.progress.allTimePercentage}%).${vars.progress.avgDaysPerTask ? ` Averaging ${vars.progress.avgDaysPerTask} days per task.` : ""}${vars.progress.daysSinceStart ? ` Day ${vars.progress.daysSinceStart}.` : ""}`) : ""}
-  ${emailProgressBar(vars.progress.allTimePercentage ?? vars.progress.percentage)}
+  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} in the queue${vars.progress.newTasksThisWeek ? ` (${vars.progress.newTasksThisWeek} new this week from your latest specs)` : ""}.`)}
+  ${emailProgressBar(vars.progress.percentage)}
 
   ${emailSectionLabel("Up next")}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px">
