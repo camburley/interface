@@ -47,6 +47,13 @@ export interface WeeklyReportProgress {
   total: number
   percentage: number
   activeMilestoneCount: number
+  allTimeDone: number
+  allTimeTotal: number
+  allTimePercentage: number
+  newTasksThisWeek: number
+  avgDaysPerTask: number | null
+  daysSinceStart: number | null
+  startDate: string | null
 }
 
 export interface WeeklyReportPayload {
@@ -411,6 +418,34 @@ export async function buildWeeklyReportForClient(input: {
       reason: task.blockedReason?.trim() || "No reason specified",
     }))
 
+  // Count tasks created this week
+  const newTasksThisWeek = tasks.filter((task) => {
+    const created = Date.parse(task.createdAt || "")
+    if (Number.isNaN(created)) return false
+    return created >= range.startDate.getTime() && created <= range.endDate.getTime()
+  }).length
+
+  // All-time progress
+  const allTimeDone = tasks.filter((t) => t.status === "done").length
+  const allTimeTotal = tasks.length
+  const allTimePercentage = allTimeTotal > 0 ? Math.round((allTimeDone / allTimeTotal) * 100) : 0
+
+  // Avg days per task (using first completedAt to now)
+  const allCompletedDates = tasks
+    .filter((t) => t.status === "done" && t.completedAt)
+    .map((t) => Date.parse(t.completedAt!))
+    .filter((d) => !Number.isNaN(d))
+    .sort((a, b) => a - b)
+
+  // Find project start (earliest createdAt from Stripe sub or first task)
+  const clientData = clientDoc.exists ? clientDoc.data() : null
+  const stripeStart = clientData?.subscriptionStartDate ? Date.parse(clientData.subscriptionStartDate as string) : NaN
+  const earliestTask = tasks.map((t) => Date.parse(t.createdAt || "")).filter((d) => !Number.isNaN(d)).sort((a, b) => a - b)[0]
+  const projectStart = !Number.isNaN(stripeStart) ? stripeStart : earliestTask || NaN
+  const daysSinceStart = !Number.isNaN(projectStart) ? Math.ceil((Date.now() - projectStart) / 86400000) : null
+  const avgDaysPerTask = allTimeDone > 0 && daysSinceStart ? Math.round((daysSinceStart / allTimeDone) * 10) / 10 : null
+  const startDateStr = !Number.isNaN(projectStart) ? new Date(projectStart).toISOString().slice(0, 10) : null
+
   const upNext = tasks
     .filter((task) => task.status === "todo")
     .sort(sortByPositionThenCreated)
@@ -443,6 +478,13 @@ export async function buildWeeklyReportForClient(input: {
       total: progressTotal,
       percentage: progressPercentage,
       activeMilestoneCount: activeMilestoneIds.size,
+      allTimeDone,
+      allTimeTotal,
+      allTimePercentage,
+      newTasksThisWeek,
+      avgDaysPerTask,
+      daysSinceStart,
+      startDate: startDateStr,
     },
     blocked,
     upNext,

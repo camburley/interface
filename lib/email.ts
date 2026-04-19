@@ -337,8 +337,19 @@ export interface WeeklySummaryEmailData {
   week: string
   weekRangeLabel: string
   completed: WeeklySummaryTaskEntry[]
-  progress: { done: number; total: number; percentage: number }
-  upNext: string[]
+  progress: {
+    done: number
+    total: number
+    percentage: number
+    allTimeDone?: number
+    allTimeTotal?: number
+    allTimePercentage?: number
+    newTasksThisWeek?: number
+    avgDaysPerTask?: number | null
+    daysSinceStart?: number | null
+    startDate?: string | null
+  }
+  upNext: Array<string | { taskId: string; title: string }>
   timelineNote: string
   reportUrl: string
 }
@@ -399,13 +410,16 @@ export function renderWeeklySummaryHtml(
 
   const upNextRows = vars.upNext.length > 0
     ? vars.upNext
-      .map(
-        (title, index) =>
-          `<tr>
+      .map((item, index) => {
+          const isObj = typeof item === "object" && item !== null
+          const title = isObj ? (item as { taskId: string; title: string }).title : (item as string)
+          const taskId = isObj ? (item as { taskId: string; title: string }).taskId : null
+          const label = taskId ? `${escapeHtml(taskId)}: ${escapeHtml(title)}` : escapeHtml(title)
+          return `<tr>
           <td width="18" valign="top" style="font-family:${F};font-size:11px;color:${FG3};padding-bottom:6px">${index + 1}.</td>
-          <td valign="top" style="font-family:${F};font-size:11px;color:${FG};padding-bottom:6px">${escapeHtml(title)}</td>
-        </tr>`,
-      )
+          <td valign="top" style="font-family:${F};font-size:11px;color:${FG};padding-bottom:6px">${label}</td>
+        </tr>`
+        })
       .join("")
     : `<tr><td style="font-family:${F};font-size:11px;color:${FG3}">No queued tasks right now.</td></tr>`
 
@@ -419,8 +433,9 @@ export function renderWeeklySummaryHtml(
   ${completedRows}
 
   ${emailSectionLabel("Progress")}
-  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} remaining in the queue.`)}
-  ${emailProgressBar(vars.progress.percentage)}
+  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} remaining in the queue.${vars.progress.newTasksThisWeek ? ` ${vars.progress.newTasksThisWeek} new task${vars.progress.newTasksThisWeek === 1 ? "" : "s"} added this week.` : ""}`)}
+  ${vars.progress.allTimeTotal ? emailCard("Since Start", `${vars.progress.allTimeDone} of ${vars.progress.allTimeTotal} tasks completed (${vars.progress.allTimePercentage}%).${vars.progress.avgDaysPerTask ? ` Averaging ${vars.progress.avgDaysPerTask} days per task.` : ""}${vars.progress.daysSinceStart ? ` Day ${vars.progress.daysSinceStart}.` : ""}`) : ""}
+  ${emailProgressBar(vars.progress.allTimePercentage ?? vars.progress.percentage)}
 
   ${emailSectionLabel("Up next")}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px">

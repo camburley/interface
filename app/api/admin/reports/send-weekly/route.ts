@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
           prUrl: task.prUrl,
         })),
         progress: report.progress,
-        upNext: report.upNext.map((task) => task.title),
+        upNext: report.upNext.map((task) => ({ taskId: task.taskId, title: task.title })),
         timelineNote: report.timelineNote,
         reportUrl: report.reportUrl,
       })
