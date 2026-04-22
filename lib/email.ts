@@ -451,7 +451,7 @@ export function renderWeeklySummaryHtml(
 // ---------------------------------------------------------------------------
 // Send email (internal)
 // ---------------------------------------------------------------------------
-const ADMIN_BCC = "bob@burley.ai"
+const ADMIN_BCC = ["bob@burley.ai", "cam@burley.ai"]
 
 async function send(to: string, subject: string, html: string): Promise<boolean> {
   const r = getResend()
