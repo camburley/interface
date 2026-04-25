@@ -5,7 +5,7 @@ import { getPRDetailsFromUrl, type PullRequestDetails } from "@/lib/github"
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://burley.ai"
 
 export const WEEKLY_TIMELINE_NOTE =
-  "Please add your PostHog credentials to the board for TASK-508 — it can't ship until we can plug directly into your PostHog account. You'll find the needed credentials listed inside the task card."
+  "Please add your PostHog credentials to the board for TASK-508 — it can't ship until we can plug directly into your PostHog account. You can find the needed credentials at the board inside the size it button."
 
 export interface WeeklyReportWeekRange {
   week: string
