@@ -249,25 +249,18 @@ function buildWhatWasDone(
   }
 }
 
+const VIDEO_ARTIFACT_TYPES = new Set(["loom", "loom_video", "demo_video", "video"])
+
 function pickVideo(task: Task): WeeklyReportVideo | null {
   const artifacts = task.artifacts ?? []
-  // Check "loom" type first
-  const loom = artifacts.find((artifact) => artifact.type === "loom")
-  if (loom) {
+  
+  // Check any known video/loom artifact type
+  const videoArtifact = artifacts.find((artifact) => VIDEO_ARTIFACT_TYPES.has(artifact.type))
+  if (videoArtifact) {
     return {
-      url: loom.url,
-      label: loom.label || "Loom demo",
-      embedUrl: toLoomEmbedUrl(loom.url),
-    }
-  }
-
-  // Check "video" type (used by cursor-agent artifacts)
-  const video = artifacts.find((artifact) => artifact.type === "video")
-  if (video) {
-    return {
-      url: video.url,
-      label: video.label || "Demo video",
-      embedUrl: toLoomEmbedUrl(video.url),
+      url: videoArtifact.url,
+      label: videoArtifact.label || "Demo video",
+      embedUrl: toLoomEmbedUrl(videoArtifact.url),
     }
   }
 
