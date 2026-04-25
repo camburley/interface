@@ -456,15 +456,16 @@ export function renderWeeklySummaryHtml(
 // ---------------------------------------------------------------------------
 const ADMIN_BCC = ["bob@burley.ai", "cam@burley.ai"]
 
-async function send(to: string, subject: string, html: string): Promise<boolean> {
+async function send(to: string | string[], subject: string, html: string, opts?: { cc?: string[]; bcc?: string[] }): Promise<boolean> {
   const r = getResend()
   if (!r) {
     console.log(`[email skip] RESEND_API_KEY not set. Would have sent to ${to}: ${subject}`)
     return false
   }
   try {
-    await r.emails.send({ from: FROM, to, subject, html, bcc: ADMIN_BCC })
-    console.log(`[email sent] to=${to} subject="${subject}"`)
+    const bcc = opts?.bcc ?? ADMIN_BCC
+    await r.emails.send({ from: FROM, to, subject, html, cc: opts?.cc, bcc })
+    console.log(`[email sent] to=${Array.isArray(to) ? to.join(',') : to} subject="${subject}"`)
     return true
   } catch (err) {
     console.error("[email error]", err)
@@ -669,6 +670,7 @@ export async function sendTaskInProgressEmail(
 export async function sendWeeklySummaryEmail(
   to: string,
   vars: WeeklySummaryEmailData,
+  opts?: { cc?: string[]; bcc?: string[] },
 ): Promise<boolean> {
   const allCopy = await loadCopy()
   const copy = allCopy.weekly_summary
@@ -678,5 +680,5 @@ export async function sendWeeklySummaryEmail(
     projectName: vars.projectName,
     week: vars.week,
   })
-  return send(to, subject, html)
+  return send(to, subject, html, opts)
 }
