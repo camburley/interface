@@ -307,7 +307,14 @@ function pickLinks(task: Task): WeeklyReportArtifactLink[] {
   if (task.outputUrl) {
     const lower = task.outputUrl.toLowerCase()
     // Don't add if it's a loom/video URL — those are handled by pickVideo
-    if (!lower.includes('loom.com') && !lower.endsWith('.mp4') && !lower.endsWith('.webm') && !lower.endsWith('.mov')) {
+    // Don't add Heroku URLs — old backend deploy links, meaningless to clients
+    if (
+      !lower.includes('loom.com') &&
+      !lower.includes('herokuapp.com') &&
+      !lower.endsWith('.mp4') &&
+      !lower.endsWith('.webm') &&
+      !lower.endsWith('.mov')
+    ) {
       links.push({
         type: "deploy",
         url: task.outputUrl,
