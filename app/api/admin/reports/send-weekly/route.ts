@@ -91,6 +91,9 @@ export async function POST(request: NextRequest) {
           oneLineSummary: task.oneLineSummary,
           videoUrl: task.video?.url ?? null,
           prUrl: task.prUrl,
+          links: task.links
+            .filter((l) => l.url)
+            .map((l) => ({ url: l.url, label: l.label })),
         })),
         progress: report.progress,
         upNext: report.upNext.map((task) => ({ taskId: task.taskId, title: task.title })),

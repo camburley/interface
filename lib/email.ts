@@ -329,6 +329,7 @@ export interface WeeklySummaryTaskEntry {
   oneLineSummary: string
   videoUrl?: string | null
   prUrl?: string | null
+  links?: Array<{ url: string; label: string }>
 }
 
 export interface WeeklySummaryEmailData {
@@ -381,16 +382,21 @@ export function renderWeeklySummaryHtml(
   const completedRows = vars.completed.length > 0
     ? vars.completed
       .map((task) => {
-        const links = [
-          task.videoUrl
-            ? `<a href="${task.videoUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">Video</a>`
-            : "",
-          task.prUrl
-            ? `<a href="${task.prUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">PR</a>`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(`<span style="color:${BORDER};padding:0 6px">·</span>`)
+        const inlineLinks: string[] = []
+        if (task.videoUrl) {
+          inlineLinks.push(`<a href="${task.videoUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">Video</a>`)
+        }
+        if (task.prUrl) {
+          inlineLinks.push(`<a href="${task.prUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">PR</a>`)
+        }
+        if (task.links) {
+          for (const link of task.links) {
+            if (link.url) {
+              inlineLinks.push(`<a href="${link.url}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">${escapeHtml(link.label)}</a>`)
+            }
+          }
+        }
+        const links = inlineLinks.join(`<span style="color:${BORDER};padding:0 6px">·</span>`)
 
         return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
         <tr><td style="border:1px solid ${BORDER};background-color:${BG3};padding:12px 14px">
@@ -433,7 +439,7 @@ export function renderWeeklySummaryHtml(
   ${completedRows}
 
   ${emailSectionLabel("Progress")}
-  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} in the queue${vars.progress.newTasksThisWeek ? ` (${vars.progress.newTasksThisWeek} new this week from your latest specs)` : ""}.`)}
+  ${emailCard("This Week", `${vars.progress.done} task${vars.progress.done === 1 ? "" : "s"} shipped. ${vars.progress.total - vars.progress.done} in the queue${vars.progress.newTasksThisWeek ? ` (${vars.progress.newTasksThisWeek} new this week)` : ""}.`)}
   ${emailProgressBar(vars.progress.percentage)}
 
   ${emailSectionLabel("Up next")}
