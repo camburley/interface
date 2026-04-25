@@ -81,6 +81,9 @@ export async function POST(request: NextRequest) {
         week,
       })
 
+      const ccFromBody: string[] | undefined = Array.isArray(body.cc) ? body.cc.filter((e: unknown) => typeof e === 'string') as string[] : undefined
+      const bccFromBody: string[] | undefined = Array.isArray(body.bcc) ? body.bcc.filter((e: unknown) => typeof e === 'string') as string[] : undefined
+
       const sent = await sendWeeklySummaryEmail(email, {
         clientName: report.clientName,
         projectName: report.projectName,
@@ -90,8 +93,7 @@ export async function POST(request: NextRequest) {
           title: task.title,
           oneLineSummary: task.oneLineSummary,
           videoUrl: task.video?.url ?? null,
-          prUrl: null, // Never include PR links
-          // Pass deploy preview links for tasks with no video
+          prUrl: null,
           links: task.links
             .filter((l) => l.url && l.type !== 'github_pr')
             .map((l) => ({ url: l.url, label: l.label })),
@@ -100,6 +102,9 @@ export async function POST(request: NextRequest) {
         upNext: report.upNext.map((task) => ({ taskId: task.taskId, title: task.title })),
         timelineNote: report.timelineNote,
         reportUrl: report.reportUrl,
+      }, {
+        cc: ccFromBody,
+        bcc: bccFromBody,
       })
 
       if (sent) {
