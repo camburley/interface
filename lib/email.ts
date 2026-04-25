@@ -386,16 +386,7 @@ export function renderWeeklySummaryHtml(
         if (task.videoUrl) {
           inlineLinks.push(`<a href="${task.videoUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">Video</a>`)
         }
-        if (task.prUrl) {
-          inlineLinks.push(`<a href="${task.prUrl}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">PR</a>`)
-        }
-        if (task.links) {
-          for (const link of task.links) {
-            if (link.url) {
-              inlineLinks.push(`<a href="${link.url}" style="font-family:${F};font-size:11px;color:${ACCENT};text-decoration:none">${escapeHtml(link.label)}</a>`)
-            }
-          }
-        }
+        // No PR links. No deploy previews for shipped tasks — those are only for review-status items.
         const links = inlineLinks.join(`<span style="color:${BORDER};padding:0 6px">·</span>`)
 
         return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
