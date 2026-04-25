@@ -90,9 +90,10 @@ export async function POST(request: NextRequest) {
           title: task.title,
           oneLineSummary: task.oneLineSummary,
           videoUrl: task.video?.url ?? null,
-          prUrl: task.prUrl,
+          prUrl: null, // Never include PR links
+          // Pass deploy preview links for tasks with no video
           links: task.links
-            .filter((l) => l.url)
+            .filter((l) => l.url && l.type !== 'github_pr')
             .map((l) => ({ url: l.url, label: l.label })),
         })),
         progress: report.progress,

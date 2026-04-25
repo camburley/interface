@@ -251,12 +251,23 @@ function buildWhatWasDone(
 
 function pickVideo(task: Task): WeeklyReportVideo | null {
   const artifacts = task.artifacts ?? []
+  // Check "loom" type first
   const loom = artifacts.find((artifact) => artifact.type === "loom")
   if (loom) {
     return {
       url: loom.url,
       label: loom.label || "Loom demo",
       embedUrl: toLoomEmbedUrl(loom.url),
+    }
+  }
+
+  // Check "video" type (used by cursor-agent artifacts)
+  const video = artifacts.find((artifact) => artifact.type === "video")
+  if (video) {
+    return {
+      url: video.url,
+      label: video.label || "Demo video",
+      embedUrl: toLoomEmbedUrl(video.url),
     }
   }
 
