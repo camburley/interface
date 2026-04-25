@@ -312,11 +312,15 @@ function pickLinks(task: Task): WeeklyReportArtifactLink[] {
     }))
 
   if (task.outputUrl) {
-    links.push({
-      type: "deploy",
-      url: task.outputUrl,
-      label: "Deploy preview",
-    })
+    const lower = task.outputUrl.toLowerCase()
+    // Don't add if it's a loom/video URL — those are handled by pickVideo
+    if (!lower.includes('loom.com') && !lower.endsWith('.mp4') && !lower.endsWith('.webm') && !lower.endsWith('.mov')) {
+      links.push({
+        type: "deploy",
+        url: task.outputUrl,
+        label: "Deploy preview",
+      })
+    }
   }
 
   return links
