@@ -448,7 +448,6 @@ export function renderWeeklySummaryHtml(
   ${emailSectionLabel("Timeline note")}
   ${emailParagraph(vars.timelineNote)}
 
-  ${emailParagraph(`Optional reference link: <a href="${vars.reportUrl}" style="color:${ACCENT};text-decoration:none">Weekly report archive</a>`)}
   `)
 }
 
