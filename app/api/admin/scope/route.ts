@@ -73,11 +73,14 @@ Respond with valid JSON matching this schema:
       "category": "feature|integration|design|infrastructure|fix|automation|api|internal-tool|refactor",
       "size": "S|M|L",
       "acceptance": ["Specific testable condition 1", "Specific testable condition 2"],
-      "definitionOfDone": ["Verification step 1", "Verification step 2"]
+      "definitionOfDone": ["Verification step 1", "Verification step 2"],
+      "updatesExistingTask": "(optional) Title of an existing board task this new task updates or replaces",
+      "dependsOnExisting": ["(optional) Titles of existing board tasks this depends on"]
     }
   ],
   "summary": "One sentence summarizing the overall breakdown",
-  "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"]
+  "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"],
+  "consolidations": ["(optional) Existing tasks that should be updated/rewritten because of this new spec, with notes on what to change"]
 }
 
 Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
@@ -99,6 +102,7 @@ export async function POST(request: NextRequest) {
       projectId?: string
       addToBoard?: boolean
       images?: { data: string; mediaType: string }[]
+      existingTasks?: { title: string; status: string; description?: string; tags?: string[] }[]
     }
 
     if (!body.description || typeof body.description !== "string" || body.description.trim().length < 10) {
@@ -123,9 +127,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Build existing-tasks context so the AI sizes WITH awareness of what's on the board
+    let existingContext = ""
+    if (body.existingTasks && Array.isArray(body.existingTasks) && body.existingTasks.length > 0) {
+      const byStatus: Record<string, typeof body.existingTasks> = {}
+      for (const t of body.existingTasks) {
+        (byStatus[t.status] ??= []).push(t)
+      }
+      existingContext = `\n\nEXISTING BOARD TASKS (${body.existingTasks.length} total already on the board):\n`
+      for (const [status, tasks] of Object.entries(byStatus)) {
+        existingContext += `\n${status.toUpperCase()} (${tasks.length}):\n`
+        for (const t of tasks) {
+          const tagStr = t.tags?.length ? ` [${t.tags.join(", ")}]` : ""
+          existingContext += `- ${t.title}${tagStr}\n`
+          if (t.description) {
+            existingContext += `  desc: ${t.description.slice(0, 120)}${t.description.length > 120 ? "..." : ""}\n`
+          }
+        }
+      }
+      existingContext += `\nIMPORTANT: You must consider these ${body.existingTasks.length} existing tasks when breaking down the new feature.\n`
+      existingContext += `1. CONSOLIDATE: If the new spec overlaps with an existing task, note it — don't create a duplicate. Instead suggest what to UPDATE on the existing task.\n`
+      existingContext += `2. REWRITE: If an existing task needs its description/scope changed because of this new spec, include a task for that rewrite.\n`
+      existingContext += `3. ADD: Only create NEW tasks for genuinely new work not covered by existing tasks.\n`
+      existingContext += `4. IMPACT: For each new task, mention any existing tasks it touches or depends on.\n`
+    }
+
     // Build multimodal content
     const hasImages = body.images && Array.isArray(body.images) && body.images.length > 0
-    const textPart = `Break this feature into standard-sized queue tasks:\n\n${body.description.trim()}`
+    const textPart = `Break this feature into standard-sized queue tasks:\n\n${body.description.trim()}${existingContext}`
 
     const userContent: Array<
       | { type: "image"; source: { type: "base64"; media_type: string; data: string } }

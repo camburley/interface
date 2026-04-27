@@ -28,6 +28,8 @@ import {
   ChevronUp,
   Loader2,
   ImagePlus,
+  RefreshCw,
+  Link2,
 } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -434,6 +436,8 @@ export function ClientBoardClient({
       {showScoping && !readOnly && (
         <ScopingPanel
           repoConnected={repoConnected}
+          existingTasks={tasks}
+          projectId={projectId}
           onClose={() => setShowScoping(false)}
           onAddTask={async (data) => {
             const payload = projectId ? { ...data, projectId } : data
@@ -784,12 +788,15 @@ interface SizedTask {
   size: "S" | "M" | "L"
   acceptance: string | string[]
   definitionOfDone?: string[]
+  updatesExistingTask?: string
+  dependsOnExisting?: string[]
 }
 
 interface SizeResult {
   tasks: SizedTask[]
   summary: string
   warnings: string[]
+  consolidations?: { task: string; note: string }[]
 }
 
 const SIZE_COLORS: Record<string, { text: string; border: string; bg: string }> = {
@@ -814,9 +821,13 @@ function ScopingPanel({
   repoConnected,
   onClose,
   onAddTask,
+  existingTasks = [],
+  projectId,
 }: {
   repoConnected?: boolean
   onClose: () => void
+  existingTasks?: { title: string; status: string; description?: string; tags?: string[] }[]
+  projectId?: string
   onAddTask: (data: {
     title: string
     description?: string
@@ -925,7 +936,16 @@ function ScopingPanel({
       const res = await fetch("/api/client/scope-feature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          existingTasks: existingTasks.map((t) => ({
+            title: t.title,
+            status: t.status,
+            description: t.description,
+            tags: t.tags,
+          })),
+          projectId,
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -1332,6 +1352,18 @@ function ScopingPanel({
                           {task.description}
                         </p>
                       )}
+                      {task.updatesExistingTask && (
+                        <div className="flex items-center gap-1.5 font-mono text-[10px] text-amber-400/80 bg-amber-400/5 border border-amber-400/20 rounded-sm px-2 py-1">
+                          <RefreshCw className="h-3 w-3" />
+                          Updates: {task.updatesExistingTask}
+                        </div>
+                      )}
+                      {task.dependsOnExisting && task.dependsOnExisting.length > 0 && (
+                        <div className="flex items-start gap-1.5 font-mono text-[10px] text-sky-400/80 bg-sky-400/5 border border-sky-400/20 rounded-sm px-2 py-1">
+                          <Link2 className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Depends on: {task.dependsOnExisting.join(", ")}</span>
+                        </div>
+                      )}
                       {task.acceptance && (
                         <div className="space-y-1">
                           <p className="font-mono text-[9px] uppercase tracking-widest text-primary/60">
@@ -1348,6 +1380,20 @@ function ScopingPanel({
                   </div>
                 )
               })}
+
+              {/* Consolidations — existing tasks that need updating */}
+              {result.consolidations && result.consolidations.length > 0 && (
+                <div className="border border-amber-500/30 bg-amber-500/5 px-4 py-3 rounded-sm">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-amber-400 mb-1.5">
+                    Existing Tasks to Update
+                  </p>
+                  {result.consolidations.map((c: { task: string; note: string }, i: number) => (
+                    <p key={i} className="font-mono text-[11px] text-amber-300/80 leading-relaxed">
+                      → <strong>{c.task}</strong>: {c.note}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               {/* Warnings */}
               {result.warnings?.length > 0 && (

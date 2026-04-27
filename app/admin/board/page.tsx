@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { getSessionUser, isAdmin } from "@/lib/session"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
@@ -31,5 +32,9 @@ export default async function BoardPage() {
     boardType: d.data().boardType ?? "client",
   }))
 
-  return <BoardClient initialTasks={tasks} projects={projects} />
+  return (
+    <Suspense fallback={<div className="p-6 font-mono text-xs text-muted-foreground">Loading board...</div>}>
+      <BoardClient initialTasks={tasks} projects={projects} />
+    </Suspense>
+  )
 }
