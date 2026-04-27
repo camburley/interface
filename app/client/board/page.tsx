@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { validateClientSession } from "@/lib/client-auth"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { ClientBoardClient } from "./board-client"
+import { BoardAgentChat } from "@/components/board-agent/board-agent-chat"
 import type { Task } from "@/lib/types/task"
 import { PROJECT_COLORS } from "@/lib/types/task"
 
@@ -37,12 +38,19 @@ export default async function ClientBoardPage() {
   const hasRepo = !!(clientDoc.data()?.githubRepo && clientDoc.data()?.githubPat)
 
   return (
-    <ClientBoardClient
-      initialTasks={tasks}
-      projectName={projectName}
-      projectColor={projectColor}
-      clientName={session.clientName}
-      repoConnected={hasRepo}
-    />
+    <>
+      <ClientBoardClient
+        initialTasks={tasks}
+        projectName={projectName}
+        projectColor={projectColor}
+        clientName={session.clientName}
+        repoConnected={hasRepo}
+        projectId={session.projectId}
+      />
+      <BoardAgentChat
+        projectId={session.projectId}
+        projectName={projectName}
+      />
+    </>
   )
 }
