@@ -18,6 +18,8 @@ interface ClientTaskStore {
     projectId?: string
   }) => Promise<{ id: string; taskId: string } | null>
 
+  updateTask: (id: string, data: Record<string, unknown>) => Promise<boolean>
+
   deleteTask: (id: string) => Promise<boolean>
 
   reorderTasks: (items: { id: string; position: number }[]) => Promise<boolean>
@@ -89,6 +91,31 @@ export const useClientTaskStore = create<ClientTaskStore>((set, get) => ({
       return { id: result.id, taskId: result.taskId }
     } catch {
       return null
+    }
+  },
+
+  updateTask: async (id, data) => {
+    const prev = get().tasks
+    set((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === id ? { ...t, ...data, updatedAt: new Date().toISOString() } : t,
+      ),
+    }))
+
+    try {
+      const res = await fetch(`/api/client/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        set({ tasks: prev })
+        return false
+      }
+      return true
+    } catch {
+      set({ tasks: prev })
+      return false
     }
   },
 

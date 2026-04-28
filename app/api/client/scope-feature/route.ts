@@ -25,8 +25,8 @@ EXISTING TO DO BOARD RULES:
 - Before creating any new task, compare the request against every existing To Do task.
 - If the new request overlaps with an existing To Do task, prefer updating or replacing that existing task instead of creating a duplicate.
 - If an existing To Do task becomes unnecessary, contradictory, or too vague because of the new request, call that out as a delete or replace action.
-- The "tasks" array is ONLY for net-new tasks that should be added to the board.
-- If the request is fully covered by changes to existing To Do tasks, return an empty "tasks" array.
+- The "newTasks" array is ONLY for net-new tasks that should be added to the board.
+- If the request is fully covered by changes to existing To Do tasks, return an empty "newTasks" array.
 - Use "boardActions" for relevant existing To Do tasks that should be updated, replaced, deleted, or intentionally kept.
 - Do not list every existing task as "keep"; only include "keep" when it clarifies why a related task should remain unchanged.
 - The final board should read like one cohesive implementation plan with no duplicate cards and no conflicting directions.
@@ -76,7 +76,7 @@ Count the distinct outcomes. Each outcome is a task. If you find yourself at exa
 
 Respond with valid JSON matching this schema:
 {
-  "tasks": [
+  "newTasks": [
     {
       "title": "Short descriptive title",
       "description": "Multi-paragraph technical implementation spec",
@@ -85,22 +85,21 @@ Respond with valid JSON matching this schema:
       "size": "S|M|L",
       "acceptance": ["Specific testable condition 1", "Specific testable condition 2"],
       "definitionOfDone": ["Verification step 1", "Verification step 2"],
-      "updatesExistingTask": "(optional) Title of an existing board task this new task updates or replaces",
       "dependsOnExisting": ["(optional) Titles of existing board tasks this depends on"]
     }
   ],
-  "summary": "One sentence summarizing the overall breakdown",
-  "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"],
   "boardActions": [
     {
       "action": "update|replace|delete|keep",
       "taskId": "Existing board task id if provided",
       "task": "Existing task title",
       "reason": "Why this action keeps the board cohesive",
-      "proposedChange": "Specific change to make"
+      "replacementTask": "(for replace) Full new task object with title, description, clientDescription, category, size, acceptance, definitionOfDone",
+      "updatedFields": "(for update) Object with only the fields that should change: title, description, clientDescription, tags, priority, acceptanceCriteria, definitionOfDone"
     }
   ],
-  "consolidations": [{"task": "Existing task title", "note": "What should change"}]
+  "summary": "One sentence summarizing the overall breakdown",
+  "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"]
 }
 
 Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
@@ -114,97 +113,66 @@ IMPORTANT: You have been given the repository's file tree (and possibly key file
 - Avoid duplicating functionality that already exists
 Do NOT list every file — only reference files that are directly relevant to a task.`
 
+const TASK_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["title", "description", "clientDescription", "category", "size", "acceptance", "definitionOfDone"],
+  properties: {
+    title: { type: "string" },
+    description: { type: "string" },
+    clientDescription: { type: "string" },
+    category: {
+      type: "string",
+      enum: ["feature", "integration", "design", "infrastructure", "fix", "automation", "api", "internal-tool", "refactor"],
+    },
+    size: { type: "string", enum: ["S", "M", "L"] },
+    acceptance: { type: "array", minItems: 1, items: { type: "string" } },
+    definitionOfDone: { type: "array", minItems: 1, items: { type: "string" } },
+    dependsOnExisting: { type: "array", items: { type: "string" } },
+  },
+} as const
+
 const TASK_BREAKDOWN_TOOL = {
   name: "format_task_breakdown",
   description: "Return the scoped task breakdown in the exact structure used by the client board.",
   input_schema: {
     type: "object",
     additionalProperties: false,
-    required: ["tasks", "summary", "warnings", "boardActions"],
+    required: ["newTasks", "boardActions", "summary", "warnings"],
     properties: {
-      tasks: {
+      newTasks: {
         type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: [
-            "title",
-            "description",
-            "clientDescription",
-            "category",
-            "size",
-            "acceptance",
-            "definitionOfDone",
-          ],
-          properties: {
-            title: { type: "string" },
-            description: { type: "string" },
-            clientDescription: { type: "string" },
-            category: {
-              type: "string",
-              enum: [
-                "feature",
-                "integration",
-                "design",
-                "infrastructure",
-                "fix",
-                "automation",
-                "api",
-                "internal-tool",
-                "refactor",
-              ],
-            },
-            size: { type: "string", enum: ["S", "M", "L"] },
-            acceptance: {
-              type: "array",
-              minItems: 1,
-              items: { type: "string" },
-            },
-            definitionOfDone: {
-              type: "array",
-              minItems: 1,
-              items: { type: "string" },
-            },
-            updatesExistingTask: { type: "string" },
-            dependsOnExisting: {
-              type: "array",
-              items: { type: "string" },
-            },
-          },
-        },
-      },
-      summary: { type: "string" },
-      warnings: {
-        type: "array",
-        items: { type: "string" },
+        items: TASK_SCHEMA,
       },
       boardActions: {
         type: "array",
         items: {
           type: "object",
           additionalProperties: false,
-          required: ["action", "task", "reason", "proposedChange"],
+          required: ["action", "task", "reason"],
           properties: {
             action: { type: "string", enum: ["update", "replace", "delete", "keep"] },
             taskId: { type: "string" },
             task: { type: "string" },
             reason: { type: "string" },
-            proposedChange: { type: "string" },
+            updatedFields: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                clientDescription: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+                priority: { type: "string", enum: ["low", "medium", "high"] },
+                acceptanceCriteria: { type: "array", items: { type: "string" } },
+                definitionOfDone: { type: "array", items: { type: "string" } },
+              },
+            },
+            replacementTask: TASK_SCHEMA,
           },
         },
       },
-      consolidations: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: ["task", "note"],
-          properties: {
-            task: { type: "string" },
-            note: { type: "string" },
-          },
-        },
-      },
+      summary: { type: "string" },
+      warnings: { type: "array", items: { type: "string" } },
     },
   },
 } as const
@@ -330,7 +298,7 @@ export async function POST(request: NextRequest) {
             existingContext += `  desc: ${t.description.slice(0, 220)}${t.description.length > 220 ? "..." : ""}\n`
           }
         }
-        existingContext += `\nIMPORTANT: Compare the new request against these To Do items first. Do not add duplicates. Return existing-task changes in boardActions, and return only net-new tasks in tasks.`
+        existingContext += `\nIMPORTANT: Compare the new request against these To Do items first. Do not add duplicates. Return existing-task changes in boardActions, and return only genuinely new tasks in newTasks.`
       }
     } catch (ctxErr) {
       console.error("[scope-feature] existingContext build failed:", ctxErr)
@@ -454,17 +422,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!parsed.tasks || !Array.isArray(parsed.tasks)) {
+    // Normalize: accept newTasks or legacy tasks field
+    if (Array.isArray(parsed.newTasks)) {
+      // canonical field present
+    } else if (Array.isArray(parsed.tasks)) {
+      parsed.newTasks = parsed.tasks
+      delete parsed.tasks
+    } else if (Array.isArray(parsed.boardActions)) {
+      parsed.newTasks = []
+    } else {
+      console.error("[scope-feature] parsed response missing newTasks/tasks:", {
+        topLevelKeys: parsed && typeof parsed === "object" ? Object.keys(parsed) : [],
+        contentBlockTypes: contentBlocks.map((block: any) => block?.type).filter(Boolean),
+        hasToolUse: !!toolUse,
+      })
       return NextResponse.json(
-        { error: "Could not break this into tasks. Try being more specific." },
+        { error: "Could not read the AI task breakdown. Please try again." },
         { status: 422 },
       )
     }
     if (!Array.isArray(parsed.boardActions)) parsed.boardActions = []
     if (!Array.isArray(parsed.warnings)) parsed.warnings = []
-    if (parsed.consolidations && !Array.isArray(parsed.consolidations)) parsed.consolidations = []
 
-    return NextResponse.json(parsed)
+    return NextResponse.json({
+      newTasks: parsed.newTasks,
+      boardActions: parsed.boardActions,
+      summary: parsed.summary ?? "",
+      warnings: parsed.warnings,
+    })
   } catch (error) {
     console.error("[scope-feature] unexpected error:", error)
     return NextResponse.json(

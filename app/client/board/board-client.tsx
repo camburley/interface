@@ -446,6 +446,18 @@ export function ClientBoardClient({
             else toast.error("Failed to add task")
             return !!result
           }}
+          onUpdateTask={async (id, data) => {
+            const ok = await useClientTaskStore.getState().updateTask(id, data)
+            if (ok) toast.success("Task updated")
+            else toast.error("Failed to update task")
+            return ok
+          }}
+          onDeleteTask={async (id) => {
+            const ok = await deleteTask(id)
+            if (ok) toast.success("Task removed")
+            else toast.error("Failed to remove task")
+            return ok
+          }}
         />
       )}
 
@@ -797,15 +809,23 @@ interface BoardAction {
   taskId?: string
   task: string
   reason: string
-  proposedChange: string
+  updatedFields?: {
+    title?: string
+    description?: string
+    clientDescription?: string
+    tags?: string[]
+    priority?: "low" | "medium" | "high"
+    acceptanceCriteria?: string[]
+    definitionOfDone?: string[]
+  }
+  replacementTask?: SizedTask
 }
 
 interface SizeResult {
-  tasks: SizedTask[]
+  newTasks: SizedTask[]
+  boardActions: BoardAction[]
   summary: string
   warnings: string[]
-  boardActions?: BoardAction[]
-  consolidations?: { task: string; note: string }[]
 }
 
 const SIZE_COLORS: Record<string, { text: string; border: string; bg: string }> = {
@@ -837,6 +857,8 @@ function ScopingPanel({
   repoConnected,
   onClose,
   onAddTask,
+  onUpdateTask,
+  onDeleteTask,
   existingTasks = [],
   projectId,
 }: {
@@ -860,6 +882,8 @@ function ScopingPanel({
     acceptanceCriteria?: string[]
     definitionOfDone?: string[]
   }) => Promise<boolean>
+  onUpdateTask: (id: string, data: Record<string, unknown>) => Promise<boolean>
+  onDeleteTask: (id: string) => Promise<boolean>
 }) {
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
@@ -879,6 +903,61 @@ function ScopingPanel({
   const [attachedImages, setAttachedImages] = useState<{ data: string; mediaType: string; preview: string }[]>([])
   const [dragging, setDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [appliedActions, setAppliedActions] = useState<Set<number>>(new Set())
+  const [applyingAction, setApplyingAction] = useState<number | null>(null)
+
+  function findExistingTaskId(action: BoardAction): string | undefined {
+    if (action.taskId) {
+      const match = existingTasks.find(
+        (t) => t.id === action.taskId || t.taskId === action.taskId,
+      )
+      return match?.id ?? action.taskId
+    }
+    const byTitle = existingTasks.find(
+      (t) => t.title.toLowerCase() === action.task.toLowerCase(),
+    )
+    return byTitle?.id
+  }
+
+  async function applyBoardAction(action: BoardAction, index: number) {
+    setApplyingAction(index)
+    const docId = findExistingTaskId(action)
+
+    if (!docId) {
+      toast.error(`Could not find task "${action.task}" on the board`)
+      setApplyingAction(null)
+      return
+    }
+
+    let ok = false
+    if (action.action === "delete") {
+      ok = await onDeleteTask(docId)
+    } else if (action.action === "update" && action.updatedFields) {
+      ok = await onUpdateTask(docId, action.updatedFields)
+    } else if (action.action === "replace" && action.replacementTask) {
+      const deleted = await onDeleteTask(docId)
+      if (deleted) {
+        const rt = action.replacementTask
+        const acceptance = Array.isArray(rt.acceptance)
+          ? rt.acceptance
+          : rt.acceptance ? [rt.acceptance] : undefined
+        ok = await onAddTask({
+          title: rt.title,
+          description: rt.description,
+          clientDescription: rt.clientDescription,
+          tags: [rt.category],
+          priority: sizeToPriority(rt.size),
+          acceptanceCriteria: acceptance,
+          definitionOfDone: rt.definitionOfDone,
+        })
+      }
+    }
+
+    if (ok) {
+      setAppliedActions((prev) => new Set(prev).add(index))
+    }
+    setApplyingAction(null)
+  }
 
   function processFiles(files: FileList | File[]) {
     const allowed = ["image/png", "image/jpeg", "image/gif", "image/webp"]
@@ -977,7 +1056,13 @@ function ScopingPanel({
         setError(data.error || "Something went wrong.")
         return
       }
-      setResult(data)
+      const normalized: SizeResult = {
+        newTasks: data.newTasks ?? data.tasks ?? [],
+        boardActions: data.boardActions ?? [],
+        summary: data.summary ?? "",
+        warnings: data.warnings ?? [],
+      }
+      setResult(normalized)
     } catch {
       setError("Network error. Please try again.")
     } finally {
@@ -1015,9 +1100,9 @@ function ScopingPanel({
   async function addAllTasks() {
     if (!result) return
     setAddingAll(true)
-    for (let i = 0; i < result.tasks.length; i++) {
+    for (let i = 0; i < result.newTasks.length; i++) {
       if (addedIndices.has(i)) continue
-      await addTask(result.tasks[i], i)
+      await addTask(result.newTasks[i], i)
     }
     setAddingAll(false)
   }
@@ -1303,12 +1388,12 @@ function ScopingPanel({
               {/* Summary bar */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-bebas text-2xl text-primary">{result.tasks.length}</span>
+                  <span className="font-bebas text-2xl text-primary">{result.newTasks.length}</span>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                     new tasks
                   </span>
                   {(["S", "M", "L"] as const).map((s) => {
-                    const count = result.tasks.filter((t) => t.size === s).length
+                    const count = result.newTasks.filter((t) => t.size === s).length
                     if (!count) return null
                     const c = SIZE_COLORS[s]
                     return (
@@ -1320,46 +1405,62 @@ function ScopingPanel({
                 </div>
                 <button
                   onClick={addAllTasks}
-                  disabled={addingAll || result.tasks.length === 0 || addedIndices.size === result.tasks.length}
+                  disabled={addingAll || result.newTasks.length === 0 || addedIndices.size === result.newTasks.length}
                   className="flex items-center gap-1.5 bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   <Plus className="h-3 w-3" />
                   {addingAll
                     ? "Adding..."
-                    : result.tasks.length === 0
+                    : result.newTasks.length === 0
                       ? "No New Tasks"
-                      : addedIndices.size === result.tasks.length
+                      : addedIndices.size === result.newTasks.length
                         ? "All Added"
                         : "Add All"}
                 </button>
               </div>
 
-              {result.boardActions && result.boardActions.length > 0 && (
+              {result.boardActions.length > 0 && (
                 <div className="border border-primary/25 bg-primary/5 px-4 py-3 rounded-sm space-y-2">
                   <p className="font-mono text-[10px] uppercase tracking-widest text-primary/80">
-                    To Do Cleanup Plan
+                    Existing To Do Changes
                   </p>
                   <p className="font-mono text-[11px] text-muted-foreground/80 leading-relaxed">
-                    Review these existing To Do changes before adding anything new so the board stays cohesive.
+                    Apply these changes to keep the board cohesive before adding new tasks.
                   </p>
                   <div className="space-y-2">
                     {result.boardActions.map((action, i) => {
                       const style = BOARD_ACTION_STYLES[action.action] ?? BOARD_ACTION_STYLES.update
+                      const applied = appliedActions.has(i)
+                      const applying = applyingAction === i
+                      const isExecutable = action.action !== "keep"
                       return (
-                        <div key={i} className={`border rounded-sm px-3 py-2 ${style.className}`}>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono text-[9px] uppercase tracking-widest border border-current/30 px-1.5 py-0.5">
-                              {style.label}
-                            </span>
-                            <span className="font-mono text-[11px]">
-                              {action.taskId ? `${action.taskId}: ` : ""}{action.task}
-                            </span>
+                        <div key={i} className={`border rounded-sm px-3 py-2 ${applied ? "border-emerald-400/30 bg-emerald-400/5" : style.className}`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
+                              <span className="font-mono text-[9px] uppercase tracking-widest border border-current/30 px-1.5 py-0.5 shrink-0">
+                                {style.label}
+                              </span>
+                              <span className="font-mono text-[11px] truncate">
+                                {action.taskId ? `${action.taskId}: ` : ""}{action.task}
+                              </span>
+                            </div>
+                            {applied ? (
+                              <span className="flex items-center gap-1 font-mono text-[10px] text-emerald-400 shrink-0">
+                                <CheckCircle className="h-3 w-3" />
+                                Done
+                              </span>
+                            ) : isExecutable ? (
+                              <button
+                                onClick={() => applyBoardAction(action, i)}
+                                disabled={applying}
+                                className="font-mono text-[10px] text-primary hover:text-primary/80 transition-colors shrink-0 disabled:opacity-50"
+                              >
+                                {applying ? "Applying..." : "Apply"}
+                              </button>
+                            ) : null}
                           </div>
                           <p className="font-mono text-[10px] text-muted-foreground/80 leading-relaxed mt-1">
                             {action.reason}
-                          </p>
-                          <p className="font-mono text-[10px] leading-relaxed mt-1">
-                            → {action.proposedChange}
                           </p>
                         </div>
                       )
@@ -1368,8 +1469,8 @@ function ScopingPanel({
                 </div>
               )}
 
-              {/* Task cards */}
-              {result.tasks.map((task, i) => {
+              {/* New task cards */}
+              {result.newTasks.map((task, i) => {
                 const added = addedIndices.has(i)
                 const sc = SIZE_COLORS[task.size] ?? SIZE_COLORS.M
                 return (
@@ -1446,18 +1547,11 @@ function ScopingPanel({
                 )
               })}
 
-              {/* Consolidations — existing tasks that need updating */}
-              {result.consolidations && result.consolidations.length > 0 && (
-                <div className="border border-amber-500/30 bg-amber-500/5 px-4 py-3 rounded-sm">
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-amber-400 mb-1.5">
-                    Existing Tasks to Update
-                  </p>
-                  {result.consolidations.map((c: { task: string; note: string }, i: number) => (
-                    <p key={i} className="font-mono text-[11px] text-amber-300/80 leading-relaxed">
-                      → <strong>{c.task}</strong>: {c.note}
-                    </p>
-                  ))}
-                </div>
+              {/* Summary */}
+              {result.summary && (
+                <p className="font-mono text-[11px] text-muted-foreground/70 leading-relaxed italic">
+                  {result.summary}
+                </p>
               )}
 
               {/* Warnings */}
