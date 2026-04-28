@@ -329,7 +329,7 @@ export async function POST(request: NextRequest) {
     > = []
 
     if (hasImages) {
-      for (const img of images.slice(0, 5)) {
+      for (const img of images.slice(0, 20)) {
         userContent.push({
           type: "image",
           source: {
