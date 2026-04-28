@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Safety: cap repo/existing context to keep prompt under Anthropic limits
-    const maxContextChars = 15000
+    const maxContextChars = 8000
     if (existingContext.length > maxContextChars) {
       existingContext = existingContext.slice(0, maxContextChars) + "\n... (existing tasks truncated for length)"
     }

@@ -938,10 +938,10 @@ function ScopingPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...payload,
-          existingTasks: existingTasks.map((t) => ({
+          existingTasks: existingTasks.slice(0, 100).map((t) => ({
             title: t.title,
             status: t.status,
-            description: t.description,
+            description: t.description?.slice(0, 200),
             tags: t.tags,
           })),
           projectId,
