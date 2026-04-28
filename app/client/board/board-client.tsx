@@ -792,10 +792,19 @@ interface SizedTask {
   dependsOnExisting?: string[]
 }
 
+interface BoardAction {
+  action: "update" | "replace" | "delete" | "keep"
+  taskId?: string
+  task: string
+  reason: string
+  proposedChange: string
+}
+
 interface SizeResult {
   tasks: SizedTask[]
   summary: string
   warnings: string[]
+  boardActions?: BoardAction[]
   consolidations?: { task: string; note: string }[]
 }
 
@@ -817,6 +826,13 @@ const CATEGORY_ICONS: Record<string, string> = {
   refactor: "↻",
 }
 
+const BOARD_ACTION_STYLES: Record<BoardAction["action"], { label: string; className: string }> = {
+  update: { label: "Update", className: "border-amber-400/30 bg-amber-400/5 text-amber-300/90" },
+  replace: { label: "Replace", className: "border-violet-400/30 bg-violet-400/5 text-violet-300/90" },
+  delete: { label: "Delete", className: "border-rose-400/30 bg-rose-400/5 text-rose-300/90" },
+  keep: { label: "Keep", className: "border-emerald-400/30 bg-emerald-400/5 text-emerald-300/90" },
+}
+
 function ScopingPanel({
   repoConnected,
   onClose,
@@ -826,7 +842,14 @@ function ScopingPanel({
 }: {
   repoConnected?: boolean
   onClose: () => void
-  existingTasks?: { title: string; status: string; description?: string; tags?: string[] }[]
+  existingTasks?: {
+    id?: string
+    taskId?: string
+    title: string
+    status: string
+    description?: string
+    tags?: string[]
+  }[]
   projectId?: string
   onAddTask: (data: {
     title: string
@@ -938,7 +961,9 @@ function ScopingPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...payload,
-          existingTasks: existingTasks.slice(0, 100).map((t) => ({
+          existingTasks: existingTasks.filter((t) => t.status === "todo").slice(0, 100).map((t) => ({
+            id: t.id,
+            taskId: t.taskId,
             title: t.title,
             status: t.status,
             description: t.description?.slice(0, 200),
@@ -1280,7 +1305,7 @@ function ScopingPanel({
                 <div className="flex items-center gap-2">
                   <span className="font-bebas text-2xl text-primary">{result.tasks.length}</span>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                    tasks
+                    new tasks
                   </span>
                   {(["S", "M", "L"] as const).map((s) => {
                     const count = result.tasks.filter((t) => t.size === s).length
@@ -1295,13 +1320,53 @@ function ScopingPanel({
                 </div>
                 <button
                   onClick={addAllTasks}
-                  disabled={addingAll || addedIndices.size === result.tasks.length}
+                  disabled={addingAll || result.tasks.length === 0 || addedIndices.size === result.tasks.length}
                   className="flex items-center gap-1.5 bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   <Plus className="h-3 w-3" />
-                  {addingAll ? "Adding..." : addedIndices.size === result.tasks.length ? "All Added" : "Add All"}
+                  {addingAll
+                    ? "Adding..."
+                    : result.tasks.length === 0
+                      ? "No New Tasks"
+                      : addedIndices.size === result.tasks.length
+                        ? "All Added"
+                        : "Add All"}
                 </button>
               </div>
+
+              {result.boardActions && result.boardActions.length > 0 && (
+                <div className="border border-primary/25 bg-primary/5 px-4 py-3 rounded-sm space-y-2">
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-primary/80">
+                    To Do Cleanup Plan
+                  </p>
+                  <p className="font-mono text-[11px] text-muted-foreground/80 leading-relaxed">
+                    Review these existing To Do changes before adding anything new so the board stays cohesive.
+                  </p>
+                  <div className="space-y-2">
+                    {result.boardActions.map((action, i) => {
+                      const style = BOARD_ACTION_STYLES[action.action] ?? BOARD_ACTION_STYLES.update
+                      return (
+                        <div key={i} className={`border rounded-sm px-3 py-2 ${style.className}`}>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono text-[9px] uppercase tracking-widest border border-current/30 px-1.5 py-0.5">
+                              {style.label}
+                            </span>
+                            <span className="font-mono text-[11px]">
+                              {action.taskId ? `${action.taskId}: ` : ""}{action.task}
+                            </span>
+                          </div>
+                          <p className="font-mono text-[10px] text-muted-foreground/80 leading-relaxed mt-1">
+                            {action.reason}
+                          </p>
+                          <p className="font-mono text-[10px] leading-relaxed mt-1">
+                            → {action.proposedChange}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Task cards */}
               {result.tasks.map((task, i) => {

@@ -43,6 +43,7 @@ export default async function ClientBoardPage() {
       projectColor={projectColor}
       clientName={session.clientName}
       repoConnected={hasRepo}
+      projectId={session.projectId}
     />
   )
 }

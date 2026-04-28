@@ -20,6 +20,17 @@ CATEGORIES: feature, integration, design, infrastructure, fix, automation, api, 
 
 TASK ORDERING: Tasks should be ordered by logical dependency and delivery sequence. Earlier tasks should unblock later ones.
 
+EXISTING TO DO BOARD RULES:
+- Treat the current To Do list as the source of truth for planned work.
+- Before creating any new task, compare the request against every existing To Do task.
+- If the new request overlaps with an existing To Do task, prefer updating or replacing that existing task instead of creating a duplicate.
+- If an existing To Do task becomes unnecessary, contradictory, or too vague because of the new request, call that out as a delete or replace action.
+- The "tasks" array is ONLY for net-new tasks that should be added to the board.
+- If the request is fully covered by changes to existing To Do tasks, return an empty "tasks" array.
+- Use "boardActions" for relevant existing To Do tasks that should be updated, replaced, deleted, or intentionally kept.
+- Do not list every existing task as "keep"; only include "keep" when it clarifies why a related task should remain unchanged.
+- The final board should read like one cohesive implementation plan with no duplicate cards and no conflicting directions.
+
 DESCRIPTION RULES:
 The description for each task is a mini implementation spec written for the developer building it. Include all that apply:
 - Data model: collections/tables, fields, types, relationships
@@ -80,6 +91,15 @@ Respond with valid JSON matching this schema:
   ],
   "summary": "One sentence summarizing the overall breakdown",
   "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"],
+  "boardActions": [
+    {
+      "action": "update|replace|delete|keep",
+      "taskId": "Existing board task id if provided",
+      "task": "Existing task title",
+      "reason": "Why this action keeps the board cohesive",
+      "proposedChange": "Specific change to make"
+    }
+  ],
   "consolidations": [{"task": "Existing task title", "note": "What should change"}]
 }
 
@@ -93,6 +113,101 @@ IMPORTANT: You have been given the repository's file tree (and possibly key file
 - Flag integration points with existing code
 - Avoid duplicating functionality that already exists
 Do NOT list every file — only reference files that are directly relevant to a task.`
+
+const TASK_BREAKDOWN_TOOL = {
+  name: "format_task_breakdown",
+  description: "Return the scoped task breakdown in the exact structure used by the client board.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["tasks", "summary", "warnings", "boardActions"],
+    properties: {
+      tasks: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "title",
+            "description",
+            "clientDescription",
+            "category",
+            "size",
+            "acceptance",
+            "definitionOfDone",
+          ],
+          properties: {
+            title: { type: "string" },
+            description: { type: "string" },
+            clientDescription: { type: "string" },
+            category: {
+              type: "string",
+              enum: [
+                "feature",
+                "integration",
+                "design",
+                "infrastructure",
+                "fix",
+                "automation",
+                "api",
+                "internal-tool",
+                "refactor",
+              ],
+            },
+            size: { type: "string", enum: ["S", "M", "L"] },
+            acceptance: {
+              type: "array",
+              minItems: 1,
+              items: { type: "string" },
+            },
+            definitionOfDone: {
+              type: "array",
+              minItems: 1,
+              items: { type: "string" },
+            },
+            updatesExistingTask: { type: "string" },
+            dependsOnExisting: {
+              type: "array",
+              items: { type: "string" },
+            },
+          },
+        },
+      },
+      summary: { type: "string" },
+      warnings: {
+        type: "array",
+        items: { type: "string" },
+      },
+      boardActions: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["action", "task", "reason", "proposedChange"],
+          properties: {
+            action: { type: "string", enum: ["update", "replace", "delete", "keep"] },
+            taskId: { type: "string" },
+            task: { type: "string" },
+            reason: { type: "string" },
+            proposedChange: { type: "string" },
+          },
+        },
+      },
+      consolidations: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["task", "note"],
+          properties: {
+            task: { type: "string" },
+            note: { type: "string" },
+          },
+        },
+      },
+    },
+  },
+} as const
 
 async function getAuthorizedSession(): Promise<{ uid: string; projectId?: string } | null> {
   const clientSession = await validateClientSession()
@@ -113,7 +228,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as {
       description: string
       images?: { data: string; mediaType: string }[]
-      existingTasks?: { title: string; status: string; description?: string; tags?: string[] }[]
+      existingTasks?: {
+        id?: string
+        taskId?: string
+        title: string
+        status: string
+        description?: string
+        tags?: string[]
+      }[]
     }
     const { description, images, existingTasks } = body
 
@@ -136,15 +258,9 @@ export async function POST(request: NextRequest) {
     try {
       const { db } = getFirebaseAdmin()
 
-      const lookupUid = session.uid
-      const clientSnap = await db
-        .collection("clients")
-        .where("uid", "==", lookupUid)
-        .limit(1)
-        .get()
-
-      if (!clientSnap.empty) {
-        const clientData = clientSnap.docs[0].data()
+      const clientDoc = await db.collection("clients").doc(session.uid).get()
+      if (clientDoc.exists) {
+        const clientData = clientDoc.data()!
         const githubRepo = clientData.githubRepo as string | undefined
         const githubPat = clientData.githubPat as string | undefined
 
@@ -199,28 +315,22 @@ export async function POST(request: NextRequest) {
       console.error("[scope-feature] repo context fetch failed:", err)
     }
 
-    // Build existing-tasks context so the AI sizes WITH awareness of what's on the board
+    // Build To Do context so the AI sizes against the planned board, not in isolation.
     let existingContext = ""
     try {
       if (existingTasks && Array.isArray(existingTasks) && existingTasks.length > 0) {
-        const byStatus: Record<string, typeof existingTasks> = {}
-        for (const t of existingTasks) {
-          const status = t.status || "unknown"
-          const arr = byStatus[status] || (byStatus[status] = [])
-          arr.push(t)
-        }
-        existingContext = `\n\nEXISTING BOARD TASKS (${existingTasks.length} total already on the board):\n`
-        for (const [status, tasks] of Object.entries(byStatus)) {
-          existingContext += `\n${status.toUpperCase()} (${tasks.length}):\n`
-          for (const t of tasks) {
-            const tagStr = t.tags && t.tags.length ? ` [${t.tags.join(", ")}]` : ""
-            existingContext += `- ${t.title}${tagStr}\n`
-            if (t.description) {
-              existingContext += `  desc: ${t.description.slice(0, 120)}${t.description.length > 120 ? "..." : ""}\n`
-            }
+        const todoTasks = existingTasks.filter((t) => t.status === "todo")
+
+        existingContext = `\n\nEXISTING TO DO TASKS (${todoTasks.length} already planned on the board):\n`
+        for (const t of todoTasks) {
+          const identifier = t.taskId || t.id || "unlabeled"
+          const tagStr = t.tags && t.tags.length ? ` [${t.tags.join(", ")}]` : ""
+          existingContext += `- ${identifier}: ${t.title}${tagStr}\n`
+          if (t.description) {
+            existingContext += `  desc: ${t.description.slice(0, 220)}${t.description.length > 220 ? "..." : ""}\n`
           }
         }
-        existingContext += `\nIMPORTANT: Consider these ${existingTasks.length} existing tasks when breaking down the new feature.`
+        existingContext += `\nIMPORTANT: Compare the new request against these To Do items first. Do not add duplicates. Return existing-task changes in boardActions, and return only net-new tasks in tasks.`
       }
     } catch (ctxErr) {
       console.error("[scope-feature] existingContext build failed:", ctxErr)
@@ -281,6 +391,8 @@ export async function POST(request: NextRequest) {
         max_tokens: 8192,
         temperature: 0.5,
         system: systemPrompt,
+        tools: [TASK_BREAKDOWN_TOOL],
+        tool_choice: { type: "tool", name: TASK_BREAKDOWN_TOOL.name },
         messages: [
           { role: "user", content: userContent },
         ],
@@ -297,52 +409,60 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json()
-    const content = data.content?.[0]?.text
+    const contentBlocks = Array.isArray(data.content) ? data.content : []
+    const toolUse = contentBlocks.find(
+      (block: any) => block?.type === "tool_use" && block?.name === TASK_BREAKDOWN_TOOL.name,
+    )
 
-    if (!content) {
-      return NextResponse.json(
-        { error: "No response from AI. Please try again." },
-        { status: 502 },
-      )
+    let parsed: any = toolUse?.input
+
+    // Fallback for older/free-text Anthropic responses. The forced tool call should be the normal path.
+    if (!parsed) {
+      const content = contentBlocks.find((block: any) => block?.type === "text")?.text
+      if (!content) {
+        return NextResponse.json(
+          { error: "No response from AI. Please try again." },
+          { status: 502 },
+        )
+      }
+
+      let jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+      if (!jsonMatch) {
+        jsonMatch = content.match(/\{[\s\S]*\}/)
+      } else {
+        jsonMatch = [jsonMatch[1]]
+      }
+      if (!jsonMatch) {
+        console.error("[scope-feature] no JSON in response. First 500 chars:", content.slice(0, 500))
+        return NextResponse.json(
+          { error: "Could not parse AI response. Please try again." },
+          { status: 502 },
+        )
+      }
+
+      let jsonStr = jsonMatch[0]
+      jsonStr = jsonStr.replace(/,(\s*[}\]])/g, "$1")
+
+      try {
+        parsed = JSON.parse(jsonStr)
+      } catch (parseErr) {
+        console.error("[scope-feature] JSON parse failed. First 500 chars of match:", jsonStr.slice(0, 500))
+        return NextResponse.json(
+          { error: "AI response was not valid JSON. Please try again." },
+          { status: 502 },
+        )
+      }
     }
 
-    // Extract JSON: handle markdown code blocks, then raw braces
-    let jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/)
-    if (!jsonMatch) {
-      jsonMatch = content.match(/\{[\s\S]*\}/)
-    } else {
-      jsonMatch = [jsonMatch[1]] // use captured group
-    }
-    if (!jsonMatch) {
-      console.error("[scope-feature] no JSON in response. First 500 chars:", content.slice(0, 500))
-      return NextResponse.json(
-        { error: "Could not parse AI response. Please try again." },
-        { status: 502 },
-      )
-    }
-
-    // Clean up common AI JSON mistakes before parsing
-    let jsonStr = jsonMatch[0]
-    // Remove trailing commas before } or ]
-    jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1')
-
-    let parsed: any
-    try {
-      parsed = JSON.parse(jsonStr)
-    } catch (parseErr) {
-      console.error("[scope-feature] JSON parse failed. First 500 chars of match:", jsonStr.slice(0, 500))
-      return NextResponse.json(
-        { error: "AI response was not valid JSON. Please try again." },
-        { status: 502 },
-      )
-    }
-
-    if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
+    if (!parsed.tasks || !Array.isArray(parsed.tasks)) {
       return NextResponse.json(
         { error: "Could not break this into tasks. Try being more specific." },
         { status: 422 },
       )
     }
+    if (!Array.isArray(parsed.boardActions)) parsed.boardActions = []
+    if (!Array.isArray(parsed.warnings)) parsed.warnings = []
+    if (parsed.consolidations && !Array.isArray(parsed.consolidations)) parsed.consolidations = []
 
     return NextResponse.json(parsed)
   } catch (error) {
