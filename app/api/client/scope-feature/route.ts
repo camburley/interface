@@ -73,11 +73,14 @@ Respond with valid JSON matching this schema:
       "category": "feature|integration|design|infrastructure|fix|automation|api|internal-tool|refactor",
       "size": "S|M|L",
       "acceptance": ["Specific testable condition 1", "Specific testable condition 2"],
-      "definitionOfDone": ["Verification step 1", "Verification step 2"]
+      "definitionOfDone": ["Verification step 1", "Verification step 2"],
+      "updatesExistingTask": "(optional) Title of an existing board task this new task updates or replaces",
+      "dependsOnExisting": ["(optional) Titles of existing board tasks this depends on"]
     }
   ],
   "summary": "One sentence summarizing the overall breakdown",
-  "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"]
+  "warnings": ["Any concerns about scope, ambiguity, or things that need clarification before work begins"],
+  "consolidations": [{"task": "Existing task title", "note": "What should change"}]
 }
 
 Don't include project management overhead as tasks. Never mention hours, days, weeks, or any time estimates in any field.`
@@ -107,10 +110,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
 
   try {
-    const { description, images } = await request.json() as {
+    const body = await request.json() as {
       description: string
       images?: { data: string; mediaType: string }[]
+      existingTasks?: { title: string; status: string; description?: string; tags?: string[] }[]
     }
+    const { description, images, existingTasks } = body
 
     if (!description || typeof description !== "string" || description.trim().length < 10) {
       return NextResponse.json(
@@ -194,13 +199,39 @@ export async function POST(request: NextRequest) {
       console.error("[scope-feature] repo context fetch failed:", err)
     }
 
+    // Build existing-tasks context so the AI sizes WITH awareness of what's on the board
+    let existingContext = ""
+    try {
+      if (existingTasks && Array.isArray(existingTasks) && existingTasks.length > 0) {
+        const byStatus: Record<string, typeof existingTasks> = {}
+        for (const t of existingTasks) {
+          const status = t.status || "unknown"
+          const arr = byStatus[status] || (byStatus[status] = [])
+          arr.push(t)
+        }
+        existingContext = `\n\nEXISTING BOARD TASKS (${existingTasks.length} total already on the board):\n`
+        for (const [status, tasks] of Object.entries(byStatus)) {
+          existingContext += `\n${status.toUpperCase()} (${tasks.length}):\n`
+          for (const t of tasks) {
+            const tagStr = t.tags && t.tags.length ? ` [${t.tags.join(", ")}]` : ""
+            existingContext += `- ${t.title}${tagStr}\n`
+            if (t.description) {
+              existingContext += `  desc: ${t.description.slice(0, 120)}${t.description.length > 120 ? "..." : ""}\n`
+            }
+          }
+        }
+        existingContext += `\nIMPORTANT: Consider these ${existingTasks.length} existing tasks when breaking down the new feature.`
+      }
+    } catch (ctxErr) {
+      console.error("[scope-feature] existingContext build failed:", ctxErr)
+      existingContext = "" // fail safe — proceed without context
+    }
+
     const systemPrompt = repoContext
       ? SYSTEM_PROMPT + REPO_CONTEXT_ADDON
       : SYSTEM_PROMPT
 
-    const textPart = repoContext
-      ? `Break this feature into standard-sized queue tasks:\n\n${description.trim()}${repoContext}`
-      : `Break this feature into standard-sized queue tasks:\n\n${description.trim()}`
+    const textPart = `Break this feature into standard-sized queue tasks:\n\n${description.trim()}${existingContext}${repoContext}`
 
     const hasImages = images && Array.isArray(images) && images.length > 0
 
@@ -273,7 +304,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const parsed = JSON.parse(jsonMatch[0])
+    let parsed: any
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch (parseErr) {
+      console.error("[scope-feature] JSON parse error:", parseErr)
+      return NextResponse.json(
+        { error: "AI response was not valid JSON. Please try again." },
+        { status: 502 },
+      )
+    }
 
     if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
       return NextResponse.json(
@@ -284,7 +324,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(parsed)
   } catch (error) {
-    console.error("[scope-feature] error:", error)
+    console.error("[scope-feature] unexpected error:", error)
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 },

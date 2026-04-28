@@ -99,6 +99,7 @@ export async function POST(request: NextRequest) {
       projectId?: string
       addToBoard?: boolean
       images?: { data: string; mediaType: string }[]
+      existingTasks?: { title: string; status: string; description?: string; tags?: string[] }[]
     }
 
     if (!body.description || typeof body.description !== "string" || body.description.trim().length < 10) {
@@ -123,9 +124,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Build existing-tasks context so the AI sizes WITH awareness of what's on the board
+    let existingContext = ""
+    try {
+      const existingTasks = body.existingTasks
+      if (existingTasks && Array.isArray(existingTasks) && existingTasks.length > 0) {
+        const byStatus: Record<string, typeof existingTasks> = {}
+        for (const t of existingTasks) {
+          const status = t.status || "unknown"
+          const arr = byStatus[status] || (byStatus[status] = [])
+          arr.push(t)
+        }
+        existingContext = `\n\nEXISTING BOARD TASKS (${existingTasks.length} total already on the board):\n`
+        for (const [status, tasks] of Object.entries(byStatus)) {
+          existingContext += `\n${status.toUpperCase()} (${tasks.length}):\n`
+          for (const t of tasks) {
+            const tagStr = t.tags && t.tags.length ? ` [${t.tags.join(", ")}]` : ""
+            existingContext += `- ${t.title}${tagStr}\n`
+            if (t.description) {
+              existingContext += `  desc: ${t.description.slice(0, 120)}${t.description.length > 120 ? "..." : ""}\n`
+            }
+          }
+        }
+        existingContext += `\nIMPORTANT: Consider these ${existingTasks.length} existing tasks when breaking down the new feature.`
+      }
+    } catch (ctxErr) {
+      console.error("[admin/scope] existingContext build failed:", ctxErr)
+      existingContext = ""
+    }
+
     // Build multimodal content
     const hasImages = body.images && Array.isArray(body.images) && body.images.length > 0
-    const textPart = `Break this feature into standard-sized queue tasks:\n\n${body.description.trim()}`
+    const textPart = `Break this feature into standard-sized queue tasks:\n\n${body.description.trim()}${existingContext}`
 
     const userContent: Array<
       | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
@@ -182,7 +212,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not parse AI response" }, { status: 502 })
     }
 
-    const parsed = JSON.parse(jsonMatch[0])
+    let parsed: any
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch (parseErr) {
+      console.error("[admin/scope] JSON parse error:", parseErr)
+      return NextResponse.json({ error: "AI response was not valid JSON" }, { status: 502 })
+    }
     if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
       return NextResponse.json(
         { error: "Could not break this into tasks. Try being more specific." },
@@ -234,7 +270,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(parsed)
   } catch (error) {
-    console.error("[admin/scope] error:", error)
+    console.error("[admin/scope] unexpected error:", error)
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 },
