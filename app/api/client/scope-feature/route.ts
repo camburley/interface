@@ -300,7 +300,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const parsed = JSON.parse(jsonMatch[0])
+    let parsed: any
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch (parseErr: any) {
+      console.error("[scope-feature] JSON parse error:", parseErr?.message, "| Content:", jsonMatch[0].slice(0, 500))
+      return NextResponse.json(
+        { error: "AI response was not valid JSON. Please try again." },
+        { status: 502 },
+      )
+    }
 
     if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
       return NextResponse.json(
@@ -310,10 +319,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(parsed)
-  } catch (error) {
-    console.error("[scope-feature] error:", error)
+  } catch (error: any) {
+    console.error("[scope-feature] unexpected error:", error?.message || error, error?.stack || "")
     return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
+      { error: `Something went wrong: ${error?.message || "unknown error"}` },
       { status: 500 },
     )
   }

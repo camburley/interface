@@ -211,7 +211,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not parse AI response" }, { status: 502 })
     }
 
-    const parsed = JSON.parse(jsonMatch[0])
+    let parsed: any
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch (parseErr: any) {
+      console.error("[admin/scope] JSON parse error:", parseErr?.message, "| Content:", jsonMatch[0].slice(0, 500))
+      return NextResponse.json(
+        { error: "AI response was not valid JSON" },
+        { status: 502 },
+      )
+    }
     if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
       return NextResponse.json(
         { error: "Could not break this into tasks. Try being more specific." },
@@ -262,10 +271,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(parsed)
-  } catch (error) {
-    console.error("[admin/scope] error:", error)
+  } catch (error: any) {
+    console.error("[admin/scope] unexpected error:", error?.message || error, error?.stack || "")
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: `Something went wrong: ${error?.message || "unknown error"}` },
       { status: 500 },
     )
   }
