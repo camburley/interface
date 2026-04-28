@@ -306,7 +306,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    // Extract JSON: handle markdown code blocks, then raw braces
+    let jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/)
+    if (!jsonMatch) {
+      jsonMatch = content.match(/\{[\s\S]*\}/)
+    } else {
+      jsonMatch = [jsonMatch[1]] // use captured group
+    }
     if (!jsonMatch) {
       console.error("[scope-feature] no JSON in response. First 500 chars:", content.slice(0, 500))
       return NextResponse.json(

@@ -214,7 +214,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No response from AI" }, { status: 502 })
     }
 
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    // Extract JSON: handle markdown code blocks, then raw braces
+    let jsonMatch = content.match(/```(?:json)?\n([\s\S]*?)\n```/)
+    if (!jsonMatch) {
+      jsonMatch = content.match(/\{[\s\S]*\}/)
+    } else {
+      jsonMatch = [jsonMatch[1]]
+    }
     if (!jsonMatch) {
       return NextResponse.json({ error: "Could not parse AI response" }, { status: 502 })
     }
