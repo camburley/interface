@@ -227,6 +227,15 @@ export async function POST(request: NextRequest) {
       existingContext = "" // fail safe — proceed without context
     }
 
+    // Safety: cap repo/existing context to keep prompt under Anthropic limits
+    const maxContextChars = 15000
+    if (existingContext.length > maxContextChars) {
+      existingContext = existingContext.slice(0, maxContextChars) + "\n... (existing tasks truncated for length)"
+    }
+    if (repoContext.length > maxContextChars) {
+      repoContext = repoContext.slice(0, maxContextChars) + "\n... (repo context truncated for length)"
+    }
+
     const systemPrompt = repoContext
       ? SYSTEM_PROMPT + REPO_CONTEXT_ADDON
       : SYSTEM_PROMPT
@@ -279,7 +288,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      console.error("[scope-feature] Anthropic error:", await response.text())
+      const errText = await response.text()
+      console.error(`[scope-feature] Anthropic ${response.status}:`, errText.slice(0, 800))
       return NextResponse.json(
         { error: "Failed to analyze feature. Please try again." },
         { status: 502 },

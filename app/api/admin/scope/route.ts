@@ -153,6 +153,12 @@ export async function POST(request: NextRequest) {
       existingContext = ""
     }
 
+    // Safety: cap context to keep prompt under Anthropic limits
+    const maxContextChars = 15000
+    if (existingContext.length > maxContextChars) {
+      existingContext = existingContext.slice(0, maxContextChars) + "\n... (existing tasks truncated for length)"
+    }
+
     // Build multimodal content
     const hasImages = body.images && Array.isArray(body.images) && body.images.length > 0
     const textPart = `Break this feature into standard-sized queue tasks:\n\n${body.description.trim()}${existingContext}`
@@ -194,7 +200,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      console.error("[admin/scope] Anthropic error:", await response.text())
+      const errText = await response.text()
+      console.error(`[admin/scope] Anthropic ${response.status}:`, errText.slice(0, 800))
       return NextResponse.json(
         { error: "Failed to analyze feature" },
         { status: 502 },
