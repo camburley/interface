@@ -356,6 +356,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         model: "claude-opus-4-6",
+        max_tokens: 40000,
         temperature: 0.5,
         system: systemPrompt,
         tools: [TASK_BREAKDOWN_TOOL],
