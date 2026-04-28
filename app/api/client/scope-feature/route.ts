@@ -308,17 +308,23 @@ export async function POST(request: NextRequest) {
 
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
+      console.error("[scope-feature] no JSON in response. First 500 chars:", content.slice(0, 500))
       return NextResponse.json(
         { error: "Could not parse AI response. Please try again." },
         { status: 502 },
       )
     }
 
+    // Clean up common AI JSON mistakes before parsing
+    let jsonStr = jsonMatch[0]
+    // Remove trailing commas before } or ]
+    jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1')
+
     let parsed: any
     try {
-      parsed = JSON.parse(jsonMatch[0])
+      parsed = JSON.parse(jsonStr)
     } catch (parseErr) {
-      console.error("[scope-feature] JSON parse error:", parseErr)
+      console.error("[scope-feature] JSON parse failed. First 500 chars of match:", jsonStr.slice(0, 500))
       return NextResponse.json(
         { error: "AI response was not valid JSON. Please try again." },
         { status: 502 },

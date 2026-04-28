@@ -219,11 +219,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not parse AI response" }, { status: 502 })
     }
 
+    // Clean up common AI JSON mistakes before parsing
+    let jsonStr = jsonMatch[0]
+    jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1')
+
     let parsed: any
     try {
-      parsed = JSON.parse(jsonMatch[0])
+      parsed = JSON.parse(jsonStr)
     } catch (parseErr) {
-      console.error("[admin/scope] JSON parse error:", parseErr)
+      console.error("[admin/scope] JSON parse error:", parseErr, "| Match:", jsonStr.slice(0, 500))
       return NextResponse.json({ error: "AI response was not valid JSON" }, { status: 502 })
     }
     if (!parsed.tasks || !Array.isArray(parsed.tasks) || parsed.tasks.length === 0) {
