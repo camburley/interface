@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateClientSession } from "@/lib/client-auth"
+import { getSessionUser, isAdmin } from "@/lib/session"
 import { getFirebaseAdmin } from "@/lib/firebase-admin"
 import { appendHistory } from "@/lib/task-utils"
 
@@ -7,8 +8,25 @@ interface RouteContext {
   params: Promise<{ taskId: string }>
 }
 
+async function getCommentSession(): Promise<{ actor: string; projectId?: string } | null> {
+  const clientSession = await validateClientSession()
+  if (clientSession) {
+    return {
+      actor: `client:${clientSession.clientName || clientSession.email || clientSession.uid}`,
+      projectId: clientSession.projectId,
+    }
+  }
+
+  const user = await getSessionUser()
+  if (user && isAdmin(user.uid)) {
+    return { actor: `admin:${user.email || user.uid}` }
+  }
+
+  return null
+}
+
 export async function POST(request: NextRequest, context: RouteContext) {
-  const session = await validateClientSession()
+  const session = await getCommentSession()
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
 
@@ -27,7 +45,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 })
 
   const task = doc.data()!
-  if (task.projectId !== session.projectId) {
+  if (session.projectId && task.projectId !== session.projectId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -40,9 +58,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
   await ref.update({ updatedAt: new Date().toISOString() })
 
-  const actor = `client:${session.clientName || session.email || session.uid}`
   await appendHistory(taskId, {
-    actor,
+    actor: session.actor,
     event: "comment",
     details: { content },
   })
