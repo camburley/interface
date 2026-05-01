@@ -165,6 +165,7 @@ async function notifyClient(
 
   const email = client.email as string
   const name = (client.name as string) ?? "there"
+  const cc = Array.isArray(client.cc) ? (client.cc as string[]) : []
 
   if (newStatus === "done" && prefs.taskDone) {
     const artifacts = (task.artifacts ?? []).map((a) => ({
@@ -187,10 +188,10 @@ async function notifyClient(
       }
     } catch {}
 
-    await sendTaskDoneEmail(email, name, task.title, taskId, artifacts, nextTask)
+    await sendTaskDoneEmail(email, name, task.title, taskId, artifacts, nextTask, cc)
   } else if (newStatus === "review" && prefs.taskReview) {
-    await sendTaskReviewEmail(email, name, task.title, taskId)
+    await sendTaskReviewEmail(email, name, task.title, taskId, cc)
   } else if (newStatus === "in_progress" && prefs.taskInProgress) {
-    await sendTaskInProgressEmail(email, name, task.title)
+    await sendTaskInProgressEmail(email, name, task.title, cc)
   }
 }

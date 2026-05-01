@@ -631,13 +631,14 @@ export async function sendTaskDoneEmail(
   taskId: string,
   artifacts: { type: string; url: string; label?: string }[],
   nextTask?: { title: string; status: string } | null,
+  cc?: string[],
 ): Promise<boolean> {
   const allCopy = await loadCopy()
   const copy = allCopy.task_done
   const vars = { clientName, taskTitle }
   const html = renderTaskDoneHtml(copy, { ...vars, artifacts, nextTask })
   const subject = interpolate(copy.subject, vars)
-  return send(to, subject, html)
+  return send(to, subject, html, cc?.length ? { cc } : undefined)
 }
 
 export async function sendTaskReviewEmail(
@@ -645,26 +646,28 @@ export async function sendTaskReviewEmail(
   clientName: string,
   taskTitle: string,
   taskId: string,
+  cc?: string[],
 ): Promise<boolean> {
   const allCopy = await loadCopy()
   const copy = allCopy.task_review
   const vars = { clientName, taskTitle }
   const html = renderTaskReviewHtml(copy, vars)
   const subject = interpolate(copy.subject, vars)
-  return send(to, subject, html)
+  return send(to, subject, html, cc?.length ? { cc } : undefined)
 }
 
 export async function sendTaskInProgressEmail(
   to: string,
   clientName: string,
   taskTitle: string,
+  cc?: string[],
 ): Promise<boolean> {
   const allCopy = await loadCopy()
   const copy = allCopy.task_in_progress
   const vars = { clientName, taskTitle }
   const html = renderTaskInProgressHtml(copy, vars)
   const subject = interpolate(copy.subject, vars)
-  return send(to, subject, html)
+  return send(to, subject, html, cc?.length ? { cc } : undefined)
 }
 
 export async function sendWeeklySummaryEmail(
