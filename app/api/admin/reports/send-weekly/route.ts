@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const weekInput = typeof body.week === "string" ? body.week : request.nextUrl.searchParams.get("week")
   const week = parseWeekRange(weekInput).week
+  const emailOverride = typeof body.emailOverride === "string" ? body.emailOverride : undefined
 
   const { db } = getFirebaseAdmin()
   const clientsSnap = await db.collection("clients").get()
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
       ...(data.emailPreferences as Record<string, boolean> | undefined),
     }
 
-    if (!prefs.weeklySummary) {
+    if (!emailOverride && !prefs.weeklySummary) {
       summary.skipped += 1
       summary.details.push({
         clientId,
@@ -84,7 +85,9 @@ export async function POST(request: NextRequest) {
       const ccFromBody: string[] | undefined = Array.isArray(body.cc) ? body.cc.filter((e: unknown) => typeof e === 'string') as string[] : undefined
       const bccFromBody: string[] | undefined = Array.isArray(body.bcc) ? body.bcc.filter((e: unknown) => typeof e === 'string') as string[] : undefined
 
-      const sent = await sendWeeklySummaryEmail(email, {
+      const effectiveEmail = emailOverride || email
+
+      const sent = await sendWeeklySummaryEmail(effectiveEmail, {
         clientName: report.clientName,
         projectName: report.projectName,
         week: report.week,
@@ -109,7 +112,7 @@ export async function POST(request: NextRequest) {
 
       if (sent) {
         summary.sent += 1
-        summary.details.push({ clientId, email, action: "sent" })
+        summary.details.push({ clientId, email: effectiveEmail, action: "sent" })
       } else {
         summary.failed += 1
         summary.details.push({
