@@ -1826,14 +1826,10 @@ function TaskDetailModal({
   >([])
   const [loadingHistory, setLoadingHistory] = useState(true)
 
-  // #region agent log
   useEffect(() => {
-    const bodyOverflow = document.body.style.overflow
-    const bodyScrollHeight = document.body.scrollHeight
-    const bodyClientHeight = document.body.clientHeight
-    fetch('http://127.0.0.1:7242/ingest/628ce550-8849-42db-bbcc-2db529e38fc1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'069519'},body:JSON.stringify({sessionId:'069519',location:'board-client.tsx:TaskDetailModal:mount',message:'Modal mounted - checking body scroll state',data:{bodyOverflow,bodyScrollHeight,bodyClientHeight,bodyScrollable:bodyScrollHeight>bodyClientHeight},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = "" }
   }, [])
-  // #endregion
 
   useEffect(() => {
     let cancelled = false
@@ -1878,28 +1874,14 @@ function TaskDetailModal({
     }
   }
 
-  // #region agent log
-  const modalRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const el = modalRef.current
-    if (!el) return
-    const handler = (e: WheelEvent) => {
-      const { scrollTop, scrollHeight, clientHeight } = el
-      fetch('http://127.0.0.1:7242/ingest/628ce550-8849-42db-bbcc-2db529e38fc1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'069519'},body:JSON.stringify({sessionId:'069519',location:'board-client.tsx:TaskDetailModal:wheel',message:'Wheel event on modal',data:{scrollTop,scrollHeight,clientHeight,isScrollable:scrollHeight>clientHeight,deltaY:e.deltaY,target:(e.target as HTMLElement)?.tagName,bodyOverflow:document.body.style.overflow},timestamp:Date.now(),hypothesisId:'H2,H3,H4'})}).catch(()=>{});
-    }
-    el.addEventListener('wheel', handler, { passive: true })
-    return () => el.removeEventListener('wheel', handler)
-  }, [])
-  // #endregion
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
+      onWheel={(e) => e.stopPropagation()}
     >
       <div
-        ref={modalRef}
-        className="bg-background border border-border/60 rounded-sm w-full max-w-2xl mx-4 shadow-2xl max-h-[85vh] overflow-y-auto"
+        className="bg-background border border-border/60 rounded-sm w-full max-w-2xl mx-4 shadow-2xl max-h-[85vh] overflow-y-auto overscroll-contain"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-5 space-y-4">
