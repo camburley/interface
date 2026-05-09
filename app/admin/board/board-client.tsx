@@ -65,6 +65,18 @@ import type {
   TaskHistoryEntry,
 } from "@/lib/types/task"
 
+function formatCompletionWeek(dateStr: string): string {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ""
+  const day = d.getDay()
+  const mon = new Date(d)
+  mon.setDate(d.getDate() - ((day + 6) % 7))
+  const fri = new Date(mon)
+  fri.setDate(mon.getDate() + 4)
+  const fmt = (dt: Date) => `${dt.getMonth() + 1}/${dt.getDate()}`
+  return `Week of ${fmt(mon)} – ${fmt(fri)}`
+}
+
 type BoardType = "client" | "internal" | "ops"
 type ViewMode = "board" | "artifacts"
 
@@ -1463,14 +1475,23 @@ function TaskCard({
           </div>
         )}
 
-        {/* Bottom row: hours, links, grip */}
+        {/* Bottom row: completion week (done) or hours, links, grip */}
         <div className="flex items-center justify-between pt-1 border-t border-border/20">
           <div className="flex items-center gap-2">
-            {task.hours && (
+            {task.status === "done" ? (
               <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {task.hours}h
+                <CheckCircle className="h-3 w-3 text-emerald-400" />
+                {formatCompletionWeek(task.completedAt || task.updatedAt)}
               </span>
+            ) : (
+              <>
+                {task.hours && (
+                  <span className="font-mono text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {task.hours}h
+                  </span>
+                )}
+              </>
             )}
             {task.assignee && (
               <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[80px]">
