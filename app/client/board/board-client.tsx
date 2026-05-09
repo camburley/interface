@@ -167,7 +167,15 @@ export function ClientBoardClient({
       const col = (initialized ? tasks : initialTasks).filter(
         (t) => t.status === status,
       )
-      col.sort((a, b) => (a.position ?? 99999) - (b.position ?? 99999))
+      if (status === "done") {
+        col.sort((a, b) => {
+          const aTime = new Date(a.completedAt || a.updatedAt).getTime()
+          const bTime = new Date(b.completedAt || b.updatedAt).getTime()
+          return bTime - aTime
+        })
+      } else {
+        col.sort((a, b) => (a.position ?? 99999) - (b.position ?? 99999))
+      }
       return col
     },
     [initialized, tasks, initialTasks],
