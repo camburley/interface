@@ -18,8 +18,13 @@ const PLANS: Record<string, { name: string; amount: number; description: string 
   },
   priority: {
     name: "Priority Lane",
-    amount: 799500,
+    amount: 899500,
     description: "Two active tasks at a time — heavier throughput for multiple concurrent priorities.",
+  },
+  scale: {
+    name: "Scale Lane",
+    amount: 1499500,
+    description: "Three active tasks — fully managed delivery with strategy sessions and faster turnaround.",
   },
 }
 
